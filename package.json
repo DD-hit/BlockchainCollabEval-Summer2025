@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "web3": "^4.16.0"
+  },
+  "type": "module"
+}
