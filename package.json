@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "express": "^5.1.0",
+    "solc": "^0.5.17",
     "web3": "^4.16.0"
   },
   "type": "module"
