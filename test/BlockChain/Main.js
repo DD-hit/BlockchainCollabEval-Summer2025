@@ -1,10 +1,9 @@
 // 1. 导入必要的包
 import { Web3 } from 'web3';          // Web3 库，用于和以太坊交互
 import fs from 'fs';                  // Node.js 文件系统模块，用于读取文件
-import { log } from 'console';
 
 // 2. 连接到以太坊节点
-const web3 = new Web3('http://192.168.3.40:8545');  // 创建 Web3 实例，连接到指定节点
+const web3 = new Web3('http://192.168.139.129:8545');  // 创建 Web3 实例，连接到指定节点
 
 // 3. 读取合约 ABI（Application Binary Interface，合约接口描述）
 const abi = JSON.parse(fs.readFileSync(
@@ -13,7 +12,7 @@ const abi = JSON.parse(fs.readFileSync(
 ));  // 读取并解析 ABI 文件
 
 // 4. 创建合约实例
-const contractAddress = '0x6723C38fB06Da781EA4B39894CD451263f023F78';  // 已部署合约的地址
+const contractAddress = '0xf5164726194946f5976Ab0E13BdF9c3657c19992';  // 已部署合约的地址
 const contract = new web3.eth.Contract(abi, contractAddress);  // 用 ABI 和地址创建合约实例
 
 // 5. 主函数
