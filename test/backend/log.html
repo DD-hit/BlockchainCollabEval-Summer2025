@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
   <meta charset="UTF-8">
   <title>区块链账户创建</title>
@@ -9,17 +10,21 @@
       margin: 20px;
       max-width: 600px;
     }
+
     .form-group {
       margin-bottom: 15px;
     }
+
     label {
       display: block;
       margin-bottom: 5px;
     }
+
     input[type="password"] {
       width: 300px;
       padding: 8px;
     }
+
     button {
       padding: 10px 20px;
       background-color: #007bff;
@@ -27,13 +32,16 @@
       border: none;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #0056b3;
     }
+
     button:disabled {
       background-color: #6c757d;
       cursor: not-allowed;
     }
+
     .result {
       margin-top: 20px;
       padding: 15px;
@@ -42,17 +50,21 @@
       border-radius: 5px;
       display: none;
     }
+
     .success {
       background-color: #d4edda;
       border-color: #c3e6cb;
       color: #155724;
     }
+
     .error {
       background-color: #f8d7da;
       border-color: #f5c6cb;
       color: #721c24;
     }
-    .address, .private-key {
+
+    .address,
+    .private-key {
       font-family: monospace;
       background-color: #e9ecef;
       padding: 8px;
@@ -60,6 +72,7 @@
       border-radius: 3px;
       word-break: break-all;
     }
+
     .warning {
       background-color: #fff3cd;
       border: 1px solid #ffeaa7;
@@ -70,13 +83,14 @@
     }
   </style>
 </head>
+
 <body>
   <h2>🔗 区块链账户创建</h2>
-  
+
   <div class="warning">
     ⚠️ <strong>安全提醒：</strong> 私钥是访问账户的唯一凭证，请妥善保管！
   </div>
-  
+
   <form id="createAccountForm">
     <div class="form-group">
       <label for="password">密码</label>
@@ -88,16 +102,16 @@
     </div>
     <button type="submit" id="submitBtn">创建账户</button>
   </form>
-  
+
   <div id="result" class="result"></div>
-  
+
   <script>
-    document.getElementById('createAccountForm').onsubmit = async function(e) {
+    document.getElementById('createAccountForm').onsubmit = async function (e) {
       e.preventDefault();
-      
+
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
-      
+
       // 验证密码
       if (password !== confirmPassword) {
         const result = document.getElementById('result');
@@ -106,7 +120,7 @@
         result.style.display = 'block';
         return;
       }
-      
+
       if (password.length < 6) {
         const result = document.getElementById('result');
         result.className = 'result error';
@@ -114,25 +128,25 @@
         result.style.display = 'block';
         return;
       }
-      
+
       const submitBtn = document.getElementById('submitBtn');
       const result = document.getElementById('result');
-      
+
       // 禁用按钮并显示加载状态
       submitBtn.disabled = true;
       submitBtn.textContent = '创建中...';
       result.style.display = 'none';
-      
+
       try {
         // 调用API创建账户
-        const response = await fetch('/api/create-account', {
+        const response = await fetch('api/accounts/createAccount', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
           // 显示成功结果
           result.className = 'result success';
@@ -152,15 +166,21 @@
             <p>${data.message}</p>
           `;
         }
-        
+
         result.style.display = 'block';
-        
+
       } catch (error) {
         console.error('请求失败:', error);
         result.className = 'result error';
         result.innerHTML = `
           <h3>❌ 网络错误</h3>
-          <p>无法连接到服务器，请检查服务器是否正在运行。</p>
+          <p>无法连接到服务器，请检查：</p>
+          <ul>
+            <li>服务器是否正在运行 (http://localhost:3000)</li>
+            <li>后端服务是否正常启动</li>
+            <li>网络连接是否正常</li>
+          </ul>
+          <p><strong>错误详情：</strong> ${error.message}</p>
         `;
         result.style.display = 'block';
       } finally {
@@ -171,4 +191,5 @@
     };
   </script>
 </body>
+
 </html>
