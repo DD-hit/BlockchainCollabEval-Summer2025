@@ -116,8 +116,4 @@ app.get('/api/verify-account/:address', async (req, res) => {
 // 启动服务器
 app.listen(PORT, () => {
     console.log(`服务器运行在 http://localhost:${PORT}/log`);
-    console.log('可用的API端点:');
-    console.log('- GET /log - 账户创建页面');
-    console.log('- POST /api/create-account - 创建账户');
-    console.log('- GET /api/verify-account/:address - 验证账户');
 });
