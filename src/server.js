@@ -62,56 +62,7 @@ app.post('/api/create-account', async (req, res) => {
     }
 });
 
-// 验证账户端点
-app.get('/api/verify-account/:address', async (req, res) => {
-    try {
-        const { address } = req.params;
-        
-        // 验证地址格式
-        if (!web3.utils.isAddress(address)) {
-            return res.status(400).json({
-                success: false,
-                message: '无效的地址格式'
-            });
-        }
-        
-        // 获取账户信息
-        const balance = await web3.eth.getBalance(address);
-        const nonce = await web3.eth.getTransactionCount(address);
-        const code = await web3.eth.getCode(address);
-        
-        // 判断账户类型
-        const isContract = code.length > 2;
-        const accountType = isContract ? '智能合约账户' : '普通账户 (EOA)';
-        
-        // 判断账户是否存在
-        const exists = balance > 0 || nonce > 0 || isContract;
-        
-        const accountInfo = {
-            address: address,
-            balance: balance,
-            balanceInEth: web3.utils.fromWei(balance, 'ether'),
-            nonce: nonce,
-            isContract: isContract,
-            accountType: accountType,
-            exists: exists
-        };
-        
-        res.json({
-            success: true,
-            message: exists ? '账户存在' : '账户不存在或为空',
-            data: accountInfo
-        });
-        
-    } catch (error) {
-        console.error('验证账户时出错:', error);
-        res.status(500).json({
-            success: false,
-            message: '验证账户失败',
-            error: error.message
-        });
-    }
-});
+
 
 // 启动服务器
 app.listen(PORT, () => {
