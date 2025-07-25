@@ -5,8 +5,8 @@ import fs from 'fs';
 const app = express();
 app.use(express.json());
 
-const abi = JSON.parse(fs.readFileSync('./test/BlockChain/SimpleStorage_sol_SimpleStorage.abi', 'utf-8'));
-const contractAddress = '0xf5164726194946f5976Ab0E13BdF9c3657c19992';
+const abi = JSON.parse(fs.readFileSync('./test/BlockChain/SimpleStorage.abi', 'utf-8'));
+const contractAddress = '0xD3c5fD9603a626786F8F53Ab46C5fB209802F66B';
 
 app.post('/sendTx', async (req, res) => {
     const { newNum, privateKey } = req.body;

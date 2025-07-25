@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "solc": "^0.5.17",
     "web3": "^4.16.0"
