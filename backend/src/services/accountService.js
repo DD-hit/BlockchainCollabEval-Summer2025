@@ -1,9 +1,9 @@
 import Web3 from 'web3';
-// import { Account } from '../models/Account.js';
+import { pool } from '../../config/database.js';
 
 export class AccountService {
     // 创建账户的业务逻辑
-    static async createAccount(password) {
+    static async createAccount(username,password) {
         console.log('开始创建账户，密码长度:', password.length);
         
         // 1. 验证输入
@@ -27,23 +27,16 @@ export class AccountService {
 
         console.log('区块链账户创建成功:', account.address);
         
+        // 3. 保存到数据库
+        const [result] = await pool.execute(
+            'INSERT INTO user (username, password, address, createdAt) VALUES (?, ?, ?, now())',
+            [username, password, account.address]
+        );
+
+        console.log('账户已保存到数据库，ID:', result.insertId);
+        
+        // 4. 返回结果
         return accountInfo;
-        
-        // // 3. 保存到数据库
-        // const savedAccount = await Account.create({
-            
-        // });
-        
-        // console.log('账户已保存到数据库，ID:', savedAccount.id);
-        
-        // // 4. 返回结果
-        // return {
-        //     id: savedAccount.id,
-        //     address: savedAccount.address,
-        //     privateKey: savedAccount.privateKey,
-        //     balance: savedAccount.balance,
-        //     createdAt: savedAccount.createdAt
-        // };
     }
     
     // 获取账户的业务逻辑

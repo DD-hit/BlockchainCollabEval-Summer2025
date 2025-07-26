@@ -93,6 +93,10 @@
 
   <form id="createAccountForm">
     <div class="form-group">
+      <label for="username">用户名</label>
+      <input type="text" id="username" name="username" placeholder="输入用户名" required>
+    </div>
+    <div class="form-group">
       <label for="password">密码</label>
       <input type="password" id="password" name="password" placeholder="输入密码保护私钥" required>
     </div>
@@ -109,6 +113,7 @@
     document.getElementById('createAccountForm').onsubmit = async function (e) {
       e.preventDefault();
 
+      const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
 
@@ -142,7 +147,7 @@
         const response = await fetch('api/accounts/createAccount', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
+          body: JSON.stringify({ username, password })
         });
 
         const data = await response.json();
@@ -151,7 +156,7 @@
           // 显示成功结果
           result.className = 'result success';
           result.innerHTML = `
-            <h3>✅ 账户创建成功！</h3>
+            <h3>✅ 以太坊账户创建成功！</h3>
             <p><strong>地址：</strong></p>
             <div class="address">${data.data.address}</div>
             <p><strong>私钥（请妥善保管）：</strong></p>

@@ -7,10 +7,10 @@ export const createAccount = async (req, res) => {
         console.log('收到创建账户请求:', req.body);
         
         // 1. 获取请求数据
-        const { password } = req.body;
+        const { username, password } = req.body;
         
         // 2. 调用业务逻辑层处理
-        const result = await AccountService.createAccount(password);
+        const result = await AccountService.createAccount(username, password);
         
         // 3. 返回成功响应
         res.json({

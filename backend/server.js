@@ -1,8 +1,8 @@
 // server.js - 项目的"大门"
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
 import accountRoutes from './src/routes/accountRoutes.js';
+import { testConnection } from './config/database.js';
 
 
 const app = express();
@@ -21,6 +21,19 @@ app.use('/api/accounts', accountRoutes);
 
 
 // 启动服务器
-app.listen(PORT, () => {
-    console.log(`服务器运行在 http://localhost:3000`);
-});
+const startServer = async () => {
+    try {
+        // 测试数据库连接
+        await testConnection();
+        
+        // 启动服务器
+        app.listen(PORT, () => {
+            console.log(`服务器运行在 http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error('服务器启动失败:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
