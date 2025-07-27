@@ -3,12 +3,24 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>区块链账户创建</title>
+  <title>区块链账户管理</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
-      max-width: 600px;
+      max-width: 800px;
+    }
+
+    .container {
+      display: flex;
+      gap: 30px;
+    }
+
+    .form-section {
+      flex: 1;
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 8px;
     }
 
     .form-group {
@@ -18,11 +30,15 @@
     label {
       display: block;
       margin-bottom: 5px;
+      font-weight: bold;
     }
 
-    input[type="password"] {
-      width: 300px;
+    input[type="text"], input[type="password"] {
+      width: 100%;
       padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
     }
 
     button {
@@ -31,6 +47,8 @@
       color: white;
       border: none;
       cursor: pointer;
+      border-radius: 4px;
+      width: 100%;
     }
 
     button:hover {
@@ -40,6 +58,14 @@
     button:disabled {
       background-color: #6c757d;
       cursor: not-allowed;
+    }
+
+    .login-btn {
+      background-color: #28a745;
+    }
+
+    .login-btn:hover {
+      background-color: #218838;
     }
 
     .result {
@@ -81,35 +107,189 @@
       border-radius: 5px;
       margin: 15px 0;
     }
+
+    .user-info {
+      background-color: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .logout-btn {
+      background-color: #dc3545;
+      margin-top: 10px;
+    }
+
+    .logout-btn:hover {
+      background-color: #c82333;
+    }
   </style>
 </head>
 
 <body>
-  <h2>🔗 区块链账户创建</h2>
+  <h2>🔗 区块链账户管理</h2>
 
-  <div class="warning">
-    ⚠️ <strong>安全提醒：</strong> 私钥是访问账户的唯一凭证，请妥善保管！
+  <div class="container">
+    <!-- 登录部分 -->
+    <div class="form-section">
+      <h3>🔐 用户登录</h3>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginUsername">用户名</label>
+          <input type="text" id="loginUsername" name="loginUsername" placeholder="输入用户名" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">密码</label>
+          <input type="password" id="loginPassword" name="loginPassword" placeholder="输入密码" required>
+        </div>
+        <button type="submit" id="loginBtn" class="login-btn">登录</button>
+      </form>
+      
+      <div id="loginResult" class="result"></div>
+      
+      <div id="userInfo" class="user-info">
+        <h4>👤 当前用户信息</h4>
+        <p><strong>用户名：</strong><span id="currentUsername"></span></p>
+        <p><strong>地址：</strong><span id="currentAddress"></span></p>
+        <button id="getBalanceBtn" class="login-btn" style="margin-bottom: 10px;">获取余额</button>
+        <button id="logoutBtn" class="logout-btn">退出登录</button>
+        <div id="balanceResult" class="result" style="margin-top: 10px;"></div>
+      </div>
+    </div>
+
+    <!-- 创建账户部分 -->
+    <div class="form-section">
+      <h3>➕ 创建新账户</h3>
+      <div class="warning">
+        ⚠️ <strong>安全提醒：</strong> 私钥是访问账户的唯一凭证，请妥善保管！
+      </div>
+
+      <form id="createAccountForm">
+        <div class="form-group">
+          <label for="username">用户名</label>
+          <input type="text" id="username" name="username" placeholder="输入用户名" required>
+        </div>
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input type="password" id="password" name="password" placeholder="输入密码保护私钥" required>
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">确认密码</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" required>
+        </div>
+        <button type="submit" id="submitBtn">创建账户</button>
+      </form>
+
+      <div id="result" class="result"></div>
+    </div>
   </div>
 
-  <form id="createAccountForm">
-    <div class="form-group">
-      <label for="username">用户名</label>
-      <input type="text" id="username" name="username" placeholder="输入用户名" required>
-    </div>
-    <div class="form-group">
-      <label for="password">密码</label>
-      <input type="password" id="password" name="password" placeholder="输入密码保护私钥" required>
-    </div>
-    <div class="form-group">
-      <label for="confirmPassword">确认密码</label>
-      <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" required>
-    </div>
-    <button type="submit" id="submitBtn">创建账户</button>
-  </form>
-
-  <div id="result" class="result"></div>
-
   <script>
+    // // 检查是否已登录
+    // function checkLoginStatus() {
+    //   const token = localStorage.getItem('token');
+    //   const username = localStorage.getItem('username');
+    //   const address = localStorage.getItem('address');
+      
+    //   if (token && username) {
+    //     const userData = JSON.parse(username);
+    //     document.getElementById('currentUsername').textContent = userData.username;
+    //     document.getElementById('currentAddress').textContent = userData.address;
+    //     document.getElementById('userInfo').style.display = 'block';
+    //     document.getElementById('loginForm').style.display = 'none';
+    //   }
+    // }
+
+    // // 页面加载时检查登录状态
+    // checkLoginStatus();
+
+    // 登录表单处理
+    document.getElementById('loginForm').onsubmit = async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const loginBtn = document.getElementById('loginBtn');
+      const loginResult = document.getElementById('loginResult');
+
+      // 禁用按钮并显示加载状态
+      loginBtn.disabled = true;
+      loginBtn.textContent = '登录中...';
+      loginResult.style.display = 'none';
+
+      try {
+        // 调用登录API
+        const response = await fetch('api/accounts/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // 登录成功，存储token和用户信息
+          localStorage.setItem('token', data.data.token);
+          localStorage.setItem('username', data.data.username);
+          localStorage.setItem('address', data.data.address);
+          
+          // 显示用户信息
+          document.getElementById('currentUsername').textContent = data.data.username;
+          document.getElementById('currentAddress').textContent = data.data.address;
+          document.getElementById('userInfo').style.display = 'block';
+          document.getElementById('loginForm').style.display = 'none';
+          
+          // 显示成功消息
+          loginResult.className = 'result success';
+          loginResult.innerHTML = '<h3>✅ 登录成功！</h3><p>欢迎回来，' + data.data.username + '！</p>';
+          loginResult.style.display = 'block';
+          
+          // 3秒后隐藏成功消息
+          setTimeout(() => {
+            loginResult.style.display = 'none';
+          }, 3000);
+        } else {
+          // 显示错误信息
+          loginResult.className = 'result error';
+          loginResult.innerHTML = `<h3>❌ 登录失败</h3><p>${data.message}</p>`;
+          loginResult.style.display = 'block';
+        }
+
+      } catch (error) {
+        console.error('登录请求失败:', error);
+        loginResult.className = 'result error';
+        loginResult.innerHTML = `
+          <h3>❌ 网络错误</h3>
+          <p>无法连接到服务器，请检查：</p>
+          <ul>
+            <li>服务器是否正在运行 (http://localhost:3000)</li>
+            <li>后端服务是否正常启动</li>
+            <li>网络连接是否正常</li>
+          </ul>
+          <p><strong>错误详情：</strong> ${error.message}</p>
+        `;
+        loginResult.style.display = 'block';
+      } finally {
+        // 恢复按钮状态
+        loginBtn.disabled = false;
+        loginBtn.textContent = '登录';
+      }
+    };
+
+    // 退出登录
+    document.getElementById('logoutBtn').onclick = function() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      document.getElementById('userInfo').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('loginForm').reset();
+      document.getElementById('loginResult').style.display = 'none';
+    };
+
+    // 创建账户表单处理（保持原有逻辑）
     document.getElementById('createAccountForm').onsubmit = async function (e) {
       e.preventDefault();
 
@@ -193,6 +373,35 @@
         submitBtn.disabled = false;
         submitBtn.textContent = '创建账户';
       }
+    };
+
+    // 获取余额
+    document.getElementById('getBalanceBtn').onclick = async function() {
+      const address = localStorage.getItem('address');
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        const balanceResult = document.getElementById('balanceResult');
+        balanceResult.className = 'result error';
+        balanceResult.innerHTML = '<h3>❌ 没有登录凭证</h3><p>请先登录获取token</p>';
+        balanceResult.style.display = 'block';
+        return;
+      }
+      
+      const response = await fetch(`api/accounts/getBalance/${address}`, {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      const data = await response.json();
+      console.log(data);
+      const balanceResult = document.getElementById('balanceResult');
+      balanceResult.className = 'result success';
+      balanceResult.innerHTML = `
+        <h3>✅ 余额获取成功！</h3>
+        <p><strong>余额：</strong> ${data.data.balance}</p>
+      `;
+      balanceResult.style.display = 'block';
     };
   </script>
 </body>

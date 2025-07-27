@@ -1,6 +1,24 @@
 // controllers/accountController.js - 项目的"接待员"
 import { AccountService } from '../services/accountService.js';
 
+// 处理登录的请求
+export const loginAccount = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const result = await AccountService.loginAccount(username, password);
+        res.json({
+            success: true,
+            message: '登录成功',
+            data: result
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 // 处理创建账户的请求
 export const createAccount = async (req, res) => {
     try {
@@ -30,20 +48,20 @@ export const createAccount = async (req, res) => {
     }
 };
 
-// 处理获取账户的请求
 export const getBalance = async (req, res) => {
     try {
-        const { address } = req.params;
+        const address = req.user.address;
         const balance = await AccountService.getBalance(address);
         res.json({
             success: true,
-            message: '账户余额获取成功',
+            message: '余额获取成功',
             data: balance
         });
     } catch (error) {
-        res.status(404).json({
+        res.status(400).json({
             success: false,
-            message: '账户不存在'
+            message: error.message
         });
     }
 };
+
