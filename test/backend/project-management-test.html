@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目管理和成员管理测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .btn-success {
+            background-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .project-list, .member-list {
+            margin-top: 15px;
+        }
+        .project-item, .member-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .current-project {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .back-btn {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .back-btn:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <h1>项目管理和成员管理测试</h1>
+        <button onclick="goBackToLogin()" class="back-btn">
+            🔙 返回登录页面
+        </button>
+    </div>
+
+    <!-- 项目管理部分 -->
+    <div class="container">
+        <h2>项目管理</h2>
+        
+        <!-- 创建项目 -->
+        <div class="section">
+            <h3>创建项目</h3>
+            <div class="form-group">
+                <label for="projectName">项目名称:</label>
+                <input type="text" id="projectName" placeholder="输入项目名称">
+            </div>
+            <!-- <div class="form-group">
+                <label for="projectOwner">项目所有者:</label>
+                <input type="text" id="projectOwner" placeholder="输入所有者用户名">
+            </div> -->
+            <button onclick="createProject()">创建项目</button>
+            <div id="createProjectResult" class="result"></div>
+        </div>
+
+        <!-- 获取项目列表 -->
+        <div class="section">
+            <h3>项目列表</h3>
+            <button onclick="getProjectList()">获取项目列表</button>
+            <div id="projectListResult" class="result"></div>
+            <div id="projectList" class="project-list"></div>
+        </div>
+
+        <!-- 获取项目详情 -->
+        <div class="section">
+            <h3>项目详情</h3>
+            <div class="form-group">
+                <label for="projectId">项目ID:</label>
+                <input type="number" id="projectId" placeholder="输入项目ID">
+            </div>
+            <button onclick="getProjectDetail()">获取项目详情</button>
+            <div id="projectDetailResult" class="result"></div>
+        </div>
+    </div>
+
+    <!-- 项目成员管理部分 -->
+    <div class="container">
+        <h2>项目成员管理</h2>
+        
+        <!-- 添加项目成员 -->
+        <div class="section">
+            <h3>添加项目成员</h3>
+            <div class="form-group">
+                <label for="memberProjectId">项目ID:</label>
+                <input type="number" id="memberProjectId" placeholder="输入项目ID">
+            </div>
+            <div class="form-group">
+                <label for="memberUsername">成员用户名:</label>
+                <input type="text" id="memberUsername" placeholder="输入成员用户名">
+            </div>
+            <div class="form-group">
+                <label for="memberRole">角色:</label>
+                <select id="memberRole">
+                    <option value="developer">开发者</option>
+                    <option value="admin">管理员</option>
+                    <option value="viewer">观察者</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="memberStatus">状态:</label>
+                <select id="memberStatus">
+                    <option value="active">活跃</option>
+                    <option value="inactive">非活跃</option>
+                </select>
+            </div>
+            <button onclick="addProjectMember()">添加成员</button>
+            <div id="addMemberResult" class="result"></div>
+        </div>
+
+        <!-- 获取项目成员列表 -->
+        <div class="section">
+            <h3>项目成员列表</h3>
+            <div class="form-group">
+                <label for="memberListProjectId">项目ID:</label>
+                <input type="number" id="memberListProjectId" placeholder="输入项目ID">
+            </div>
+            <button onclick="getProjectMemberList()">获取成员列表</button>
+            <div id="memberListResult" class="result"></div>
+            <div id="memberList" class="member-list"></div>
+        </div>
+
+        <!-- 更新项目成员 -->
+        <div class="section">
+            <h3>更新项目成员</h3>
+            <div class="form-group">
+                <label for="updateProjectId">项目ID:</label>
+                <input type="number" id="updateProjectId" placeholder="输入项目ID">
+            </div>
+            <div class="form-group">
+                <label for="updateUsername">成员用户名:</label>
+                <input type="text" id="updateUsername" placeholder="输入成员用户名">
+            </div>
+            <div class="form-group">
+                <label for="updateRole">新角色:</label>
+                <select id="updateRole">
+                    <option value="developer">开发者</option>
+                    <option value="admin">管理员</option>
+                    <option value="viewer">观察者</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="updateStatus">新状态:</label>
+                <select id="updateStatus">
+                    <option value="active">活跃</option>
+                    <option value="inactive">非活跃</option>
+                </select>
+            </div>
+            <button onclick="updateProjectMember()">更新成员</button>
+            <div id="updateMemberResult" class="result"></div>
+        </div>
+
+        <!-- 删除项目成员 -->
+        <div class="section">
+            <h3>删除项目成员</h3>
+            <div class="form-group">
+                <label for="deleteProjectId">项目ID:</label>
+                <input type="number" id="deleteProjectId" placeholder="输入项目ID">
+            </div>
+            <div class="form-group">
+                <label for="deleteUsername">成员用户名:</label>
+                <input type="text" id="deleteUsername" placeholder="输入成员用户名">
+            </div>
+            <button class="btn-danger" onclick="deleteProjectMember()">删除成员</button>
+            <div id="deleteMemberResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        // 显示结果
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.className = `result ${isError ? 'error' : 'success'}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // 项目管理功能
+        async function createProject() {
+            try {
+                const projectName = document.getElementById('projectName').value;
+                const projectOwner = localStorage.getItem('username');
+                
+                const response = await fetch(`${API_BASE_URL}/projectManager/createProject`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ projectName, projectOwner })
+                });
+                
+                const result = await response.json();
+                showResult('createProjectResult', result, !result.success);
+            } catch (error) {
+                showResult('createProjectResult', { error: error.message }, true);
+            }
+        }
+
+        async function getProjectList() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/projectManager/getProjectList`);
+                const result = await response.json();
+                // showResult('projectListResult', result, !result.success);
+                
+                if (result.success && result.data) {
+                    const projectList = document.getElementById('projectList');
+                    projectList.innerHTML = result.data.map(project => `
+                        <div class="project-item">
+                            <strong>ID:</strong> ${project.projectId} | 
+                            <strong>名称:</strong> ${project.projectName} | 
+                            <strong>所有者:</strong> ${project.projectOwner} | 
+                            <strong>创建时间:</strong> ${project.createTime}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                showResult('projectListResult', { error: error.message }, true);
+            }
+        }
+
+        async function getProjectDetail() {
+            try {
+                const projectId = document.getElementById('projectId').value;
+                const response = await fetch(`${API_BASE_URL}/projectManager/getProjectDetail/${projectId}`);
+                const result = await response.json();
+                showResult('projectDetailResult', result, !result.success);
+            } catch (error) {
+                showResult('projectDetailResult', { error: error.message }, true);
+            }
+        }
+
+        // 项目成员管理功能
+        async function addProjectMember() {
+            try {
+                const projectId = document.getElementById('memberProjectId').value;
+                const username = document.getElementById('memberUsername').value;
+                const role = document.getElementById('memberRole').value;
+                const status = document.getElementById('memberStatus').value;
+                
+                const response = await fetch(`${API_BASE_URL}/projectMembers/addProjectMember`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ projectId, username, role, status })
+                });
+                
+                const result = await response.json();
+                showResult('addMemberResult', result, !result.success);
+            } catch (error) {
+                showResult('addMemberResult', { error: error.message }, true);
+            }
+        }
+
+        async function getProjectMemberList() {
+            try {
+                const projectId = document.getElementById('memberListProjectId').value;
+                const response = await fetch(`${API_BASE_URL}/projectMembers/getProjectMemberList/${projectId}`);
+                const result = await response.json();
+                showResult('memberListResult', result, !result.success);
+                
+                if (result.success && result.data) {
+                    const memberList = document.getElementById('memberList');
+                    memberList.innerHTML = result.data.map(member => `
+                        <div class="member-item">
+                            <strong>用户名:</strong> ${member.username} | 
+                            <strong>角色:</strong> ${member.role} | 
+                            <strong>状态:</strong> ${member.status} | 
+                            <strong>添加时间:</strong> ${member.addedTime}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                showResult('memberListResult', { error: error.message }, true);
+            }
+        }
+
+        async function updateProjectMember() {
+            try {
+                const projectId = document.getElementById('updateProjectId').value;
+                const username = document.getElementById('updateUsername').value;
+                const role = document.getElementById('updateRole').value;
+                const status = document.getElementById('updateStatus').value;
+                
+                const response = await fetch(`${API_BASE_URL}/projectMembers/updateProjectMember/${projectId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ projectId, username, role, status })
+                });
+                
+                const result = await response.json();
+                showResult('updateMemberResult', result, !result.success);
+            } catch (error) {
+                showResult('updateMemberResult', { error: error.message }, true);
+            }
+        }
+
+        async function deleteProjectMember() {
+            try {
+                const projectId = document.getElementById('deleteProjectId').value;
+                const username = document.getElementById('deleteUsername').value;
+                
+                const response = await fetch(`${API_BASE_URL}/projectMembers/deleteProjectMember/${projectId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username ,projectId})
+                });
+                
+                const result = await response.json();
+                showResult('deleteMemberResult', result, !result.success);
+            } catch (error) {
+                showResult('deleteMemberResult', { error: error.message }, true);
+            }
+        }
+
+        function goBackToLogin() {
+            window.location.href = './log.html';
+        }
+    </script>
+</body>
+</html> 

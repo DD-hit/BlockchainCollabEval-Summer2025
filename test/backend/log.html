@@ -125,6 +125,15 @@
     .logout-btn:hover {
       background-color: #c82333;
     }
+
+    .project-btn {
+      background-color: #17a2b8;
+      margin-bottom: 10px;
+    }
+
+    .project-btn:hover {
+      background-color: #138496;
+    }
   </style>
 </head>
 
@@ -154,6 +163,7 @@
         <p><strong>用户名：</strong><span id="currentUsername"></span></p>
         <p><strong>地址：</strong><span id="currentAddress"></span></p>
         <button id="getBalanceBtn" class="login-btn" style="margin-bottom: 10px;">获取余额</button>
+        <button id="goToProjectBtn" class="project-btn">📋 项目管理</button>
         <button id="logoutBtn" class="logout-btn">退出登录</button>
         <div id="balanceResult" class="result" style="margin-top: 10px;"></div>
       </div>
@@ -289,7 +299,7 @@
       document.getElementById('loginResult').style.display = 'none';
     };
 
-    // 创建账户表单处理（保持原有逻辑）
+    // 创建账户表单处理
     document.getElementById('createAccountForm').onsubmit = async function (e) {
       e.preventDefault();
 
@@ -402,6 +412,11 @@
         <p><strong>余额：</strong> ${data.data.balance}</p>
       `;
       balanceResult.style.display = 'block';
+    };
+
+    // 跳转到项目管理页面
+    document.getElementById('goToProjectBtn').onclick = function() {
+        window.location.href = 'project-management-test.html';
     };
   </script>
 </body>
