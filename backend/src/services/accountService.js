@@ -1,7 +1,7 @@
 import Web3 from 'web3';
 import { pool } from '../../config/database.js';
 import jwt from 'jsonwebtoken';
-import { getBalance } from '../utils/getBalance.js';
+import { getBalance } from '../utils/eth.js';
 
 export class AccountService {
 
@@ -29,7 +29,7 @@ export class AccountService {
 
         // 1. 验证输入
         const _username = await pool.execute('SELECT username FROM user WHERE username = ?', [username]);
-        if (_username.length > 0) {
+        if (_username[0].length > 0) {
             throw new Error('用户已存在');
         }
         if (!password) {
@@ -58,10 +58,16 @@ export class AccountService {
             [username, password, account.address]
         );
 
-        console.log('账户已保存到数据库，ID:', result.insertId);
+        console.log('账户已保存到数据库');
 
         // 4. 返回结果
         return accountInfo;
+    }
+
+    //获取用户列表
+    static async getUserList() {
+        const queryResult = await pool.execute('SELECT username,address FROM user');
+        return queryResult[0];
     }
 
     // 获取余额
