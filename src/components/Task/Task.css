@@ -1,0 +1,418 @@
+.task-assignment, .file-upload {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 20px 0;
+}
+
+/* 任务分配样式 */
+.task-form {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.requirement-input-group,
+.deliverable-input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+.requirement-input-group .form-control,
+.deliverable-input-group .form-control {
+  flex: 1;
+}
+
+.members-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.member-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  background: #fafbfc;
+  transition: all 0.3s ease;
+}
+
+.member-preview-card:hover {
+  border-color: #667eea;
+  background: white;
+}
+
+.member-avatar-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.member-preview-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-preview-info strong {
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.member-preview-info span {
+  color: #666;
+  font-size: 12px;
+}
+
+/* 文件上传样式 */
+.upload-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.upload-dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 60px 40px;
+  text-align: center;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 30px;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.active {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.upload-icon {
+  font-size: 4rem;
+  opacity: 0.6;
+}
+
+.dropzone-content h3 {
+  color: #333;
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.dropzone-content p {
+  color: #666;
+  margin: 0;
+}
+
+.file-limit {
+  font-size: 12px !important;
+  color: #999 !important;
+}
+
+/* 文件列表容器 */
+.files-list-container {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.files-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.files-header h3 {
+  color: #333;
+  margin: 0;
+}
+
+.files-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.file-item-upload {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  background: #fafbfc;
+  transition: all 0.3s ease;
+}
+
+.file-item-upload:hover {
+  border-color: #667eea;
+  background: white;
+}
+
+.file-info-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.file-icon-large {
+  font-size: 2.5rem;
+  width: 60px;
+  text-align: center;
+}
+
+.file-details h4 {
+  color: #333;
+  margin: 0 0 5px 0;
+  font-size: 1rem;
+}
+
+.file-details p {
+  color: #666;
+  margin: 0 0 5px 0;
+  font-size: 13px;
+}
+
+.file-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.file-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.file-status.uploading {
+  background: #d4edda;
+  color: #155724;
+}
+
+.file-status.completed {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.file-status.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* 上传进度条 */
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 150px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #666;
+  min-width: 35px;
+  text-align: right;
+}
+
+/* 上传说明 */
+.upload-info {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.upload-info h3 {
+  color: #333;
+  margin: 0 0 20px 0;
+  font-size: 1.2rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+}
+
+.info-item h4 {
+  color: #333;
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+}
+
+.info-item ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.info-item li {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 5px;
+  padding-left: 15px;
+  position: relative;
+}
+
+.info-item li:before {
+  content: '•';
+  color: #667eea;
+  position: absolute;
+  left: 0;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #666;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .upload-dropzone {
+    padding: 40px 20px;
+  }
+  
+  .dropzone-content h3 {
+    font-size: 1.1rem;
+  }
+  
+  .files-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+  
+  .files-actions {
+    justify-content: center;
+  }
+  
+  .file-item-upload {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .file-info-section {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .upload-progress {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .members-preview {
+    grid-template-columns: 1fr;
+  }
+  
+  .member-preview-card {
+    justify-content: center;
+  }
+}
+
+/* 动画效果 */
+.file-item-upload {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 拖拽激活状态 */
+.upload-dropzone.active {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+/* 文件类型图标颜色 */
+.file-icon-large {
+  filter: grayscale(0);
+}
+
+/* 成功状态动画 */
+.file-status.completed {
+  animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
