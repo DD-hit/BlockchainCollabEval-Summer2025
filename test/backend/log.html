@@ -299,9 +299,9 @@
 
         if (data.success) {
           // 登录成功，存储token和用户信息
-          localStorage.setItem('token', data.data.token);
-          localStorage.setItem('username', data.data.username);
-          localStorage.setItem('address', data.data.address);
+          sessionStorage.setItem('token', data.data.token);
+          sessionStorage.setItem('username', data.data.username);
+          sessionStorage.setItem('address', data.data.address);
           
           // 显示用户信息
           document.getElementById('currentUsername').textContent = data.data.username;
@@ -348,8 +348,8 @@
 
     // 退出登录
     document.getElementById('logoutBtn').onclick = function() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('username');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('username');
       document.getElementById('userInfo').style.display = 'none';
       document.getElementById('loginForm').style.display = 'block';
       document.getElementById('loginForm').reset();
@@ -484,8 +484,8 @@
 
     // 获取余额
     document.getElementById('getBalanceBtn').onclick = async function() {
-      const address = localStorage.getItem('address');
-      const token = localStorage.getItem('token');
+      const address = sessionStorage.getItem('address');
+      const token = sessionStorage.getItem('token');
       
       if (!token) {
         const balanceResult = document.getElementById('balanceResult');
@@ -516,8 +516,7 @@
           `;
         } else {
           balanceResult.className = 'result error';
-          balanceResult.innerHTML = `
-            <h3>❌ 获取余额失败</h3>
+          balanceResult.innerHTML = `            <h3>❌ 获取余额失败</h3>
             <p>${data.message}</p>
           `;
         }

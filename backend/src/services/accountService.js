@@ -12,7 +12,7 @@ export class AccountService {
             throw new Error('用户不存在');
         }
         if (queryResult[0].password === password) {
-            const token = jwt.sign({ username: username, address: queryResult[0].address }, "123456789", { expiresIn: '24h' });
+const token = jwt.sign({ username: username, address: queryResult[0].address }, "123456789", { expiresIn: '24h' });            
             return {
                 token: token,
                 username: username,
@@ -45,6 +45,7 @@ export class AccountService {
         const account = web3.eth.accounts.create();
 
         const accountInfo = {
+            username: username,
             address: account.address,
             privateKey: account.privateKey,
             createdAt: new Date().toISOString()

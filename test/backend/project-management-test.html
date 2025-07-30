@@ -499,7 +499,7 @@
             try {
                 const projectName = document.getElementById('projectName').value;
                 const description = document.getElementById('projectDescription').value;
-                const projectOwner = localStorage.getItem('username');
+                const projectOwner = sessionStorage.getItem('username');
                 const startTime = document.getElementById('projectStartTime').value;
                 const endTime = document.getElementById('projectEndTime').value;
                 
@@ -507,7 +507,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
                     body: JSON.stringify({ projectName, description, projectOwner, startTime, endTime })
                 });
@@ -523,7 +523,7 @@
             try {
                 const response = await fetch(`${API_BASE_URL}/projectManager/getProjectList`, {
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 const result = await response.json();
@@ -550,7 +550,7 @@
                 const projectId = document.getElementById('projectId').value;
                 const response = await fetch(`${API_BASE_URL}/projectManager/getProjectDetail/${projectId}`, {
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 const result = await response.json();
@@ -571,7 +571,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
                     body: JSON.stringify({ projectId, username, role })
                 });
@@ -588,7 +588,7 @@
                 const projectId = document.getElementById('memberListProjectId').value;
                 const response = await fetch(`${API_BASE_URL}/projectMembers/getProjectMemberList/${projectId}`, {
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 const result = await response.json();
@@ -618,7 +618,7 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
                     body: JSON.stringify({ username, role })
                 });
@@ -639,7 +639,7 @@
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
                     body: JSON.stringify({ username })
                 });
@@ -668,7 +668,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
                     body: JSON.stringify({ projectId, title, description, startDate, endDate })
                 });
@@ -685,7 +685,7 @@
                 const projectId = document.getElementById('milestoneListProjectId').value;
                 const response = await fetch(`${API_BASE_URL}/milestones/getMilestoneList/${projectId}`, {
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 const result = await response.json();
@@ -713,7 +713,7 @@
                 const milestoneId = document.getElementById('milestoneId').value;
                 const response = await fetch(`${API_BASE_URL}/milestones/getMilestoneDetail/${milestoneId}`, {
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 const result = await response.json();
@@ -735,7 +735,7 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
                     body: JSON.stringify({ title, description, startDate, endDate })
                 });
@@ -754,7 +754,7 @@
                 const response = await fetch(`${API_BASE_URL}/milestones/deleteMilestone/${milestoneId}`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 
@@ -781,7 +781,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
                     body: JSON.stringify({ milestoneId, title, description, assignedTo, priority, status, startTime, endTime })
                 });
@@ -798,7 +798,7 @@
                 const milestoneId = document.getElementById('subtaskListMilestoneId').value;
                 const response = await fetch(`${API_BASE_URL}/subtasks/getSubtaskList/${milestoneId}`, {
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 const result = await response.json();
@@ -826,7 +826,7 @@
                 const subtaskId = document.getElementById('subtaskId').value;
                 const response = await fetch(`${API_BASE_URL}/subtasks/getSubtaskDetail/${subtaskId}`, {
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 const result = await response.json();
@@ -851,7 +851,7 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
                     body: JSON.stringify({ title, description, assignedTo, priority, status, startTime, endTime })
                 });
@@ -870,7 +870,7 @@
                 const response = await fetch(`${API_BASE_URL}/subtasks/deleteSubtask/${subtaskId}`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 

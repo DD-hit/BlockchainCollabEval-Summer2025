@@ -14,7 +14,6 @@ export const createProject = async (req, res) => {
         }
         
         const result = await ProjectManagerService.createProject(projectName, description, projectOwner, startTime, endTime);
-        await ProjectMemberService.addProjectMember(result.projectId, projectOwner, '组长');
         res.json({
             success: true,
             message: '项目创建成功',
