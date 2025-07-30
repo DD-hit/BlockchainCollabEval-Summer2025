@@ -134,6 +134,63 @@
     .project-btn:hover {
       background-color: #138496;
     }
+
+    /* 弹窗样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 600px;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .show-private-key {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .show-private-key:hover {
+      background-color: #c82333;
+    }
+
+    .private-key-hidden {
+      color: #6c757d;
+      font-style: italic;
+    }
   </style>
 </head>
 
@@ -183,11 +240,11 @@
         </div>
         <div class="form-group">
           <label for="password">密码</label>
-          <input type="password" id="password" name="password" placeholder="输入密码保护私钥" required>
+          <input type="password" id="password" name="password" placeholder="输入密码" required>
         </div>
         <div class="form-group">
           <label for="confirmPassword">确认密码</label>
-          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" required>
+          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="再次输入密码" required>
         </div>
         <button type="submit" id="submitBtn">创建账户</button>
       </form>
@@ -196,25 +253,25 @@
     </div>
   </div>
 
+  <!-- 创建账户成功弹窗 -->
+  <div id="accountModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>✅ 以太坊账户创建成功！</h3>
+      <div id="modalContent">
+        <p><strong>用户名：</strong><span id="modalUsername"></span></p>
+        <p><strong>以太坊地址：</strong></p>
+        <div class="address" id="modalAddress"></div>
+        <p><strong>私钥（请妥善保管）：</strong></p>
+        <div class="private-key-hidden" id="modalPrivateKeyHidden">点击下方按钮显示私钥</div>
+        <div class="private-key" id="modalPrivateKey" style="display: none;"></div>
+        <button class="show-private-key" id="showPrivateKeyBtn">显示私钥</button>
+        <p><strong>创建时间：</strong><span id="modalCreateTime"></span></p>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // // 检查是否已登录
-    // function checkLoginStatus() {
-    //   const token = localStorage.getItem('token');
-    //   const username = localStorage.getItem('username');
-    //   const address = localStorage.getItem('address');
-      
-    //   if (token && username) {
-    //     const userData = JSON.parse(username);
-    //     document.getElementById('currentUsername').textContent = userData.username;
-    //     document.getElementById('currentAddress').textContent = userData.address;
-    //     document.getElementById('userInfo').style.display = 'block';
-    //     document.getElementById('loginForm').style.display = 'none';
-    //   }
-    // }
-
-    // // 页面加载时检查登录状态
-    // checkLoginStatus();
-
     // 登录表单处理
     document.getElementById('loginForm').onsubmit = async function (e) {
       e.preventDefault();
@@ -275,7 +332,7 @@
           <h3>❌ 网络错误</h3>
           <p>无法连接到服务器，请检查：</p>
           <ul>
-            <li>服务器是否正在运行 (http://localhost:3000)</li>
+            <li>服务器是否正在运行 (http://localhost:5000)</li>
             <li>后端服务是否正常启动</li>
             <li>网络连接是否正常</li>
           </ul>
@@ -307,25 +364,30 @@
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
 
-      // 验证密码
-      if (password !== confirmPassword) {
-        const result = document.getElementById('result');
-        result.className = 'result error';
-        result.innerHTML = '<h3>❌ 密码不一致</h3><p>请确保两次输入的密码相同。</p>';
-        result.style.display = 'block';
-        return;
-      }
-
-      if (password.length < 6) {
-        const result = document.getElementById('result');
-        result.className = 'result error';
-        result.innerHTML = '<h3>❌ 密码太短</h3><p>密码长度至少需要6位。</p>';
-        result.style.display = 'block';
-        return;
-      }
-
       const submitBtn = document.getElementById('submitBtn');
       const result = document.getElementById('result');
+
+      // 验证密码
+      if (password !== confirmPassword) {
+        result.className = 'result error';
+        result.innerHTML = `
+          <h3>❌ 密码不匹配</h3>
+          <p>两次输入的密码不一致，请重新输入</p>
+        `;
+        result.style.display = 'block';
+        return;
+      }
+
+      // 验证密码长度
+      if (password.length < 6) {
+        result.className = 'result error';
+        result.innerHTML = `
+          <h3>❌ 密码太短</h3>
+          <p>密码长度至少需要6位字符</p>
+        `;
+        result.style.display = 'block';
+        return;
+      }
 
       // 禁用按钮并显示加载状态
       submitBtn.disabled = true;
@@ -343,16 +405,22 @@
         const data = await response.json();
 
         if (data.success) {
-          // 显示成功结果
-          result.className = 'result success';
-          result.innerHTML = `
-            <h3>✅ 以太坊账户创建成功！</h3>
-            <p><strong>地址：</strong></p>
-            <div class="address">${data.data.address}</div>
-            <p><strong>私钥（请妥善保管）：</strong></p>
-            <div class="private-key">${data.data.privateKey}</div>
-            <p><strong>创建时间：</strong> ${new Date(data.data.createdAt).toLocaleString()}</p>
-          `;
+          // 显示弹窗
+          document.getElementById('modalUsername').textContent = data.data.username;
+          document.getElementById('modalAddress').textContent = data.data.address;
+          document.getElementById('modalPrivateKey').textContent = data.data.privateKey;
+          document.getElementById('modalCreateTime').textContent = new Date(data.data.createdAt).toLocaleString();
+          
+          // 重置私钥显示状态
+          document.getElementById('modalPrivateKey').style.display = 'none';
+          document.getElementById('modalPrivateKeyHidden').style.display = 'block';
+          document.getElementById('showPrivateKeyBtn').textContent = '显示私钥';
+          
+          // 显示弹窗
+          document.getElementById('accountModal').style.display = 'block';
+          
+          // 清空表单
+          document.getElementById('createAccountForm').reset();
         } else {
           // 显示错误信息
           result.className = 'result error';
@@ -360,9 +428,8 @@
             <h3>❌ 创建失败</h3>
             <p>${data.message}</p>
           `;
+          result.style.display = 'block';
         }
-
-        result.style.display = 'block';
 
       } catch (error) {
         console.error('请求失败:', error);
@@ -371,7 +438,7 @@
           <h3>❌ 网络错误</h3>
           <p>无法连接到服务器，请检查：</p>
           <ul>
-            <li>服务器是否正在运行 (http://localhost:3000)</li>
+            <li>服务器是否正在运行 (http://localhost:5000)</li>
             <li>后端服务是否正常启动</li>
             <li>网络连接是否正常</li>
           </ul>
@@ -382,6 +449,36 @@
         // 恢复按钮状态
         submitBtn.disabled = false;
         submitBtn.textContent = '创建账户';
+      }
+    };
+
+    // 弹窗关闭功能
+    document.querySelector('.close').onclick = function() {
+      document.getElementById('accountModal').style.display = 'none';
+    }
+
+    // 点击弹窗外部关闭
+    window.onclick = function(event) {
+      const modal = document.getElementById('accountModal');
+      if (event.target == modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    // 显示/隐藏私钥
+    document.getElementById('showPrivateKeyBtn').onclick = function() {
+      const privateKeyDiv = document.getElementById('modalPrivateKey');
+      const privateKeyHiddenDiv = document.getElementById('modalPrivateKeyHidden');
+      const btn = document.getElementById('showPrivateKeyBtn');
+      
+      if (privateKeyDiv.style.display === 'none') {
+        privateKeyDiv.style.display = 'block';
+        privateKeyHiddenDiv.style.display = 'none';
+        btn.textContent = '隐藏私钥';
+      } else {
+        privateKeyDiv.style.display = 'none';
+        privateKeyHiddenDiv.style.display = 'block';
+        btn.textContent = '显示私钥';
       }
     };
 
@@ -398,20 +495,48 @@
         return;
       }
       
-      const response = await fetch(`api/accounts/getBalance/${address}`, {
-        headers: {
-          'Authorization': 'Bearer ' + token
-        }
-      });
-      const data = await response.json();
-      console.log(data);
       const balanceResult = document.getElementById('balanceResult');
-      balanceResult.className = 'result success';
-      balanceResult.innerHTML = `
-        <h3>✅ 余额获取成功！</h3>
-        <p><strong>余额：</strong> ${data.data.balance}</p>
-      `;
-      balanceResult.style.display = 'block';
+      
+      try {
+        const response = await fetch(`api/accounts/getBalance`, {
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        
+        const data = await response.json();
+        console.log('余额API响应:', data);
+        
+        if (data.success) {
+          balanceResult.className = 'result success';
+          balanceResult.innerHTML = `
+            <h3>✅ 余额获取成功！</h3>
+            <p><strong>地址：</strong> ${address}</p>
+            <p><strong>余额：</strong> ${(Number(data.data.balance) / 1e18).toFixed(6)} ETH</p>
+          `;
+        } else {
+          balanceResult.className = 'result error';
+          balanceResult.innerHTML = `
+            <h3>❌ 获取余额失败</h3>
+            <p>${data.message}</p>
+          `;
+        }
+        balanceResult.style.display = 'block';
+      } catch (error) {
+        console.error('获取余额请求失败:', error);
+        balanceResult.className = 'result error';
+        balanceResult.innerHTML = `
+          <h3>❌ 网络错误</h3>
+          <p>无法连接到服务器，请检查：</p>
+          <ul>
+            <li>服务器是否正在运行 (http://localhost:5000)</li>
+            <li>后端服务是否正常启动</li>
+            <li>网络连接是否正常</li>
+          </ul>
+          <p><strong>错误详情：</strong> ${error.message}</p>
+        `;
+        balanceResult.style.display = 'block';
+      }
     };
 
     // 跳转到项目管理页面
