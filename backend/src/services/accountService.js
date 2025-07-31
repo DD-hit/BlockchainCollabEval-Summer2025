@@ -7,16 +7,16 @@ export class AccountService {
 
     //登录账号
     static async loginAccount(username, password) {
-        const queryResult = await pool.execute('SELECT * FROM user WHERE username = ?', [username]);
-        if (queryResult[0].length === 0) {  // 检查第一个元素（rows）的长度
+        const [queryResult] = await pool.execute('SELECT * FROM user WHERE username = ?', [username]);
+        if (queryResult.length === 0) {  // 检查第一个元素（rows）的长度
             throw new Error('用户不存在');
         }
-        if (queryResult[0][0].password === password) {
-            const token = jwt.sign({ username: username, address: queryResult[0][0].address }, "123456789", { expiresIn: '24h' });
+        if (queryResult[0].password === password) {
+const token = jwt.sign({ username: username, address: queryResult[0].address }, "123456789", { expiresIn: '24h' });            
             return {
                 token: token,
                 username: username,
-                address: queryResult[0][0].address
+                address: queryResult[0].address
             }
         } else {
             throw new Error('密码错误');
@@ -28,8 +28,8 @@ export class AccountService {
         console.log('开始创建账户，密码长度:', password.length);
 
         // 1. 验证输入
-        const _username = await pool.execute('SELECT username FROM user WHERE username = ?', [username]);
-        if (_username[0].length > 0) {
+        const [_username] = await pool.execute('SELECT username FROM user WHERE username = ?', [username]);
+        if (_username.length > 0) {
             throw new Error('用户已存在');
         }
         if (!password) {
@@ -45,6 +45,7 @@ export class AccountService {
         const account = web3.eth.accounts.create();
 
         const accountInfo = {
+            username: username,
             address: account.address,
             privateKey: account.privateKey,
             createdAt: new Date().toISOString()
@@ -66,8 +67,8 @@ export class AccountService {
 
     //获取用户列表
     static async getUserList() {
-        const queryResult = await pool.execute('SELECT username,address FROM user');
-        return queryResult[0];
+        const [queryResult] = await pool.execute('SELECT username,address FROM user');
+        return queryResult;
     }
 
     // 获取余额

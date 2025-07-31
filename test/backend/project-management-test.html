@@ -80,10 +80,10 @@
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
-        .project-list, .member-list {
+        .project-list, .member-list, .milestone-list, .subtask-list {
             margin-top: 15px;
         }
-        .project-item, .member-item {
+        .project-item, .member-item, .milestone-item, .subtask-item {
             padding: 10px;
             border: 1px solid #ddd;
             margin-bottom: 10px;
@@ -138,10 +138,18 @@
                 <label for="projectName">项目名称:</label>
                 <input type="text" id="projectName" placeholder="输入项目名称">
             </div>
-            <!-- <div class="form-group">
-                <label for="projectOwner">项目所有者:</label>
-                <input type="text" id="projectOwner" placeholder="输入所有者用户名">
-            </div> -->
+            <div class="form-group">
+                <label for="projectDescription">项目描述:</label>
+                <textarea id="projectDescription" placeholder="输入项目描述"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="projectStartTime">开始时间:</label>
+                <input type="date" id="projectStartTime">
+            </div>
+            <div class="form-group">
+                <label for="projectEndTime">结束时间:</label>
+                <input type="date" id="projectEndTime">
+            </div>
             <button onclick="createProject()">创建项目</button>
             <div id="createProjectResult" class="result"></div>
         </div>
@@ -189,13 +197,7 @@
                     <option value="viewer">观察者</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="memberStatus">状态:</label>
-                <select id="memberStatus">
-                    <option value="active">活跃</option>
-                    <option value="inactive">非活跃</option>
-                </select>
-            </div>
+            
             <button onclick="addProjectMember()">添加成员</button>
             <div id="addMemberResult" class="result"></div>
         </div>
@@ -231,13 +233,7 @@
                     <option value="viewer">观察者</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="updateStatus">新状态:</label>
-                <select id="updateStatus">
-                    <option value="active">活跃</option>
-                    <option value="inactive">非活跃</option>
-                </select>
-            </div>
+            
             <button onclick="updateProjectMember()">更新成员</button>
             <div id="updateMemberResult" class="result"></div>
         </div>
@@ -258,8 +254,238 @@
         </div>
     </div>
 
+    <!-- 里程碑管理部分 -->
+    <div class="container">
+        <h2>里程碑管理</h2>
+        
+        <!-- 创建里程碑 -->
+        <div class="section">
+            <h3>创建里程碑</h3>
+            <div class="form-group">
+                <label for="milestoneProjectId">项目ID:</label>
+                <input type="number" id="milestoneProjectId" placeholder="输入项目ID">
+            </div>
+            <div class="form-group">
+                <label for="milestoneTitle">里程碑标题:</label>
+                <input type="text" id="milestoneTitle" placeholder="输入里程碑标题">
+            </div>
+            <div class="form-group">
+                <label for="milestoneDescription">描述:</label>
+                <textarea id="milestoneDescription" placeholder="输入里程碑描述"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="milestoneStartDate">开始日期:</label>
+                <input type="date" id="milestoneStartDate">
+            </div>
+            <div class="form-group">
+                <label for="milestoneEndDate">结束日期:</label>
+                <input type="date" id="milestoneEndDate">
+            </div>
+            <button onclick="createMilestone()">创建里程碑</button>
+            <div id="createMilestoneResult" class="result"></div>
+        </div>
+
+        <!-- 获取里程碑列表 -->
+        <div class="section">
+            <h3>里程碑列表</h3>
+            <div class="form-group">
+                <label for="milestoneListProjectId">项目ID:</label>
+                <input type="number" id="milestoneListProjectId" placeholder="输入项目ID">
+            </div>
+            <button onclick="getMilestoneList()">获取里程碑列表</button>
+            <div id="milestoneListResult" class="result"></div>
+            <div id="milestoneList" class="milestone-list"></div>
+        </div>
+
+        <!-- 获取里程碑详情 -->
+        <div class="section">
+            <h3>里程碑详情</h3>
+            <div class="form-group">
+                <label for="milestoneId">里程碑ID:</label>
+                <input type="number" id="milestoneId" placeholder="输入里程碑ID">
+            </div>
+            <button onclick="getMilestoneDetail()">获取里程碑详情</button>
+            <div id="milestoneDetailResult" class="result"></div>
+        </div>
+
+        <!-- 更新里程碑 -->
+        <div class="section">
+            <h3>更新里程碑</h3>
+            <div class="form-group">
+                <label for="updateMilestoneId">里程碑ID:</label>
+                <input type="number" id="updateMilestoneId" placeholder="输入里程碑ID">
+            </div>
+            <div class="form-group">
+                <label for="updateMilestoneTitle">新标题:</label>
+                <input type="text" id="updateMilestoneTitle" placeholder="输入新标题">
+            </div>
+            <div class="form-group">
+                <label for="updateMilestoneDescription">新描述:</label>
+                <textarea id="updateMilestoneDescription" placeholder="输入新描述"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="updateMilestoneStartDate">新开始日期:</label>
+                <input type="date" id="updateMilestoneStartDate">
+            </div>
+            <div class="form-group">
+                <label for="updateMilestoneEndDate">新结束日期:</label>
+                <input type="date" id="updateMilestoneEndDate">
+            </div>
+            <button onclick="updateMilestone()">更新里程碑</button>
+            <div id="updateMilestoneResult" class="result"></div>
+        </div>
+
+        <!-- 删除里程碑 -->
+        <div class="section">
+            <h3>删除里程碑</h3>
+            <div class="form-group">
+                <label for="deleteMilestoneId">里程碑ID:</label>
+                <input type="number" id="deleteMilestoneId" placeholder="输入里程碑ID">
+            </div>
+            <button class="btn-danger" onclick="deleteMilestone()">删除里程碑</button>
+            <div id="deleteMilestoneResult" class="result"></div>
+        </div>
+    </div>
+
+    <!-- 子任务管理部分 -->
+    <div class="container">
+        <h2>子任务管理</h2>
+        
+        <!-- 创建子任务 -->
+        <div class="section">
+            <h3>创建子任务</h3>
+            <div class="form-group">
+                <label for="subtaskMilestoneId">里程碑ID:</label>
+                <input type="number" id="subtaskMilestoneId" placeholder="输入里程碑ID">
+            </div>
+            <div class="form-group">
+                <label for="subtaskTitle">任务标题:</label>
+                <input type="text" id="subtaskTitle" placeholder="输入任务标题">
+            </div>
+            <div class="form-group">
+                <label for="subtaskDescription">描述:</label>
+                <textarea id="subtaskDescription" placeholder="输入任务描述"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="subtaskAssignedTo">负责人:</label>
+                <input type="text" id="subtaskAssignedTo" placeholder="输入负责人用户名">
+            </div>
+            <div class="form-group">
+                <label for="subtaskPriority">优先级:</label>
+                <select id="subtaskPriority">
+                    <option value="low">低</option>
+                    <option value="medium">中</option>
+                    <option value="high">高</option>
+                    <option value="urgent">紧急</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="subtaskStatus">状态:</label>
+                <select id="subtaskStatus">
+                    <option value="todo">待办</option>
+                    <option value="in_progress">进行中</option>
+                    <option value="review">待审核</option>
+                    <option value="done">已完成</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="subtaskStartTime">开始时间:</label>
+                <input type="date" id="subtaskStartTime">
+            </div>
+            <div class="form-group">
+                <label for="subtaskEndTime">结束时间:</label>
+                <input type="date" id="subtaskEndTime">
+            </div>
+            <button onclick="createSubtask()">创建子任务</button>
+            <div id="createSubtaskResult" class="result"></div>
+        </div>
+
+        <!-- 获取子任务列表 -->
+        <div class="section">
+            <h3>子任务列表</h3>
+            <div class="form-group">
+                <label for="subtaskListMilestoneId">里程碑ID:</label>
+                <input type="number" id="subtaskListMilestoneId" placeholder="输入里程碑ID">
+            </div>
+            <button onclick="getSubtaskList()">获取子任务列表</button>
+            <div id="subtaskListResult" class="result"></div>
+            <div id="subtaskList" class="subtask-list"></div>
+        </div>
+
+        <!-- 获取子任务详情 -->
+        <div class="section">
+            <h3>子任务详情</h3>
+            <div class="form-group">
+                <label for="subtaskId">子任务ID:</label>
+                <input type="number" id="subtaskId" placeholder="输入子任务ID">
+            </div>
+            <button onclick="getSubtaskDetail()">获取子任务详情</button>
+            <div id="subtaskDetailResult" class="result"></div>
+        </div>
+
+        <!-- 更新子任务 -->
+        <div class="section">
+            <h3>更新子任务</h3>
+            <div class="form-group">
+                <label for="updateSubtaskId">子任务ID:</label>
+                <input type="number" id="updateSubtaskId" placeholder="输入子任务ID">
+            </div>
+            <div class="form-group">
+                <label for="updateSubtaskTitle">新标题:</label>
+                <input type="text" id="updateSubtaskTitle" placeholder="输入新标题">
+            </div>
+            <div class="form-group">
+                <label for="updateSubtaskDescription">新描述:</label>
+                <textarea id="updateSubtaskDescription" placeholder="输入新描述"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="updateSubtaskAssignedTo">新负责人:</label>
+                <input type="text" id="updateSubtaskAssignedTo" placeholder="输入新负责人">
+            </div>
+            <div class="form-group">
+                <label for="updateSubtaskPriority">新优先级:</label>
+                <select id="updateSubtaskPriority">
+                    <option value="low">低</option>
+                    <option value="medium">中</option>
+                    <option value="high">高</option>
+                    <option value="urgent">紧急</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="updateSubtaskStatus">新状态:</label>
+                <select id="updateSubtaskStatus">
+                    <option value="todo">待办</option>
+                    <option value="in_progress">进行中</option>
+                    <option value="review">待审核</option>
+                    <option value="done">已完成</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="updateSubtaskStartTime">新开始时间:</label>
+                <input type="date" id="updateSubtaskStartTime">
+            </div>
+            <div class="form-group">
+                <label for="updateSubtaskEndTime">新结束时间:</label>
+                <input type="date" id="updateSubtaskEndTime">
+            </div>
+            <button onclick="updateSubtask()">更新子任务</button>
+            <div id="updateSubtaskResult" class="result"></div>
+        </div>
+
+        <!-- 删除子任务 -->
+        <div class="section">
+            <h3>删除子任务</h3>
+            <div class="form-group">
+                <label for="deleteSubtaskId">子任务ID:</label>
+                <input type="number" id="deleteSubtaskId" placeholder="输入子任务ID">
+            </div>
+            <button class="btn-danger" onclick="deleteSubtask()">删除子任务</button>
+            <div id="deleteSubtaskResult" class="result"></div>
+        </div>
+    </div>
+
     <script>
-        const API_BASE_URL = 'http://localhost:3000/api';
+        const API_BASE_URL = 'http://localhost:5000/api';
 
         // 显示结果
         function showResult(elementId, data, isError = false) {
@@ -272,14 +498,18 @@
         async function createProject() {
             try {
                 const projectName = document.getElementById('projectName').value;
-                const projectOwner = localStorage.getItem('username');
+                const description = document.getElementById('projectDescription').value;
+                const projectOwner = sessionStorage.getItem('username');
+                const startTime = document.getElementById('projectStartTime').value;
+                const endTime = document.getElementById('projectEndTime').value;
                 
                 const response = await fetch(`${API_BASE_URL}/projectManager/createProject`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
-                    body: JSON.stringify({ projectName, projectOwner })
+                    body: JSON.stringify({ projectName, description, projectOwner, startTime, endTime })
                 });
                 
                 const result = await response.json();
@@ -291,9 +521,13 @@
 
         async function getProjectList() {
             try {
-                const response = await fetch(`${API_BASE_URL}/projectManager/getProjectList`);
+                const response = await fetch(`${API_BASE_URL}/projectManager/getProjectList`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
                 const result = await response.json();
-                // showResult('projectListResult', result, !result.success);
+                showResult('projectListResult', result, !result.success);
                 
                 if (result.success && result.data) {
                     const projectList = document.getElementById('projectList');
@@ -314,7 +548,11 @@
         async function getProjectDetail() {
             try {
                 const projectId = document.getElementById('projectId').value;
-                const response = await fetch(`${API_BASE_URL}/projectManager/getProjectDetail/${projectId}`);
+                const response = await fetch(`${API_BASE_URL}/projectManager/getProjectDetail/${projectId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
                 const result = await response.json();
                 showResult('projectDetailResult', result, !result.success);
             } catch (error) {
@@ -328,14 +566,14 @@
                 const projectId = document.getElementById('memberProjectId').value;
                 const username = document.getElementById('memberUsername').value;
                 const role = document.getElementById('memberRole').value;
-                const status = document.getElementById('memberStatus').value;
                 
                 const response = await fetch(`${API_BASE_URL}/projectMembers/addProjectMember`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
-                    body: JSON.stringify({ projectId, username, role, status })
+                    body: JSON.stringify({ projectId, username, role })
                 });
                 
                 const result = await response.json();
@@ -348,20 +586,22 @@
         async function getProjectMemberList() {
             try {
                 const projectId = document.getElementById('memberListProjectId').value;
-                const response = await fetch(`${API_BASE_URL}/projectMembers/getProjectMemberList/${projectId}`);
+                const response = await fetch(`${API_BASE_URL}/projectMembers/getProjectMemberList/${projectId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
                 const result = await response.json();
                 showResult('memberListResult', result, !result.success);
                 
                 if (result.success && result.data) {
                     const memberList = document.getElementById('memberList');
-                    memberList.innerHTML = result.data.map(member => `
-                        <div class="member-item">
-                            <strong>用户名:</strong> ${member.username} | 
-                            <strong>角色:</strong> ${member.role} | 
-                            <strong>状态:</strong> ${member.status} | 
-                            <strong>添加时间:</strong> ${member.addedTime}
-                        </div>
-                    `).join('');
+                                         memberList.innerHTML = result.data.map(member => `
+                         <div class="member-item">
+                             <strong>用户名:</strong> ${member.username} | 
+                             <strong>角色:</strong> ${member.role}
+                         </div>
+                     `).join('');
                 }
             } catch (error) {
                 showResult('memberListResult', { error: error.message }, true);
@@ -373,14 +613,14 @@
                 const projectId = document.getElementById('updateProjectId').value;
                 const username = document.getElementById('updateUsername').value;
                 const role = document.getElementById('updateRole').value;
-                const status = document.getElementById('updateStatus').value;
                 
                 const response = await fetch(`${API_BASE_URL}/projectMembers/updateProjectMember/${projectId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
-                    body: JSON.stringify({ projectId, username, role, status })
+                    body: JSON.stringify({ username, role })
                 });
                 
                 const result = await response.json();
@@ -399,8 +639,9 @@
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     },
-                    body: JSON.stringify({ username ,projectId})
+                    body: JSON.stringify({ username })
                 });
                 
                 const result = await response.json();
@@ -412,6 +653,232 @@
 
         function goBackToLogin() {
             window.location.href = './log.html';
+        }
+
+        // 里程碑管理功能
+        async function createMilestone() {
+            try {
+                const projectId = document.getElementById('milestoneProjectId').value;
+                const title = document.getElementById('milestoneTitle').value;
+                const description = document.getElementById('milestoneDescription').value;
+                const startDate = document.getElementById('milestoneStartDate').value;
+                const endDate = document.getElementById('milestoneEndDate').value;
+                
+                const response = await fetch(`${API_BASE_URL}/milestones/createMilestone`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    },
+                    body: JSON.stringify({ projectId, title, description, startDate, endDate })
+                });
+                
+                const result = await response.json();
+                showResult('createMilestoneResult', result, !result.success);
+            } catch (error) {
+                showResult('createMilestoneResult', { error: error.message }, true);
+            }
+        }
+
+        async function getMilestoneList() {
+            try {
+                const projectId = document.getElementById('milestoneListProjectId').value;
+                const response = await fetch(`${API_BASE_URL}/milestones/getMilestoneList/${projectId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
+                const result = await response.json();
+                showResult('milestoneListResult', result, !result.success);
+                
+                if (result.success && result.data) {
+                    const milestoneList = document.getElementById('milestoneList');
+                    milestoneList.innerHTML = result.data.map(milestone => `
+                        <div class="milestone-item">
+                            <strong>ID:</strong> ${milestone.milestoneId} | 
+                            <strong>标题:</strong> ${milestone.title} | 
+                            <strong>状态:</strong> ${milestone.status} | 
+                            <strong>开始时间:</strong> ${milestone.startTime} | 
+                            <strong>结束时间:</strong> ${milestone.endTime}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                showResult('milestoneListResult', { error: error.message }, true);
+            }
+        }
+
+        async function getMilestoneDetail() {
+            try {
+                const milestoneId = document.getElementById('milestoneId').value;
+                const response = await fetch(`${API_BASE_URL}/milestones/getMilestoneDetail/${milestoneId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
+                const result = await response.json();
+                showResult('milestoneDetailResult', result, !result.success);
+            } catch (error) {
+                showResult('milestoneDetailResult', { error: error.message }, true);
+            }
+        }
+
+        async function updateMilestone() {
+            try {
+                const milestoneId = document.getElementById('updateMilestoneId').value;
+                const title = document.getElementById('updateMilestoneTitle').value;
+                const description = document.getElementById('updateMilestoneDescription').value;
+                const startDate = document.getElementById('updateMilestoneStartDate').value;
+                const endDate = document.getElementById('updateMilestoneEndDate').value;
+                
+                const response = await fetch(`${API_BASE_URL}/milestones/updateMilestone/${milestoneId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    },
+                    body: JSON.stringify({ title, description, startDate, endDate })
+                });
+                
+                const result = await response.json();
+                showResult('updateMilestoneResult', result, !result.success);
+            } catch (error) {
+                showResult('updateMilestoneResult', { error: error.message }, true);
+            }
+        }
+
+        async function deleteMilestone() {
+            try {
+                const milestoneId = document.getElementById('deleteMilestoneId').value;
+                
+                const response = await fetch(`${API_BASE_URL}/milestones/deleteMilestone/${milestoneId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
+                
+                const result = await response.json();
+                showResult('deleteMilestoneResult', result, !result.success);
+            } catch (error) {
+                showResult('deleteMilestoneResult', { error: error.message }, true);
+            }
+        }
+
+        // 子任务管理功能
+        async function createSubtask() {
+            try {
+                const milestoneId = document.getElementById('subtaskMilestoneId').value;
+                const title = document.getElementById('subtaskTitle').value;
+                const description = document.getElementById('subtaskDescription').value;
+                const assignedTo = document.getElementById('subtaskAssignedTo').value;
+                const priority = document.getElementById('subtaskPriority').value;
+                const status = document.getElementById('subtaskStatus').value;
+                const startTime = document.getElementById('subtaskStartTime').value;
+                const endTime = document.getElementById('subtaskEndTime').value;
+                
+                const response = await fetch(`${API_BASE_URL}/subtasks/createSubtask`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    },
+                    body: JSON.stringify({ milestoneId, title, description, assignedTo, priority, status, startTime, endTime })
+                });
+                
+                const result = await response.json();
+                showResult('createSubtaskResult', result, !result.success);
+            } catch (error) {
+                showResult('createSubtaskResult', { error: error.message }, true);
+            }
+        }
+
+        async function getSubtaskList() {
+            try {
+                const milestoneId = document.getElementById('subtaskListMilestoneId').value;
+                const response = await fetch(`${API_BASE_URL}/subtasks/getSubtaskList/${milestoneId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
+                const result = await response.json();
+                showResult('subtaskListResult', result, !result.success);
+                
+                if (result.success && result.data) {
+                    const subtaskList = document.getElementById('subtaskList');
+                    subtaskList.innerHTML = result.data.map(subtask => `
+                        <div class="subtask-item">
+                            <strong>ID:</strong> ${subtask.subtaskId} | 
+                            <strong>标题:</strong> ${subtask.title} | 
+                            <strong>负责人:</strong> ${subtask.assignedTo} | 
+                            <strong>优先级:</strong> ${subtask.priority} | 
+                            <strong>状态:</strong> ${subtask.status}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                showResult('subtaskListResult', { error: error.message }, true);
+            }
+        }
+
+        async function getSubtaskDetail() {
+            try {
+                const subtaskId = document.getElementById('subtaskId').value;
+                const response = await fetch(`${API_BASE_URL}/subtasks/getSubtaskDetail/${subtaskId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
+                const result = await response.json();
+                showResult('subtaskDetailResult', result, !result.success);
+            } catch (error) {
+                showResult('subtaskDetailResult', { error: error.message }, true);
+            }
+        }
+
+        async function updateSubtask() {
+            try {
+                const subtaskId = document.getElementById('updateSubtaskId').value;
+                const title = document.getElementById('updateSubtaskTitle').value;
+                const description = document.getElementById('updateSubtaskDescription').value;
+                const assignedTo = document.getElementById('updateSubtaskAssignedTo').value;
+                const priority = document.getElementById('updateSubtaskPriority').value;
+                const status = document.getElementById('updateSubtaskStatus').value;
+                const startTime = document.getElementById('updateSubtaskStartTime').value;
+                const endTime = document.getElementById('updateSubtaskEndTime').value;
+                
+                const response = await fetch(`${API_BASE_URL}/subtasks/updateSubtask/${subtaskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    },
+                    body: JSON.stringify({ title, description, assignedTo, priority, status, startTime, endTime })
+                });
+                
+                const result = await response.json();
+                showResult('updateSubtaskResult', result, !result.success);
+            } catch (error) {
+                showResult('updateSubtaskResult', { error: error.message }, true);
+            }
+        }
+
+        async function deleteSubtask() {
+            try {
+                const subtaskId = document.getElementById('deleteSubtaskId').value;
+                
+                const response = await fetch(`${API_BASE_URL}/subtasks/deleteSubtask/${subtaskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
+                
+                const result = await response.json();
+                showResult('deleteSubtaskResult', result, !result.success);
+            } catch (error) {
+                showResult('deleteSubtaskResult', { error: error.message }, true);
+            }
         }
     </script>
 </body>

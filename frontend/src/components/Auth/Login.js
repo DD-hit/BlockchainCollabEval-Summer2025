@@ -25,6 +25,7 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
+
       console.log('发送登录请求:', formData);
       const data = await accountAPI.login(formData.username, formData.password);
       
@@ -98,5 +99,3 @@ const Login = ({ onLogin }) => {
 };
 
 export default Login;
-
-

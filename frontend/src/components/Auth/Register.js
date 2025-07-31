@@ -11,7 +11,9 @@ const Register = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
   const [success, setSuccess] = useState('');
+
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -50,6 +52,7 @@ const Register = () => {
     } catch (err) {
       console.error('注册错误:', err);
       setError(`连接失败: ${err.message}`);
+
     } finally {
       setLoading(false);
     }
@@ -119,6 +122,8 @@ const Register = () => {
 };
 
 export default Register;
+
+
 
 
 

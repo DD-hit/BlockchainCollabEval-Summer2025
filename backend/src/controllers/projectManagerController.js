@@ -3,9 +3,17 @@ import { ProjectMemberService } from '../services/projectMemberService.js';
 
 export const createProject = async (req, res) => {
     try {
-        const { projectName, projectOwner } = req.body;
-        const result = await ProjectManagerService.createProject(projectName, projectOwner);
-        await ProjectMemberService.addProjectMember(result.projectId, projectOwner, 'admin', 'accepted');
+        const { projectName, description, projectOwner, startTime, endTime } = req.body;
+        
+        // 输入验证
+        if (!projectName || !description || !projectOwner) {
+            return res.status(400).json({
+                success: false,
+                message: '项目名称、描述和项目负责人不能为空'
+            });
+        }
+        
+        const result = await ProjectManagerService.createProject(projectName, description, projectOwner, startTime, endTime);
         res.json({
             success: true,
             message: '项目创建成功',
