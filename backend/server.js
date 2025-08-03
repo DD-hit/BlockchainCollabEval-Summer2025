@@ -6,6 +6,7 @@ import projectManagerRoutes from './src/routes/projectManagerRoutes.js';
 import projectMemberRoutes from './src/routes/projectMemberRoutes.js';
 import milestoneRoutes from './src/routes/milestoneRoutes.js';
 import subtaskRoutes from './src/routes/subtaskRoutes.js';
+import filesRoutes from './src/routes/filesRoutes.js';
 import { testConnection } from './config/database.js';
 
 const app = express();
@@ -29,12 +30,18 @@ app.get('/project-management-test.html', (req, res) => {
     res.sendFile('project-management-test.html', { root: './test/backend' });
 });
 
+// FormData测试页面路由
+app.get('/formdata-test.html', (req, res) => {
+    res.sendFile('formdata-test.html', { root: './test/backend' });
+});
+
 // API 路由
 app.use('/api/accounts', accountRoutes);
 app.use('/api/projectManager', projectManagerRoutes);
 app.use('/api/projectMembers', projectMemberRoutes);
 app.use('/api/milestones', milestoneRoutes);
 app.use('/api/subtasks', subtaskRoutes);
+app.use('/api/files', filesRoutes);
 
 // 处理React前端路由 - 所有非API请求都返回index.html
 // app.get('*', (req, res) => {

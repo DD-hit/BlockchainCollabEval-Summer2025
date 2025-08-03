@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormData 文件上传测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>FormData 文件上传测试</h1>
+
+    <div class="upload-section">
+        <h2>单文件上传</h2>
+        <div class="form-group">
+            <label>子任务ID:</label>
+            <input type="number" id="subtaskId" placeholder="输入子任务ID" value="1">
+        </div>
+        <div class="form-group">
+            <label>描述:</label>
+            <textarea id="description" placeholder="输入描述"></textarea>
+        </div>
+        <div class="form-group">
+            <label>选择单个文件:</label>
+            <input type="file" id="singleFile" accept="image/*,.pdf,.txt,application/zip,application/x-zip-compressed,.zip,application/x-rar-compressed,.rar">
+        </div>
+        <button onclick="uploadSingleFile()">上传单文件与描述</button>
+        <div id="singleResult" class="result"></div>
+    </div>
+
+
+    <script>
+        // 多文件上传
+        async function uploadSingleFile() {
+            const fileInput = document.getElementById('singleFile');
+            const resultDiv = document.getElementById('singleResult');
+            const descriptionInput = document.getElementById('description');
+            const subtaskIdInput = document.getElementById('subtaskId');
+            
+            if (fileInput.files.length === 0) {
+                resultDiv.textContent = '请选择文件';
+                return;
+            }
+            if (!descriptionInput.value.trim()) {
+                resultDiv.textContent = '请填写描述';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('files', fileInput.files[0]);
+
+            formData.append('description', descriptionInput.value.trim());
+            formData.append('subtaskId', subtaskIdInput.value);
+
+            console.log(formData.get('files'));
+            
+            try {
+                resultDiv.textContent = '上传中...';
+                
+                const response = await fetch('/api/files/filesUpload', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+
+                const result = await response.json();
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+                
+                if (result.success) {
+                    fileInput.value = ''; // 清空文件选择
+                    descriptionInput.value = '';
+                }
+            } catch (error) {
+                resultDiv.textContent = '上传失败: ' + error.message;
+            }
+        }
+
+    </script>
+</body>
+</html> 
