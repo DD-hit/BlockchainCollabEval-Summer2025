@@ -2,21 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
-// 组件导入
+// 布局组件
+import MainLayout from './components/Layout/MainLayout';
+
+// 页面组件
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Dashboard from './components/Dashboard/Dashboard';
 import ProjectCreate from './components/Project/ProjectCreate';
 import ProjectDetail from './components/Project/ProjectDetail';
-import FileUpload from './components/Task/FileUpload';
-import TaskAssignment from './components/Task/TaskAssignment';
-import Navbar from './components/Layout/Navbar';
-
-// 新增组件导入
-import MilestoneList from './components/Milestone/MilestoneList';
-import MilestoneForm from './components/Milestone/MilestoneForm';
-import SubtaskList from './components/Subtask/SubtaskList';
-import SubtaskForm from './components/Subtask/SubtaskForm';
+import MilestoneManagement from './components/Milestone/MilestoneManagement';
+import MilestoneDetail from './components/Milestone/MilestoneDetail';
+import TaskBoard from './components/Task/TaskBoard';
+import MemberManagement from './components/Member/MemberManagement';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -52,8 +50,6 @@ function App() {
   return (
     <Router>
       <div className="App">
-        {user && <Navbar user={user} onLogout={handleLogout} />}
-        
         <Routes>
           {/* 公开路由 */}
           <Route 
@@ -65,58 +61,128 @@ function App() {
             element={!user ? <Register /> : <Navigate to="/dashboard" />} 
           />
           
-          {/* 受保护的路由 */}
+          {/* 受保护的路由 - 直接传递组件作为 children */}
           <Route 
             path="/dashboard" 
-            element={user ? <Dashboard user={user} /> : <Navigate to="/login" />} 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <Dashboard user={user} />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
           />
           <Route 
             path="/project/create" 
-            element={user ? <ProjectCreate user={user} /> : <Navigate to="/login" />} 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <ProjectCreate user={user} />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
           />
           <Route 
             path="/project/:id" 
-            element={user ? <ProjectDetail user={user} /> : <Navigate to="/login" />} 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <ProjectDetail user={user} />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
           />
-          <Route 
-            path="/project/:projectId/upload" 
-            element={user ? <FileUpload user={user} /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/project/:projectId/task/assign" 
-            element={user ? <TaskAssignment user={user} /> : <Navigate to="/login" />} 
-          />
-          
-          {/* 里程碑路由 */}
           <Route 
             path="/project/:projectId/milestones" 
-            element={user ? <MilestoneList /> : <Navigate to="/login" />} 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <MilestoneManagement user={user} />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
           />
           <Route 
-            path="/project/:projectId/milestone/create" 
-            element={user ? <MilestoneForm /> : <Navigate to="/login" />} 
+            path="/milestone/:milestoneId" 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <MilestoneDetail user={user} />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
           />
           <Route 
-            path="/project/:projectId/milestone/:milestoneId/edit" 
-            element={user ? <MilestoneForm isEdit={true} /> : <Navigate to="/login" />} 
-          />
-          
-          {/* 子任务路由 */}
-          <Route 
-            path="/project/:projectId/milestone/:milestoneId/subtasks" 
-            element={user ? <SubtaskList /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/project/:projectId/milestone/:milestoneId/subtask/create" 
-            element={user ? <SubtaskForm /> : <Navigate to="/login" />} 
+            path="/project/:projectId/tasks" 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <TaskBoard user={user} />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
           />
           <Route 
-            path="/project/:projectId/milestone/:milestoneId/subtask/:subtaskId/edit" 
-            element={user ? <SubtaskForm isEdit={true} /> : <Navigate to="/login" />} 
+            path="/members" 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <MemberManagement user={user} />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
           />
-          
-          {/* 默认路由 */}
-          <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+          <Route 
+            path="/milestones" 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <MilestoneManagement user={user} />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
+          />
+          <Route 
+            path="/tasks" 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <TaskBoard user={user} />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
+          />
+          <Route 
+            path="/members" 
+            element={
+              user ? (
+                <MainLayout user={user} onLogout={handleLogout}>
+                  <div>成员管理页面 - 开发中</div>
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
+          />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </div>
     </Router>

@@ -1,331 +1,214 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { projectAPI } from '../../utils/api';
 import './Project.css';
 
 const ProjectCreate = ({ user }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    projectName: '',
     description: '',
-    startDate: '',
-    endDate: '',
-    members: [''],
-    tasks: [{ title: '', description: '', priority: '中', estimatedHours: '' }]
+    blockchainType: 'EVM',
+    startTime: '',
+    endTime: '',
+    enableDAO: false,
+    templateType: 'solidity',
+    isPublic: true
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const blockchainTypes = [
+    { value: 'EVM', label: 'EVM (以太坊虚拟机)', description: '支持以太坊、BSC、Polygon等' },
+    { value: 'Cosmos', label: 'Cosmos SDK', description: '支持Cosmos生态链' },
+    { value: 'Solana', label: 'Solana', description: '高性能区块链' },
+    { value: 'Polkadot', label: 'Polkadot', description: '跨链互操作性' }
+  ];
 
-  const handleMemberChange = (index, value) => {
-    const newMembers = [...formData.members];
-    newMembers[index] = value;
-    setFormData({ ...formData, members: newMembers });
-  };
-
-  const addMember = () => {
-    setFormData({
-      ...formData,
-      members: [...formData.members, '']
-    });
-  };
-
-  const removeMember = (index) => {
-    const newMembers = formData.members.filter((_, i) => i !== index);
-    setFormData({ ...formData, members: newMembers });
-  };
-
-  const handleTaskChange = (index, field, value) => {
-    const newTasks = [...formData.tasks];
-    newTasks[index][field] = value;
-    setFormData({ ...formData, tasks: newTasks });
-  };
-
-  const addTask = () => {
-    setFormData({
-      ...formData,
-      tasks: [...formData.tasks, { title: '', description: '', priority: '中', estimatedHours: '' }]
-    });
-  };
-
-  const removeTask = (index) => {
-    const newTasks = formData.tasks.filter((_, i) => i !== index);
-    setFormData({ ...formData, tasks: newTasks });
-  };
+  const templateTypes = [
+    { value: 'solidity', label: 'Solidity 智能合约', description: '以太坊标准合约模板' },
+    { value: 'rust', label: 'Rust 合约', description: 'Solana/Near 合约模板' },
+    { value: 'cosmwasm', label: 'CosmWasm', description: 'Cosmos 生态合约模板' },
+    { value: 'substrate', label: 'Substrate', description: 'Polkadot 平行链模板' }
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    // 验证表单
-    if (!formData.name.trim()) {
-      setError('项目名称不能为空');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.description.trim()) {
-      setError('项目描述不能为空');
-      setLoading(false);
-      return;
-    }
-
-    if (new Date(formData.endDate) <= new Date(formData.startDate)) {
-      setError('结束日期必须晚于开始日期');
-      setLoading(false);
-      return;
-    }
-
-    // 过滤空成员
-    const validMembers = formData.members.filter(member => member.trim());
-    if (validMembers.length === 0) {
-      setError('至少需要添加一个项目成员');
-      setLoading(false);
-      return;
-    }
-
-    // 验证任务
-    const validTasks = formData.tasks.filter(task => task.title.trim());
-    if (validTasks.length === 0) {
-      setError('至少需要添加一个预设任务');
-      setLoading(false);
-      return;
-    }
-
+    
     try {
       const projectData = {
-        ...formData,
-        members: validMembers,
-        tasks: validTasks,
-        creator: user.username,
-        creatorAddress: user.address
+        projectName: formData.projectName,
+        description: formData.description,
+        projectOwner: user.username,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        blockchainType: formData.blockchainType,
+        enableDAO: formData.enableDAO,
+        templateType: formData.templateType,
+        isPublic: formData.isPublic
       };
 
-      const response = await fetch('/api/projects/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
-        },
-        body: JSON.stringify(projectData),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
+      const response = await projectAPI.createProject(projectData);
+      
+      if (response.data.success) {
         navigate('/dashboard');
       } else {
-        setError(data.message || '创建项目失败');
+        setError(response.data.message || '创建项目失败');
       }
-    } catch (err) {
-      setError('网络错误，请稍后重试');
+    } catch (error) {
+      console.error('创建项目失败:', error);
+      setError(error.response?.data?.message || '网络错误，请重试');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   return (
     <div className="project-create">
-      <div className="container">
-        <div className="page-header">
-          <h1>🚀 创建新项目</h1>
-          <p>设置项目信息、添加团队成员并预设任务</p>
+      <div className="page-header">
+        <h1>创建区块链项目</h1>
+        <p>设置您的区块链开发项目，选择合适的技术栈</p>
+      </div>
+      
+      {error && (
+        <div className="error-message">
+          <span>❌</span>
+          {error}
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="project-form">
+        {/* 基本信息 */}
+        <div className="form-section">
+          <h3>📋 基本信息</h3>
+          <div className="form-group">
+            <label>项目名称 *</label>
+            <input
+              type="text"
+              value={formData.projectName}
+              onChange={(e) => handleInputChange('projectName', e.target.value)}
+              placeholder="输入项目名称"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>项目描述 *</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="描述项目目标和功能"
+              rows={4}
+              required
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>开始时间</label>
+              <input
+                type="date"
+                value={formData.startTime}
+                onChange={(e) => handleInputChange('startTime', e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label>结束时间</label>
+              <input
+                type="date"
+                value={formData.endTime}
+                onChange={(e) => handleInputChange('endTime', e.target.value)}
+              />
+            </div>
+          </div>
         </div>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {/* 区块链配置 */}
+        <div className="form-section">
+          <h3>⛓️ 区块链配置</h3>
+          <div className="form-group">
+            <label>区块链类型 *</label>
+            <div className="blockchain-options">
+              {blockchainTypes.map(type => (
+                <div 
+                  key={type.value}
+                  className={`blockchain-option ${formData.blockchainType === type.value ? 'selected' : ''}`}
+                  onClick={() => handleInputChange('blockchainType', type.value)}
+                >
+                  <div className="option-header">
+                    <span className="option-title">{type.label}</span>
+                    <span className="option-radio">
+                      {formData.blockchainType === type.value ? '🔘' : '⚪'}
+                    </span>
+                  </div>
+                  <p className="option-description">{type.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        <form onSubmit={handleSubmit} className="project-form">
-          {/* 基本信息 */}
-          <div className="form-section">
-            <h3>📋 基本信息</h3>
-            
-            <div className="form-group">
-              <label htmlFor="name">项目名称 *</label>
+          <div className="form-group">
+            <label>代码模板</label>
+            <select
+              value={formData.templateType}
+              onChange={(e) => handleInputChange('templateType', e.target.value)}
+            >
+              {templateTypes.map(template => (
+                <option key={template.value} value={template.value}>
+                  {template.label} - {template.description}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* 高级选项 */}
+        <div className="form-section">
+          <h3>⚙️ 高级选项</h3>
+          <div className="checkbox-group">
+            <label className="checkbox-item">
               <input
-                type="text"
-                id="name"
-                name="name"
-                className="form-control"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="请输入项目名称"
-                required
+                type="checkbox"
+                checked={formData.enableDAO}
+                onChange={(e) => handleInputChange('enableDAO', e.target.checked)}
               />
-            </div>
+              <span className="checkmark"></span>
+              <div className="checkbox-content">
+                <span className="checkbox-title">启用 DAO 治理</span>
+                <p className="checkbox-description">自动生成去中心化治理合约模板</p>
+              </div>
+            </label>
 
-            <div className="form-group">
-              <label htmlFor="description">项目描述 *</label>
-              <textarea
-                id="description"
-                name="description"
-                className="form-control"
-                rows="4"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="详细描述项目目标、功能和技术要求"
-                required
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={formData.isPublic}
+                onChange={(e) => handleInputChange('isPublic', e.target.checked)}
               />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="startDate">开始日期 *</label>
-                <input
-                  type="date"
-                  id="startDate"
-                  name="startDate"
-                  className="form-control"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                  required
-                />
+              <span className="checkmark"></span>
+              <div className="checkbox-content">
+                <span className="checkbox-title">公开项目</span>
+                <p className="checkbox-description">允许其他开发者查看和贡献</p>
               </div>
-              <div className="form-group">
-                <label htmlFor="endDate">预计结束日期 *</label>
-                <input
-                  type="date"
-                  id="endDate"
-                  name="endDate"
-                  className="form-control"
-                  value={formData.endDate}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+            </label>
           </div>
-
-          {/* 团队成员 */}
-          <div className="form-section">
-            <div className="section-header">
-              <h3>👥 团队成员</h3>
-              <button type="button" onClick={addMember} className="btn btn-secondary btn-sm">
-                ➕ 添加成员
-              </button>
-            </div>
-            
-            {formData.members.map((member, index) => (
-              <div key={index} className="member-input-group">
-                <input
-                  type="text"
-                  className="form-control"
-                  value={member}
-                  onChange={(e) => handleMemberChange(index, e.target.value)}
-                  placeholder="输入成员用户名或区块链地址"
-                />
-                {formData.members.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeMember(index)}
-                    className="btn btn-danger btn-sm"
-                  >
-                    ❌
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* 预设任务 */}
-          <div className="form-section">
-            <div className="section-header">
-              <h3>📝 预设任务</h3>
-              <button type="button" onClick={addTask} className="btn btn-secondary btn-sm">
-                ➕ 添加任务
-              </button>
-            </div>
-            
-            {formData.tasks.map((task, index) => (
-              <div key={index} className="task-input-group">
-                <div className="task-header">
-                  <h4>任务 {index + 1}</h4>
-                  {formData.tasks.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeTask(index)}
-                      className="btn btn-danger btn-sm"
-                    >
-                      🗑️ 删除
-                    </button>
-                  )}
-                </div>
-                
-                <div className="form-group">
-                  <label>任务标题 *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={task.title}
-                    onChange={(e) => handleTaskChange(index, 'title', e.target.value)}
-                    placeholder="请输入任务标题"
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>任务描述</label>
-                  <textarea
-                    className="form-control"
-                    rows="3"
-                    value={task.description}
-                    onChange={(e) => handleTaskChange(index, 'description', e.target.value)}
-                    placeholder="详细描述任务要求和交付物"
-                  />
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>优先级</label>
-                    <select
-                      className="form-control"
-                      value={task.priority}
-                      onChange={(e) => handleTaskChange(index, 'priority', e.target.value)}
-                    >
-                      <option value="低">低优先级</option>
-                      <option value="中">中优先级</option>
-                      <option value="高">高优先级</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>预估工时（小时）</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      value={task.estimatedHours}
-                      onChange={(e) => handleTaskChange(index, 'estimatedHours', e.target.value)}
-                      placeholder="预估完成时间"
-                      min="1"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="form-actions">
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="btn btn-secondary"
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading ? '创建中...' : '🚀 创建项目'}
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+        
+        <div className="form-actions">
+          <button type="button" onClick={() => navigate('/dashboard')} className="btn btn-secondary">
+            取消
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? '创建中...' : '🚀 创建项目'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
