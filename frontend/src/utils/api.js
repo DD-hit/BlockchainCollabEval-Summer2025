@@ -1,82 +1,60 @@
-// API 工具类
-class ApiClient {
-  constructor(baseURL = '') {
-    this.baseURL = baseURL;
-  }
+import axios from 'axios';
 
-  // 获取认证头
-  getAuthHeaders() {
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+// 创建axios实例
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// 请求拦截器 - 添加token
+api.interceptors.request.use(
+  (config) => {
     const token = localStorage.getItem('token');
-    return {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
-    };
-  }
-
-  // 通用请求方法
-  async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
-    const config = {
-      headers: this.getAuthHeaders(),
-      ...options
-    };
-
-    try {
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('API请求失败:', error);
-      throw error;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
 
-  // GET 请求
-  async get(endpoint) {
-    return this.request(endpoint, { method: 'GET' });
+// 响应拦截器 - 处理错误
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token过期或无效，清除本地存储并跳转到登录页
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      localStorage.removeItem('address');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
   }
+);
 
-  // POST 请求
-  async post(endpoint, data) {
-    return this.request(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-  }
-
-  // PUT 请求
-  async put(endpoint, data) {
-    return this.request(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
-  }
-
-  // DELETE 请求
-  async delete(endpoint, data = null) {
-    return this.request(endpoint, {
-      method: 'DELETE',
-      ...(data && { body: JSON.stringify(data) })
-    });
-  }
-}
-
-export const api = new ApiClient();
-
-// 账户相关API
+// 账户管理API
 export const accountAPI = {
-  login: (username, password) => 
-    api.post('/api/accounts/login', { username, password }),
+  login: (credentials) => 
+    api.post('/api/accounts/login', credentials),
   
-  register: (username, password) => 
-    api.post('/api/accounts/createAccount', { username, password }),
+  register: (userData) => 
+    api.post('/api/accounts/register', userData),
   
-  getBalance: (address) => 
-    api.get(`/api/accounts/getBalance/${address}`)
+  getProfile: () => 
+    api.get('/api/accounts/profile'),
+  
+  updateProfile: (profileData) => 
+    api.put('/api/accounts/profile', profileData)
 };
 
 // 项目管理API
@@ -87,26 +65,37 @@ export const projectAPI = {
   getProjectList: () => 
     api.get('/api/projectManager/getProjectList'),
   
+  getMyProjects: () => 
+    api.get('/api/projectManager/getMyProjects'),
+  
   getProjectDetail: (projectId) => 
-    api.get(`/api/projectManager/getProjectDetail/${projectId}`)
+    api.get(`/api/projectManager/getProjectDetail/${projectId}`),
+  
+  updateProject: (projectId, projectData) => 
+    api.put(`/api/projectManager/updateProject/${projectId}`, projectData),
+  
+  deleteProject: (projectId) => 
+    api.delete(`/api/projectManager/deleteProject/${projectId}`)
 };
 
-// 项目成员API
+// 项目成员管理API
 export const memberAPI = {
-  addMember: (projectId, username) => 
-    api.post('/api/projectMembers/addProjectMember', { projectId, username }),
+  addMember: (memberData) => 
+    api.post('/api/projectMembers/addProjectMember', memberData),
   
   getMemberList: (projectId) => 
     api.get(`/api/projectMembers/getProjectMemberList/${projectId}`),
   
-  deleteMember: (projectId, username) => 
-    api.delete(`/api/projectMembers/deleteProjectMember/${projectId}`, { username }),
-  
   updateMember: (projectId, memberData) => 
-    api.put(`/api/projectMembers/updateProjectMember/${projectId}`, memberData)
+    api.put(`/api/projectMembers/updateProjectMember/${projectId}`, memberData),
+  
+  deleteMember: (projectId, username) => 
+    api.delete(`/api/projectMembers/deleteProjectMember/${projectId}`, {
+      data: { username }
+    })
 };
 
-// 里程碑API
+// 里程碑管理API
 export const milestoneAPI = {
   createMilestone: (milestoneData) => 
     api.post('/api/milestones/createMilestone', milestoneData),
@@ -124,7 +113,7 @@ export const milestoneAPI = {
     api.delete(`/api/milestones/deleteMilestone/${milestoneId}`)
 };
 
-// 子任务API
+// 子任务管理API
 export const subtaskAPI = {
   createSubtask: (subtaskData) => 
     api.post('/api/subtasks/createSubtask', subtaskData),
@@ -141,3 +130,5 @@ export const subtaskAPI = {
   deleteSubtask: (subtaskId) => 
     api.delete(`/api/subtasks/deleteSubtask/${subtaskId}`)
 };
+
+export default api;
