@@ -1,117 +1,169 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { projectAPI } from '../../utils/api';
 import './Dashboard.css';
 
 const Dashboard = ({ user }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [viewMode, setViewMode] = useState('grid');
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // 模拟获取项目数据
-    setTimeout(() => {
-      setProjects([
-        {
-          id: 1,
-          name: '区块链投票系统',
-          description: '基于以太坊的去中心化投票平台',
-          status: '进行中',
-          progress: 65,
-          members: 4,
-          tasks: 8,
-          createdAt: '2024-01-15'
-        },
-        {
-          id: 2,
-          name: '智能合约审计工具',
-          description: '自动化智能合约安全审计系统',
-          status: '已完成',
-          progress: 100,
-          members: 3,
-          tasks: 12,
-          createdAt: '2024-01-10'
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
+    loadProjects();
   }, []);
 
+  const loadProjects = async () => {
+    try {
+      setLoading(true);
+      const response = await projectAPI.getProjectList();
+      
+      if (response.data.success) {
+        setProjects(response.data.data);
+      } else {
+        setError(response.data.message || '获取项目列表失败');
+      }
+    } catch (error) {
+      console.error('加载项目失败:', error);
+      setError('加载项目失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getProjectIcon = (projectName) => {
+    if (projectName.includes('区块链') || projectName.includes('智能合约')) return '⛓️';
+    if (projectName.includes('投票')) return '🗳️';
+    if (projectName.includes('DeFi') || projectName.includes('借贷')) return '💰';
+    if (projectName.includes('NFT')) return '🎨';
+    if (projectName.includes('交易')) return '💱';
+    return '🚀';
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'active': return '#48bb78';
+      case 'completed': return '#38a169';
+      case 'planning': return '#ed8936';
+      case 'paused': return '#718096';
+      default: return '#4299e1';
+    }
+  };
+
   if (loading) {
-    return <div className="loading">加载中...</div>;
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner">⏳</div>
+        <p>加载项目中...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <h3>❌ 加载失败</h3>
+        <p>{error}</p>
+        <button className="btn btn-primary" onClick={loadProjects}>
+          重试
+        </button>
+      </div>
+    );
   }
 
   return (
     <div className="dashboard">
-      <div className="container">
-        <div className="dashboard-header">
-          <h1>📊 项目仪表板</h1>
-          <p>欢迎回来，{user.username}！</p>
-        </div>
-
-        <div className="stats-grid">
-          <div className="stat-card">
-            <h3>总项目数</h3>
-            <div className="stat-number">{projects.length}</div>
+      <div className="dashboard-header">
+        <div className="header-content">
+          <div>
+            <h1 className="page-title">项目管理</h1>
+            <p className="page-subtitle">管理您的所有项目</p>
           </div>
-          <div className="stat-card">
-            <h3>进行中项目</h3>
-            <div className="stat-number">
-              {projects.filter(p => p.status === '进行中').length}
-            </div>
-          </div>
-          <div className="stat-card">
-            <h3>已完成项目</h3>
-            <div className="stat-number">
-              {projects.filter(p => p.status === '已完成').length}
-            </div>
+          <div className="view-controls">
+            <span className="results-count">共 {projects.length} 个项目</span>
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/project/create')}
+            >
+              + 创建项目
+            </button>
           </div>
         </div>
-
-        <div className="projects-section">
-          <div className="section-header">
-            <h2>我的项目</h2>
-            <Link to="/project/create" className="btn btn-primary">
-              ➕ 创建新项目
-            </Link>
-          </div>
-
-          <div className="projects-grid">
-            {projects.map(project => (
-              <div key={project.id} className="project-card">
-                <div className="project-header">
-                  <h3>{project.name}</h3>
-                  <span className={`status-badge ${project.status}`}>
-                    {project.status}
-                  </span>
-                </div>
-                <p className="project-description">{project.description}</p>
-                <div className="project-stats">
-                  <span>👥 {project.members} 成员</span>
-                  <span>📋 {project.tasks} 任务</span>
-                </div>
-                <div className="project-progress">
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill"
-                      style={{ width: `${project.progress}%` }}
-                    ></div>
+      </div>
+      
+      <div className={`projects-container ${viewMode}`}>
+        {projects.length > 0 ? (
+          projects.map(project => (
+            <div key={project.projectId} className="project-card">
+              <Link to={`/project/${project.projectId}`} className="project-link">
+                <div 
+                  className="project-cover"
+                  style={{ background: `linear-gradient(135deg, ${getStatusColor(project.status || 'active')} 0%, ${getStatusColor(project.status || 'active')}88 100%)` }}
+                >
+                  <div className="cover-overlay">
+                    <div className="project-badges">
+                      <span className="status-badge" style={{ background: getStatusColor(project.status || 'active') }}>
+                        {project.status === 'active' ? '进行中' : 
+                         project.status === 'completed' ? '已完成' : 
+                         project.status === 'planning' ? '规划中' : '活跃'}
+                      </span>
+                    </div>
                   </div>
-                  <span>{project.progress}%</span>
+                  <div style={{ fontSize: '48px', color: 'white' }}>
+                    {getProjectIcon(project.projectName)}
+                  </div>
                 </div>
-                <div className="project-actions">
-                  <Link 
-                    to={`/project/${project.id}`}
-                    className="btn btn-secondary btn-sm"
-                  >
-                    查看详情
-                  </Link>
+                
+                <div className="project-info">
+                  <h3 className="project-name">{project.projectName}</h3>
+                  <div className="project-meta">
+                    <span>📅 {new Date(project.createdAt || Date.now()).toLocaleDateString()}</span>
+                    <span>👤 {project.creatorName || user.username}</span>
+                  </div>
+                  <p className="project-description">{project.description}</p>
+                  
+                  <div className="progress-section">
+                    <div className="progress-header">
+                      <span>项目进度</span>
+                      <span>{project.progress || 0}%</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill"
+                        style={{ 
+                          width: `${project.progress || 0}%`,
+                          background: getStatusColor(project.status || 'active')
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div className="tech-tags">
+                    <span className="tech-tag">区块链</span>
+                    <span className="tech-tag">智能合约</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              </Link>
+            </div>
+          ))
+        ) : (
+          <div className="empty-state">
+            <div className="empty-icon">📋</div>
+            <h3>暂无项目</h3>
+            <p>开始创建您的第一个项目吧！</p>
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/project/create')}
+            >
+              创建项目
+            </button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default Dashboard;
+
