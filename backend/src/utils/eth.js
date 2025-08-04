@@ -51,14 +51,27 @@ export const deployContract = async (abi, bytecode, constructorArgs, fromAddress
 
     const deploymentData = deployTx.encodeABI();
 
-    // 获取nonce
-    const nonce = await web3.eth.getTransactionCount(fromAddress, 'pending');
+    // 获取nonce - 检查不同状态的nonce
+    const pendingNonce = await web3.eth.getTransactionCount(fromAddress, 'pending');
+    const latestNonce = await web3.eth.getTransactionCount(fromAddress, 'latest');
+    
+    console.log(`地址 ${fromAddress} 的 nonce 状态:`);
+    console.log(`  - pending nonce: ${pendingNonce}`);
+    console.log(`  - latest nonce: ${latestNonce}`);
+    console.log(`  - 差异: ${pendingNonce - latestNonce} (pending - latest)`);
+    
+    // 使用 latest nonce 来避免 pending 交易的影响
+    const nonce = latestNonce;
+    console.log(`使用 nonce: ${nonce}`);
+    // 获取当前gas价格
+    const gasPrice = await web3.eth.getGasPrice();
 
     // 构造交易对象
     const tx = {
         from: fromAddress,
         data: deploymentData,
         gas,
+        gasPrice,
         nonce
     };
 

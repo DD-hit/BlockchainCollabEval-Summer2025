@@ -122,9 +122,14 @@
 <body>
     <div class="header-container">
         <h1>项目管理和成员管理测试</h1>
-        <button onclick="goBackToLogin()" class="back-btn">
-            🔙 返回登录页面
-        </button>
+        <div>
+            <button onclick="goToFileUpload()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                📁 文件上传测试
+            </button>
+            <button onclick="goBackToLogin()" class="back-btn">
+                🔙 返回登录页面
+            </button>
+        </div>
     </div>
 
     <!-- 项目管理部分 -->
@@ -157,9 +162,9 @@
         <!-- 获取项目列表 -->
         <div class="section">
             <h3>项目列表</h3>
-            <button onclick="getProjectList()">获取项目列表</button>
-            <div id="projectListResult" class="result"></div>
-            <div id="projectList" class="project-list"></div>
+            <button onclick="getMyProjectList()">获取我的项目列表</button>
+            <div id="myProjectListResult" class="result"></div>
+            <div id="myProjectList" class="project-list"></div>
         </div>
 
         <!-- 获取项目详情 -->
@@ -376,7 +381,6 @@
                     <option value="low">低</option>
                     <option value="medium">中</option>
                     <option value="high">高</option>
-                    <option value="urgent">紧急</option>
                 </select>
             </div>
             <div class="form-group">
@@ -447,8 +451,7 @@
                 <select id="updateSubtaskPriority">
                     <option value="low">低</option>
                     <option value="medium">中</option>
-                    <option value="high">高</option>
-                    <option value="urgent">紧急</option>
+                    <option value="high">高</option
                 </select>
             </div>
             <div class="form-group">
@@ -456,7 +459,6 @@
                 <select id="updateSubtaskStatus">
                     <option value="todo">待办</option>
                     <option value="in_progress">进行中</option>
-                    <option value="review">待审核</option>
                     <option value="done">已完成</option>
                 </select>
             </div>
@@ -519,19 +521,19 @@
             }
         }
 
-        async function getProjectList() {
+        async function getMyProjectList() {
             try {
-                const response = await fetch(`${API_BASE_URL}/projectManager/getProjectList`, {
+                const response = await fetch(`${API_BASE_URL}/projectManager/getMyProjectList`, {
                     headers: {
                         'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
                 const result = await response.json();
-                showResult('projectListResult', result, !result.success);
+                showResult('myProjectListResult', result, !result.success);
                 
                 if (result.success && result.data) {
-                    const projectList = document.getElementById('projectList');
-                    projectList.innerHTML = result.data.map(project => `
+                    const myProjectList = document.getElementById('myProjectList');
+                    myProjectList.innerHTML = result.data.map(project => `
                         <div class="project-item">
                             <strong>ID:</strong> ${project.projectId} | 
                             <strong>名称:</strong> ${project.projectName} | 
@@ -541,7 +543,7 @@
                     `).join('');
                 }
             } catch (error) {
-                showResult('projectListResult', { error: error.message }, true);
+                showResult('myProjectListResult', { error: error.message }, true);
             }
         }
 
@@ -653,6 +655,10 @@
 
         function goBackToLogin() {
             window.location.href = './log.html';
+        }
+
+        function goToFileUpload() {
+            window.location.href = './formdata-test.html';
         }
 
         // 里程碑管理功能
@@ -772,7 +778,14 @@
                 const title = document.getElementById('subtaskTitle').value;
                 const description = document.getElementById('subtaskDescription').value;
                 const assignedTo = document.getElementById('subtaskAssignedTo').value;
-                const priority = document.getElementById('subtaskPriority').value;
+                let priority;
+                if (document.getElementById('subtaskPriority').value == 'low') {
+                    priority = 1;
+                } else if (document.getElementById('subtaskPriority').value == 'medium') {
+                    priority = 2;
+                } else if (document.getElementById('subtaskPriority').value == 'high') {
+                    priority = 3;
+                }
                 const status = document.getElementById('subtaskStatus').value;
                 const startTime = document.getElementById('subtaskStartTime').value;
                 const endTime = document.getElementById('subtaskEndTime').value;

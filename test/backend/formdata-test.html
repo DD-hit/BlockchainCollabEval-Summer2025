@@ -91,11 +91,19 @@
                 return;
             }
 
+            // 弹出私钥输入框
+            const privateKey = prompt('请输入您的私钥:');
+            if (!privateKey || privateKey.trim() === '') {
+                resultDiv.textContent = '请输入私钥';
+                return;
+            }
+
             const formData = new FormData();
             formData.append('files', fileInput.files[0]);
 
             formData.append('description', descriptionInput.value.trim());
             formData.append('subtaskId', subtaskIdInput.value);
+            formData.append('privateKey', privateKey.trim());
 
             console.log(formData.get('files'));
             
@@ -106,7 +114,7 @@
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }
                 });
 

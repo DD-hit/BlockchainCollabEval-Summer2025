@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { uploadFiles, getFiles, deleteFile } from '../controllers/filesController.js';
-import { verifyToken } from '../middleware/authMiddleware.js';
+import { verifyToken } from '../middleware/verifyToken.js';
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);

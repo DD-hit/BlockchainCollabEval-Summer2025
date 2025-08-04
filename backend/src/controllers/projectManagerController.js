@@ -43,6 +43,23 @@ export const getProjectList = async (req, res) => {
     }
 }
 
+export const getMyProjectList = async (req, res) => { 
+    try {
+        const username = req.user.username;
+        const result = await ProjectManagerService.getMyProjectList(username);
+        res.json({
+            success: true,
+            message: '我的项目列表获取成功',
+            data: result
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
 export const getProjectDetail = async (req, res) => {
     try {
         const { projectId } = req.params;

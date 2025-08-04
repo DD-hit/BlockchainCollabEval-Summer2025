@@ -35,7 +35,13 @@ export class ProjectManagerService {
 
     //获取我的项目列表
     static async getMyProjectList(username) {
+        if (!username) {
+            throw new Error('用户名不能为空');
+        }
         const [queryResult] = await pool.execute('SELECT * FROM projects WHERE projectOwner = ?', [username]);
+        if (queryResult.length === 0) {
+            throw new Error('没有找到项目');
+        }
         return queryResult;
     }
 

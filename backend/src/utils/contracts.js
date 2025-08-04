@@ -3,8 +3,8 @@ import fs from 'fs';
 import path from 'path';
 
 // 读取合约文件
-const abiPath = path.join(process.cwd(), '../../contracts/ContributionScore.abi');
-const binPath = path.join(process.cwd(), '../../contracts/ContributionScore.bin');
+const abiPath = path.join(process.cwd(), './contracts/ContributionScore.abi');
+const binPath = path.join(process.cwd(), './contracts/ContributionScore.bin');
 
 // 读取ABI
 const ContributionScoreFactoryABI = JSON.parse(fs.readFileSync(abiPath, 'utf8'));

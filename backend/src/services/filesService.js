@@ -42,7 +42,7 @@ export class FilesService {
                 `INSERT INTO files (
                     originalName, fileName, filePath, fileType, fileSize, 
                     fileHash, username, uploadTime, subtaskId,
-                    contractAddress, description
+                    address, description
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
                 [
                     file.originalname,    // 原始文件名
