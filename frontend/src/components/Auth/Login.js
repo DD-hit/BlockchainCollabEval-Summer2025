@@ -22,9 +22,9 @@ const Login = ({ onLogin }) => {
       if (response.data.success) {
         const userData = response.data.data;
         
-        localStorage.setItem('token', userData.token);
-        localStorage.setItem('username', userData.username);
-        localStorage.setItem('address', userData.address);
+        sessionStorage.setItem('token', userData.token);
+        sessionStorage.setItem('username', userData.username);
+        sessionStorage.setItem('address', userData.address);
         
         onLogin(userData);
       } else {

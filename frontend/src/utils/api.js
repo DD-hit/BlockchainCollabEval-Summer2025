@@ -14,7 +14,7 @@ const api = axios.create({
 // 请求拦截器 - 添加token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,11 +32,14 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token过期或无效，清除本地存储并跳转到登录页
-      localStorage.removeItem('token');
-      localStorage.removeItem('username');
-      localStorage.removeItem('address');
-      window.location.href = '/login';
+      // 避免在logout API调用时再次触发401处理
+      if (!error.config.url.includes('/logout')) {
+        // 直接清除本地存储，不调用logout API
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('username');
+        sessionStorage.removeItem('address');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -48,13 +51,18 @@ export const accountAPI = {
     api.post('/api/accounts/login', credentials),
   
   register: (userData) => 
-    api.post('/api/accounts/register', userData),
+    api.post('/api/accounts/createAccount', userData),
   
   getProfile: () => 
-    api.get('/api/accounts/profile'),
+    api.get('/api/accounts/getBalance'),
   
   updateProfile: (profileData) => 
-    api.put('/api/accounts/profile', profileData)
+    api.put('/api/accounts/updateProfile', profileData),
+
+  logout: (username) => {
+    // 总是发送用户名，让后端决定是否验证token
+    return api.post('/api/accounts/logout', { username });
+  }
 };
 
 // 项目管理API

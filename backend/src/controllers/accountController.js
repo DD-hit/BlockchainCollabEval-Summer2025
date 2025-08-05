@@ -12,7 +12,7 @@ export const loginAccount = async (req, res) => {
             data: result
         });
     } catch (error) {
-        res.status(400).json({
+        res.status(401).json({
             success: false,
             message: error.message
         });
@@ -65,3 +65,56 @@ export const getBalance = async (req, res) => {
     }
 };
 
+// 处理更新用户信息的请求
+export const updateProfile = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const result = await AccountService.updateProfile(username, password);
+        res.json({
+            success: true,
+            message: '用户信息更新成功',
+            data: result
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+export const logout = async (req, res) => {
+    try {
+        console.log('📨 收到logout请求');
+        console.log('📦 请求体:', req.body);
+        console.log('👤 用户信息:', req.user);
+        
+        // 支持从请求体或查询参数获取username
+        let username;
+        if (req.body && req.body.username) {
+            username = req.body.username;
+            console.log('📝 从请求体获取用户名:', username);
+        } else if (req.user && req.user.username) {
+            username = req.user.username;
+            console.log('🔑 从token获取用户名:', username);
+        } else {
+            console.log('❌ 无法获取用户名');
+            throw new Error('用户名不能为空');
+        }
+        
+        const result = await AccountService.logout(username);
+        console.log('✅ logout服务执行成功:', result);
+        
+        res.json({
+            success: true,
+            message: '退出登录成功',
+            data: result
+        });
+    } catch (error) {
+        console.error('❌ logout控制器错误:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+}

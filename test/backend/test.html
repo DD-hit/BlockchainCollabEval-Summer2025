@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .connecting {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        #messages {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .message.sent {
+            background-color: #e3f2fd;
+            text-align: right;
+        }
+        .message.received {
+            background-color: #f3e5f5;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>WebSocket 测试</h1>
+        
+        <div id="status" class="status connecting">
+            连接中...
+        </div>
+        
+        <div>
+            <input type="text" id="messageInput" placeholder="输入消息">
+            <button onclick="sendMessage()" id="sendBtn" disabled>发送消息</button>
+            <button onclick="clearMessages()">清空消息</button>
+        </div>
+        
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        const socket = new WebSocket('ws://localhost:8080/ws');
+        const statusDiv = document.getElementById('status');
+        const sendBtn = document.getElementById('sendBtn');
+        const messagesDiv = document.getElementById('messages');
+
+        // 连接事件
+        socket.onopen = () => {
+            console.log('Connected to server');
+            statusDiv.textContent = '已连接';
+            statusDiv.className = 'status connected';
+            sendBtn.disabled = false;
+        }
+
+        // 接收消息
+        socket.onmessage = (event) => {
+            console.log('Message from server', event.data);
+            try {
+                const data = JSON.parse(event.data);
+                addMessage(data.message, 'received', data.timestamp);
+            } catch (error) {
+                addMessage(event.data, 'received');
+            }
+        }
+
+        // 连接关闭
+        socket.onclose = () => {
+            console.log('Disconnected from server');
+            statusDiv.textContent = '连接已断开';
+            statusDiv.className = 'status disconnected';
+            sendBtn.disabled = true;
+        }
+
+        // 连接错误
+        socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            statusDiv.textContent = '连接错误';
+            statusDiv.className = 'status disconnected';
+            sendBtn.disabled = true;
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (!message) return;
+            socket.send(message);
+            addMessage(message, 'sent');
+        }
+
+        // 添加消息到界面
+        function addMessage(message, type, timestamp) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `
+                <div>${message}</div>
+                <div class="timestamp">${timestamp || new Date().toLocaleTimeString()}</div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 清空消息
+        function clearMessages() {
+            messagesDiv.innerHTML = '';
+        }
+    </script>
+</body>
+
+</html>

@@ -12,7 +12,8 @@ export class AccountService {
             throw new Error('用户不存在');
         }
         if (queryResult[0].password === password) {
-const token = jwt.sign({ username: username, address: queryResult[0].address }, "123456789", { expiresIn: '24h' });            
+            const token = jwt.sign({ username: username, address: queryResult[0].address }, "123456789", { expiresIn: '24h' });
+            await pool.execute('update user set status = 1 where username = ?', [username]);
             return {
                 token: token,
                 username: username,
@@ -76,6 +77,48 @@ const token = jwt.sign({ username: username, address: queryResult[0].address }, 
         const balance = await getBalance(address);
         return {
             balance: balance.toString()  // 将BigInt转换为字符串
+        };
+    }
+
+    // 更新用户信息
+    static async updateProfile(username, password) {
+        // 验证用户是否存在
+        const [user] = await pool.execute('SELECT * FROM user WHERE username = ?', [username]);
+        if (user.length === 0) {
+            throw new Error('用户不存在');
+        }
+
+        // 更新密码
+        if (password && password.length >= 6) {
+            await pool.execute('UPDATE user SET password = ? WHERE username = ?', [password, username]);
+        }
+
+        return {
+            username: username,
+            message: '用户信息更新成功'
+        };
+    }
+
+    // 退出登录 
+    static async logout(username) {
+        console.log(`🔍 开始处理用户 ${username} 的登出请求`);
+        
+        const [user] = await pool.execute('SELECT * FROM user WHERE username = ?', [username]);
+        if (user.length === 0) {
+            console.log(`❌ 用户 ${username} 不存在`);
+            throw new Error('用户不存在');
+        }
+        
+        console.log(`✅ 用户 ${username} 存在，当前状态: ${user[0].status}`);
+        
+        const [updateResult] = await pool.execute('UPDATE user SET status = 0 WHERE username = ?', [username]);
+        console.log(`📝 更新结果:`, updateResult);
+        
+        console.log(`✅ 用户 ${username} 状态已更新为离线`);
+        
+        return {
+            success: true,
+            message: '退出登录成功'
         };
     }
 

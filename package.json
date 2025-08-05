@@ -2,6 +2,7 @@
   "name": "blockchain-collab-eval",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "npm run start:frontend",
     "start:frontend": "cd frontend && npm start",

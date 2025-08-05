@@ -1,10 +1,15 @@
 // 合约ABI和字节码配置
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-// 读取合约文件
-const abiPath = path.join(process.cwd(), './contracts/ContributionScore.abi');
-const binPath = path.join(process.cwd(), './contracts/ContributionScore.bin');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// 读取合约文件 - 修复路径
+const abiPath = path.join(__dirname, '../../../contracts/ContributionScore.abi');
+const binPath = path.join(__dirname, '../../../contracts/ContributionScore.bin');
 
 // 读取ABI
 const ContributionScoreFactoryABI = JSON.parse(fs.readFileSync(abiPath, 'utf8'));

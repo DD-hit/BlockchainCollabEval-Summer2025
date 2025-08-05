@@ -9,10 +9,10 @@ export class ProjectManagerService {
         projectOwner, 
         startTime, 
         endTime,
-        blockchainType = 'EVM',
-        enableDAO = false,
-        templateType = 'solidity',
-        isPublic = true
+        // blockchainType = 'EVM',
+        // enableDAO = false,
+        // templateType = 'solidity',
+        // isPublic = true
     ) {
         if (!projectName) {
             throw new Error('项目名称不能为空');
@@ -25,22 +25,14 @@ export class ProjectManagerService {
                 description, 
                 projectOwner, 
                 startTime, 
-                endTime,
-                blockchainType,
-                enableDAO,
-                templateType,
-                isPublic
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                endTime
+            ) VALUES (?, ?, ?, ?, ?)`, 
             [
                 projectName, 
                 description, 
                 projectOwner, 
                 startTime, 
-                endTime,
-                blockchainType,
-                enableDAO,
-                templateType,
-                isPublic
+                endTime
             ]
         );
         
@@ -57,23 +49,23 @@ export class ProjectManagerService {
             projectOwner: projectOwner,
             startTime: startTime,
             endTime: endTime,
-            blockchainType: blockchainType,
-            enableDAO: enableDAO,
-            templateType: templateType,
-            isPublic: isPublic
+            // blockchainType: blockchainType, 
+            // enableDAO: enableDAO,
+            // templateType: templateType,
+            // isPublic: isPublic
         }
     }
 
     //获取项目列表
     static async getProjectList() {
-        const [queryResult] = await pool.execute('SELECT * FROM projects ORDER BY createTime DESC');
+        const [queryResult] = await pool.execute('SELECT * FROM projects ORDER BY projectId DESC');
         return queryResult;
     }
 
     //获取我的项目列表
     static async getMyProjectList(username) {
         const [queryResult] = await pool.execute(
-            'SELECT * FROM projects WHERE projectOwner = ? ORDER BY createTime DESC', 
+            'SELECT * FROM projects WHERE projectId IN (SELECT projectId FROM project_members WHERE username = ?) ORDER BY projectId DESC', 
             [username]
         );
         return queryResult;

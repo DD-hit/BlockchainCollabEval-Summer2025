@@ -17,7 +17,7 @@ const Dashboard = ({ user }) => {
   const loadProjects = async () => {
     try {
       setLoading(true);
-      const response = await projectAPI.getProjectList();
+      const response = await projectAPI.getMyProjects();
       
       if (response.data.success) {
         setProjects(response.data.data);
@@ -99,14 +99,12 @@ const Dashboard = ({ user }) => {
               <Link to={`/project/${project.projectId}`} className="project-link">
                 <div 
                   className="project-cover"
-                  style={{ background: `linear-gradient(135deg, ${getStatusColor(project.status || 'active')} 0%, ${getStatusColor(project.status || 'active')}88 100%)` }}
+                  style={{ background: `linear-gradient(135deg, ${getStatusColor('active')} 0%, ${getStatusColor('active')}88 100%)` }}
                 >
                   <div className="cover-overlay">
                     <div className="project-badges">
-                      <span className="status-badge" style={{ background: getStatusColor(project.status || 'active') }}>
-                        {project.status === 'active' ? '进行中' : 
-                         project.status === 'completed' ? '已完成' : 
-                         project.status === 'planning' ? '规划中' : '活跃'}
+                      <span className="status-badge" style={{ background: getStatusColor('active') }}>
+                        进行中
                       </span>
                     </div>
                   </div>
@@ -118,30 +116,30 @@ const Dashboard = ({ user }) => {
                 <div className="project-info">
                   <h3 className="project-name">{project.projectName}</h3>
                   <div className="project-meta">
-                    <span>📅 {new Date(project.createdAt || Date.now()).toLocaleDateString()}</span>
-                    <span>👤 {project.creatorName || user.username}</span>
+                    <span>�� {new Date(project.startTime || Date.now()).toLocaleDateString()}</span>
+                    <span>👤 {project.projectOwner || user?.username || '未知'}</span>
                   </div>
                   <p className="project-description">{project.description}</p>
                   
                   <div className="progress-section">
                     <div className="progress-header">
                       <span>项目进度</span>
-                      <span>{project.progress || 0}%</span>
+                      <span>0%</span>
                     </div>
                     <div className="progress-bar">
                       <div 
                         className="progress-fill"
                         style={{ 
-                          width: `${project.progress || 0}%`,
-                          background: getStatusColor(project.status || 'active')
+                          width: '0%',
+                          background: getStatusColor('active')
                         }}
                       ></div>
                     </div>
                   </div>
                   
                   <div className="tech-tags">
-                    <span className="tech-tag">区块链</span>
-                    <span className="tech-tag">智能合约</span>
+                    <span className="tech-tag">项目管理</span>
+                    <span className="tech-tag">协同开发</span>
                   </div>
                 </div>
               </Link>

@@ -16,7 +16,23 @@ const PORT = 5000;
 app.use(cors());
 app.use(express.json());
 // 静态文件配置 
-app.use(express.static('../frontend/public')); // React构建文件
+// app.use(express.static('../frontend/public')); // React构建文件
+// app.use(express.static('../frontend/src')); // React开发文件
+app.use(express.static('../test/frontend')); 
+
+app.get('/', (req, res) => {
+    res.sendFile('log.html', { root: './test/backend' });
+});
+
+// 项目管理测试页面路由
+app.get('/project-management-test.html', (req, res) => {
+    res.sendFile('project-management-test.html', { root: './test/backend' });
+});
+
+// FormData测试页面路由
+app.get('/formdata-test.html', (req, res) => {
+    res.sendFile('formdata-test.html', { root: './test/backend' });
+});
 
 // API 路由
 app.use('/api/accounts', accountRoutes);
@@ -27,14 +43,14 @@ app.use('/api/subtasks', subtaskRoutes);
 app.use('/api/files', filesRoutes);
 
 // 处理React前端路由 - 所有非API请求都返回index.html
-app.get('*', (req, res) => {
-    // 对于React路由，返回index.html
-    res.sendFile('index.html', { root: '../frontend/public' }, (err) => {
-        if (err) {
-            res.status(404).json({ message: '页面不存在' });
-        }
-    });
-});
+// app.get('*', (req, res) => {
+//     // 对于React路由，返回index.html
+//     res.sendFile('index.html', { root: '../frontend/public' }, (err) => {
+//         if (err) {
+//             res.status(404).json({ message: '页面不存在' });
+//         }
+//     });
+// });
 
 // 启动服务器
 const startServer = async () => {

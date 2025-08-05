@@ -9,10 +9,10 @@ export const createProject = async (req, res) => {
             projectOwner, 
             startTime, 
             endTime,
-            blockchainType,
-            enableDAO,
-            templateType,
-            isPublic
+            // blockchainType,
+            // enableDAO,
+            // templateType,
+            // isPublic
         } = req.body;
         
         // 输入验证
@@ -28,11 +28,11 @@ export const createProject = async (req, res) => {
             description, 
             projectOwner, 
             startTime, 
-            endTime,
-            blockchainType,
-            enableDAO,
-            templateType,
-            isPublic
+            endTime
+            // blockchainType,
+            // enableDAO,
+            // templateType,
+            // isPublic
         );
         
         res.json({
