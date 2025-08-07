@@ -29,13 +29,10 @@ const wss = new WebSocketServer({ server });
 wss.on('connection', (socket) => {
     console.log('Client connected');
     socket.on('message', (message) => {
-        console.log('Message from client', message);
-        socket.send(`已收到${message}`);
-        socket.send(`已收到${message}`);
-        socket.send(`已收到${message}`);
-        socket.send(`已收到${message}`);
-        socket.send(`已收到${message}`);
-        socket.send(`已收到${message}`);
+        // 将 Buffer 转换为字符串
+        const messageStr = message.toString();
+        console.log('Message from client:', messageStr);
+        socket.send(`已收到: ${messageStr}`);
     });
     
     socket.on('close', () => {

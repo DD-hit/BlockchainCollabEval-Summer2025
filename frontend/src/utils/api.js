@@ -59,10 +59,8 @@ export const accountAPI = {
   updateProfile: (profileData) => 
     api.put('/api/accounts/updateProfile', profileData),
 
-  logout: (username) => {
-    // 总是发送用户名，让后端决定是否验证token
-    return api.post('/api/accounts/logout', { username });
-  }
+  logout: (username) => 
+    api.post('/api/accounts/logout', { username })
 };
 
 // 项目管理API

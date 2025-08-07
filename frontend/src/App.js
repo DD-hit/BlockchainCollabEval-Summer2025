@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
-import { accountAPI } from './utils/api';
 
 // 布局组件
 import MainLayout from './components/Layout/MainLayout';
@@ -20,6 +19,92 @@ import MemberManagement from './components/Member/MemberManagement';
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const wsRef = useRef(null); // 全局WebSocket引用
+
+  // 建立WebSocket连接
+  const connectWebSocket = () => {
+    // 如果已有连接，不重复建立
+    if (wsRef.current) {
+      console.log('🔌 WebSocket连接已存在，跳过建立');
+      return;
+    }
+    
+    console.log('🔌 开始建立WebSocket连接...');
+    const ws = new WebSocket('ws://localhost:5000');
+    wsRef.current = ws;
+    
+    ws.onopen = () => {
+      console.log('🔌 WebSocket连接已建立');
+      const username = sessionStorage.getItem('username');
+      ws.send(JSON.stringify({
+        type: 'connection',
+        message: 'WebSocket连接已建立',
+        username: username, // 发送用户名给后端
+        timestamp: Date.now()
+      }));
+      
+      // 开始发送心跳包
+      startHeartbeat(ws);
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log('📨 收到WebSocket消息:', message);
+        
+        if (message.type === 'connection_ack') {
+          console.log('✅ 连接确认收到:', message.message);
+        } else if (message.type === 'pong') {
+          console.log('💓 收到心跳响应:', message.timestamp);
+        }
+      } catch (error) {
+        console.error('❌ WebSocket消息解析错误:', error);
+      }
+    };
+    
+    ws.onclose = async (event) => {
+      console.log('🔌 WebSocket连接已关闭', event.code, event.reason);
+      wsRef.current = null; // 清空引用
+      
+      // 停止心跳包
+      stopHeartbeat();
+    };
+    
+    ws.onerror = (error) => {
+      console.error('❌ WebSocket连接错误:', error);
+    };
+  };
+
+  // 心跳包定时器引用
+  const heartbeatRef = useRef(null);
+
+  // 开始发送心跳包
+  const startHeartbeat = (ws) => {
+    // 清除可能存在的旧定时器
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+    }
+    
+    // 每3秒发送一次心跳包
+    heartbeatRef.current = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        console.log('💓 发送心跳包');
+        ws.send(JSON.stringify({
+          type: 'ping',
+          timestamp: Date.now()
+        }));
+      }
+    }, 3000); // 3秒
+  };
+
+  // 停止心跳包
+  const stopHeartbeat = () => {
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+      heartbeatRef.current = null;
+      console.log('💓 停止心跳包');
+    }
+  };
 
   useEffect(() => {
     // 检查本地存储中的用户信息
@@ -29,74 +114,37 @@ function App() {
     
     if (token && username && address) {
       setUser({ token, username, address });
+      // 如果用户已登录，建立WebSocket连接
+      connectWebSocket();
     }
     setLoading(false);
-  }, []);
-
-  // 页面卸载时通知后端用户离线
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      const username = sessionStorage.getItem('username');
-      const token = sessionStorage.getItem('token');
-      
-      console.log('🔄 页面即将卸载');
-      console.log('👤 用户名:', username);
-      console.log('🔑 Token存在:', !!token);
-      
-      if (username && token) {
-        try {
-          // 使用 sendBeacon API 确保在页面卸载时也能发送请求
-          const data = JSON.stringify({ username });
-          const url = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/accounts/logout`;
-          console.log('📤 页面卸载，发送logout请求到:', url);
-          console.log('📦 发送数据:', data);
-          
-          // 创建Blob对象，确保正确的Content-Type
-          const blob = new Blob([data], { type: 'application/json' });
-          const success = navigator.sendBeacon(url, blob);
-          console.log('📡 sendBeacon发送结果:', success);
-        } catch (error) {
-          console.error('❌ 页面卸载通知失败:', error);
-        }
-      } else {
-        console.log('⚠️ 用户名或token不存在，跳过logout通知');
-      }
-    };
-
-    // 监听页面卸载事件
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    // 清理事件监听器
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogin = (userData) => {
     setUser(userData);
+    // 登录成功后建立WebSocket连接
+    connectWebSocket();
   };
 
-  const handleLogout = async () => {
-    try {
-      // 获取用户名，用于token过期时的logout调用
-      const username = sessionStorage.getItem('username');
-      console.log('🚪 开始登出，用户名:', username);
-      
-      // 调用后端logout接口，通知后端更新用户状态为离线
-      const response = await accountAPI.logout(username);
-      console.log('📡 登出API响应:', response);
-      console.log('✅ 登出成功，已通知后端更新用户状态');
-    } catch (error) {
-      console.error('❌ 登出通知失败:', error);
-      // 即使后端通知失败，也要清除前端会话
-    } finally {
-      // 清除前端会话数据
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('username');
-      sessionStorage.removeItem('address');
-      setUser(null);
-      console.log('🧹 前端会话已清除');
+  const handleLogout = () => {
+    console.log('🚪 开始登出');
+    
+    // 停止心跳包
+    stopHeartbeat();
+    
+    // 关闭WebSocket连接
+    if (wsRef.current) {
+      console.log('🔌 登出时关闭WebSocket连接');
+      wsRef.current.close();
+      wsRef.current = null;
     }
+    
+    // 清除前端会话数据
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('username');
+    sessionStorage.removeItem('address');
+    setUser(null);
+    console.log('🧹 前端会话已清除');
   };
 
   if (loading) {
