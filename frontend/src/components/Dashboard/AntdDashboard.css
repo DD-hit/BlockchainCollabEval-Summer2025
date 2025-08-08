@@ -1,0 +1,176 @@
+.dashboard-container {
+  padding: 0;
+}
+
+.dashboard-header {
+  margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 8px 0;
+}
+
+.dashboard-header p {
+  color: #8c8c8c;
+  font-size: 16px;
+  margin: 0;
+}
+
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #8c8c8c;
+}
+
+.dashboard-loading p {
+  margin-top: 16px;
+  font-size: 16px;
+}
+
+.stats-row .ant-col {
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.quick-start-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.quick-actions {
+  padding: 20px;
+}
+
+.quick-actions p {
+  font-size: 16px;
+  color: #595959;
+  margin-bottom: 20px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .dashboard-header h1 {
+    font-size: 24px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .action-buttons .ant-btn {
+    margin-left: 0 !important;
+    margin-bottom: 8px;
+    width: 200px;
+  }
+}
+
+
+.dashboard-content {
+  padding: 24px;
+  min-height: calc(100vh - 64px);
+  overflow: auto;
+}
+
+
+/* 最近项目表格样式 */
+.recent-projects-card {
+  margin-top: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.recent-projects-card .ant-table {
+  border-radius: 4px;
+}
+
+.recent-projects-card .ant-table-thead > tr > th {
+  background-color: #f7f9fc;
+  font-weight: 500;
+}
+
+.recent-projects-card .ant-table-tbody > tr:hover > td {
+  background-color: #f5f7fa;
+}
+
+/* 活动时间线样式 */
+.activities-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.activities-card .ant-timeline-item {
+  padding-bottom: 20px;
+}
+
+.activities-card .ant-timeline-item-content {
+  top: -4px;
+}
+
+.activities-card .ant-timeline-item p:first-child {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+/* 空状态样式 */
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.empty-state .ant-empty-description {
+  margin-bottom: 20px;
+}
+
+/* 项目负责人样式优化 */
+.owner-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 链接样式统一 */
+.dashboard-content a {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.dashboard-content a:hover {
+  color: #096dd9;
+  text-decoration: underline;
+}
+
+/* 响应式表格调整 */
+@media (max-width: 768px) {
+  .recent-projects-card .ant-table {
+    font-size: 13px;
+  }
+  
+  .activities-card .ant-timeline-item {
+    padding-bottom: 16px;
+  }
+}

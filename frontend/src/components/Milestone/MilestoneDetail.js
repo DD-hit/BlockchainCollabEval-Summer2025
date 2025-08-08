@@ -1,7 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { milestoneAPI, subtaskAPI } from '../../utils/api';
-import './Milestone.css';
+import { 
+  Card, 
+  Button, 
+  Descriptions, 
+  Tag, 
+  Progress, 
+  List, 
+  Empty, 
+  Spin, 
+  message,
+  Modal,
+  Form,
+  Input,
+  DatePicker
+} from 'antd';
+import { 
+  ArrowLeftOutlined, 
+  EditOutlined, 
+  DeleteOutlined, 
+  PlusOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined
+} from '@ant-design/icons';
+import dayjs from 'dayjs';
+import './MilestoneDetail.css';
+
+const { TextArea } = Input;
 
 const MilestoneDetail = ({ user }) => {
   const { milestoneId } = useParams();
@@ -9,187 +34,349 @@ const MilestoneDetail = ({ user }) => {
   const [milestone, setMilestone] = useState(null);
   const [subtasks, setSubtasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [form] = Form.useForm();
 
   useEffect(() => {
-    console.log('MilestoneDetail mounted, milestoneId:', milestoneId);
     if (milestoneId) {
-      loadMilestoneData();
-    } else {
-      setError('里程碑ID不存在');
-      setLoading(false);
+      fetchMilestoneDetail();
+      fetchSubtasks();
     }
   }, [milestoneId]);
 
-  const loadMilestoneData = async () => {
+  const fetchMilestoneDetail = async () => {
     try {
-      console.log('Loading milestone data for ID:', milestoneId);
-      setLoading(true);
-      setError('');
+      const token = localStorage.getItem('token');
       
-      // 先尝试获取里程碑详情
-      const milestoneRes = await milestoneAPI.getMilestoneDetail(milestoneId);
-      console.log('Milestone response:', milestoneRes);
-      
-      if (milestoneRes.data && milestoneRes.data.success) {
-        setMilestone(milestoneRes.data.data);
-        console.log('Milestone data set:', milestoneRes.data.data);
-        
-        // 然后获取子任务
-        try {
-          const subtasksRes = await subtaskAPI.getSubtaskList(milestoneId);
-          console.log('Subtasks response:', subtasksRes);
-          
-          if (subtasksRes.data && subtasksRes.data.success) {
-            setSubtasks(subtasksRes.data.data || []);
-          } else {
-            console.log('No subtasks found or failed to load subtasks');
-            setSubtasks([]);
-          }
-        } catch (subtaskError) {
-          console.error('加载子任务失败:', subtaskError);
-          setSubtasks([]);
+      const response = await fetch(`http://localhost:5000/api/milestones/getMilestoneDetail/${milestoneId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      } else {
-        setError(milestoneRes.data?.message || '获取里程碑失败');
-      }
+      });
+
+      const result = await response.json();
       
+      if (result.success) {
+        setMilestone(result.data);
+      } else {
+        message.error('获取里程碑详情失败：' + result.message);
+      }
     } catch (error) {
-      console.error('加载里程碑数据失败:', error);
-      setError('加载数据失败: ' + (error.response?.data?.message || error.message));
+      console.error('获取里程碑详情失败:', error);
+      message.error('网络错误，请重试');
+    }
+  };
+
+  const fetchSubtasks = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:5000/api/subtasks/getSubtaskList/${milestoneId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setSubtasks(result.data || []);
+      } else {
+        console.log('获取子任务失败:', result.message);
+      }
+    } catch (error) {
+      console.error('获取子任务失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (status) => {
-    const colorMap = {
-      'pending': '#718096',
-      'in_progress': '#ed8936',
-      'completed': '#48bb78'
-    };
-    return colorMap[status] || '#718096';
+  const handleEdit = () => {
+    form.setFieldsValue({
+      title: milestone.title,
+      description: milestone.description,
+      startDate: milestone.startDate ? dayjs(milestone.startDate) : null,
+      endDate: milestone.endDate ? dayjs(milestone.endDate) : null,
+    });
+    setEditModalVisible(true);
   };
 
-  const getStatusText = (status) => {
-    const statusMap = {
-      'pending': '待办',
-      'in_progress': '进行中',
-      'completed': '已完成'
-    };
-    return statusMap[status] || status;
+  const handleUpdate = async (values) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const formData = {
+        ...values,
+        startDate: values.startDate ? values.startDate.format('YYYY-MM-DD') : null,
+        endDate: values.endDate ? values.endDate.format('YYYY-MM-DD') : null,
+      };
+
+      const response = await fetch(`http://localhost:5000/api/milestones/updateMilestone/${milestoneId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        message.success('里程碑更新成功');
+        setEditModalVisible(false);
+        fetchMilestoneDetail();
+      } else {
+        message.error('更新失败：' + result.message);
+      }
+    } catch (error) {
+      console.error('更新里程碑失败:', error);
+      message.error('更新失败，请重试');
+    }
   };
+
+  const handleDelete = () => {
+    Modal.confirm({
+      title: '确认删除',
+      content: '确定要删除这个里程碑吗？此操作不可恢复。',
+      okText: '确定删除',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          const token = localStorage.getItem('token');
+          
+          const response = await fetch(`http://localhost:5000/api/milestones/deleteMilestone/${milestoneId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+          
+          if (result.success) {
+            message.success('里程碑删除成功');
+            navigate(-1);
+          } else {
+            message.error('删除失败：' + result.message);
+          }
+        } catch (error) {
+          console.error('删除里程碑失败:', error);
+          message.error('删除失败，请重试');
+        }
+      }
+    });
+  };
+
+  const getStatusTag = (milestone) => {
+    if (!milestone.startDate || !milestone.endDate) {
+      return <Tag color="default">未设置时间</Tag>;
+    }
+    
+    const now = new Date();
+    const startDate = new Date(milestone.startDate);
+    const endDate = new Date(milestone.endDate);
+    
+    if (now < startDate) {
+      return <Tag color="blue">未开始</Tag>;
+    } else if (now > endDate) {
+      return <Tag color="red">已结束</Tag>;
+    } else {
+      return <Tag color="green">进行中</Tag>;
+    }
+  };
+
+  const calculateProgress = () => {
+    if (subtasks.length === 0) return 0;
+    const completedTasks = subtasks.filter(task => task.status === 'completed').length;
+    return Math.round((completedTasks / subtasks.length) * 100);
+  };
+
+  if (loading) {
+    return (
+      <div className="milestone-loading">
+        <Spin size="large" />
+        <p>加载里程碑详情...</p>
+      </div>
+    );
+  }
+
+  if (!milestone) {
+    return (
+      <div className="milestone-error">
+        <Empty description="里程碑不存在" />
+        <Button onClick={() => navigate(-1)}>返回</Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="milestone-detail">
-      {/* 页面头部 */}
+    <div className="milestone-detail-container">
       <div className="page-header">
-        <button 
-          className="btn btn-secondary"
+        <Button 
+          icon={<ArrowLeftOutlined />} 
           onClick={() => navigate(-1)}
+          className="back-button"
         >
-          ← 返回
-        </button>
-        
-        <h1 className="page-title">
-          {loading ? '加载中...' : error ? '加载失败' : milestone ? milestone.milestoneName : '里程碑详情'}
-        </h1>
-        
-        <p className="page-subtitle">
-          里程碑ID: {milestoneId}
-        </p>
+          返回
+        </Button>
+        <div className="header-content">
+          <h1>{milestone.title}</h1>
+          <div className="header-meta">
+            {getStatusTag(milestone)}
+            <span className="progress-text">完成度: {calculateProgress()}%</span>
+          </div>
+        </div>
+        <div className="header-actions">
+          <Button icon={<EditOutlined />} onClick={handleEdit}>
+            编辑
+          </Button>
+          <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
+            删除
+          </Button>
+        </div>
       </div>
 
-      {loading && (
-        <div className="loading-container">
-          <div className="loading-spinner">⏳</div>
-          <p>加载里程碑数据中...</p>
-        </div>
-      )}
+      <div className="milestone-content">
+        <Card className="milestone-info-card" title="里程碑信息">
+          <Descriptions column={2} bordered>
+            <Descriptions.Item label="标题" span={2}>
+              {milestone.title}
+            </Descriptions.Item>
+            <Descriptions.Item label="描述" span={2}>
+              {milestone.description || '暂无描述'}
+            </Descriptions.Item>
+            <Descriptions.Item label="开始时间">
+              <div className="date-item">
+                <CalendarOutlined />
+                {milestone.startDate ? new Date(milestone.startDate).toLocaleDateString() : '未设置'}
+              </div>
+            </Descriptions.Item>
+            <Descriptions.Item label="结束时间">
+              <div className="date-item">
+                <CalendarOutlined />
+                {milestone.endDate ? new Date(milestone.endDate).toLocaleDateString() : '未设置'}
+              </div>
+            </Descriptions.Item>
+            <Descriptions.Item label="创建时间">
+              {new Date(milestone.createTime).toLocaleString()}
+            </Descriptions.Item>
+            <Descriptions.Item label="完成进度">
+              <Progress percent={calculateProgress()} size="small" />
+            </Descriptions.Item>
+          </Descriptions>
+        </Card>
 
-      {error && (
-        <div className="error-container">
-          <h3>❌ 加载失败</h3>
-          <p>{error}</p>
-          <button 
-            className="btn btn-primary"
-            onClick={() => navigate(-1)}
+        <Card 
+          className="subtasks-card" 
+          title="子任务列表"
+          extra={
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => navigate(`/subtasks/create?milestoneId=${milestoneId}`)}
+            >
+              添加子任务
+            </Button>
+          }
+        >
+          {subtasks.length === 0 ? (
+            <Empty description="暂无子任务" />
+          ) : (
+            <List
+              dataSource={subtasks}
+              renderItem={subtask => (
+                <List.Item
+                  actions={[
+                    <Button 
+                      type="link" 
+                      onClick={() => navigate(`/subtasks/${subtask.subtaskId}`)}
+                    >
+                      查看详情
+                    </Button>
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      subtask.status === 'completed' ? 
+                        <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 16 }} /> :
+                        <div className="task-status-dot" />
+                    }
+                    title={subtask.title}
+                    description={
+                      <div>
+                        <p>{subtask.description}</p>
+                        <div className="subtask-meta">
+                          <Tag color={subtask.status === 'completed' ? 'green' : 'blue'}>
+                            {subtask.status === 'completed' ? '已完成' : '进行中'}
+                          </Tag>
+                          {subtask.assignee && (
+                            <span>负责人: {subtask.assignee}</span>
+                          )}
+                        </div>
+                      </div>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          )}
+        </Card>
+      </div>
+
+      <Modal
+        title="编辑里程碑"
+        open={editModalVisible}
+        onCancel={() => setEditModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleUpdate}
+        >
+          <Form.Item
+            label="标题"
+            name="title"
+            rules={[{ required: true, message: '请输入标题' }]}
           >
-            返回
-          </button>
-        </div>
-      )}
-
-      {!loading && !error && milestone && (
-        <>
-          {/* 里程碑信息 */}
-          <div className="milestone-info-card">
-            <h2>里程碑信息</h2>
-            <div className="info-grid">
-              <div className="info-item">
-                <label>名称:</label>
-                <span>{milestone.milestoneName}</span>
-              </div>
-              <div className="info-item">
-                <label>描述:</label>
-                <span>{milestone.description || '无描述'}</span>
-              </div>
-              <div className="info-item">
-                <label>截止时间:</label>
-                <span>{milestone.deadline ? new Date(milestone.deadline).toLocaleDateString() : '未设置'}</span>
-              </div>
-              <div className="info-item">
-                <label>优先级:</label>
-                <span>{milestone.priority || '未设置'}</span>
-              </div>
-            </div>
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="描述"
+            name="description"
+          >
+            <TextArea rows={4} />
+          </Form.Item>
+          <Form.Item
+            label="开始时间"
+            name="startDate"
+          >
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item
+            label="结束时间"
+            name="endDate"
+          >
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+          <div className="modal-actions">
+            <Button onClick={() => setEditModalVisible(false)}>
+              取消
+            </Button>
+            <Button type="primary" htmlType="submit">
+              保存
+            </Button>
           </div>
-
-          {/* 子任务列表 */}
-          <div className="subtasks-section">
-            <div className="section-header">
-              <h2>子任务 ({subtasks.length})</h2>
-              <button className="btn btn-primary">
-                ➕ 添加任务
-              </button>
-            </div>
-            
-            {subtasks.length > 0 ? (
-              <div className="subtasks-grid">
-                {subtasks.map(task => (
-                  <div key={task.subtaskId} className="subtask-card">
-                    <div className="subtask-header">
-                      <h4>{task.taskName}</h4>
-                      <span 
-                        className="status-badge"
-                        style={{ backgroundColor: getStatusColor(task.status) }}
-                      >
-                        {getStatusText(task.status)}
-                      </span>
-                    </div>
-                    <p className="subtask-description">{task.description}</p>
-                    <div className="subtask-meta">
-                      <span>任务ID: {task.subtaskId}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <div className="empty-icon">📝</div>
-                <h3>暂无子任务</h3>
-                <p>为这个里程碑添加一些任务来开始工作吧</p>
-                <button className="btn btn-primary">
-                  ➕ 创建第一个任务
-                </button>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+        </Form>
+      </Modal>
     </div>
   );
 };
 
 export default MilestoneDetail;
-

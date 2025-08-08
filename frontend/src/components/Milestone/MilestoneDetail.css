@@ -1,0 +1,130 @@
+.milestone-detail-container {
+  padding: 0;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.back-button {
+  margin-bottom: 16px;
+}
+
+.header-content h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 8px 0;
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.progress-text {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.milestone-loading,
+.milestone-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #8c8c8c;
+}
+
+.milestone-loading p {
+  margin-top: 16px;
+  font-size: 16px;
+}
+
+.milestone-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.milestone-info-card,
+.subtasks-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.date-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #8c8c8c;
+}
+
+.task-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1890ff;
+  margin: 4px;
+}
+
+.subtask-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .header-content h1 {
+    font-size: 24px;
+  }
+  
+  .header-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .header-actions {
+    justify-content: flex-start;
+  }
+  
+  .milestone-detail-container {
+    padding: 0;
+  }
+  
+  .milestone-info-card,
+  .subtasks-card {
+    margin: 0 -16px;
+    border-radius: 0;
+  }
+}

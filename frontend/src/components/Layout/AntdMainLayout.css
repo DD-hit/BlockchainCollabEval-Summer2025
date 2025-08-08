@@ -1,0 +1,77 @@
+.logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 16px;
+}
+
+.logo h3 {
+  color: #1890ff;
+  margin: 0;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.header {
+  background: white;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+  margin-left: 16px;
+}
+
+.header-right {
+  padding-right: 24px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.user-info:hover {
+  background-color: #f5f5f5;
+}
+
+.username {
+  margin-left: 8px;
+  font-weight: 500;
+  color: #262626;
+}
+
+.content {
+  margin: 24px 16px;
+  height: calc(100vh - 112px); /* 增加底部留白 */
+  overflow: auto;
+  padding-bottom: 24px; /* 防止内容被底部遮挡 */
+}
+
+/* 增加最小宽度防止布局错位 */
+@media (min-width: 768px) {
+  .content {
+    min-width: 1024px;
+  }
+}

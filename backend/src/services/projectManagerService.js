@@ -29,8 +29,9 @@ export class ProjectManagerService {
                 blockchainType,
                 enableDAO,
                 templateType,
-                isPublic
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                isPublic,
+                created_at  // 添加实际存在的字段
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`, 
             [
                 projectName, 
                 description, 
@@ -64,21 +65,23 @@ export class ProjectManagerService {
         }
     }
 
-    //获取项目列表
-    static async getProjectList() {
-        const [queryResult] = await pool.execute('SELECT * FROM projects ORDER BY createTime DESC');
+        //获取项目列表
+    static async getProjectList(username) {
+        const [queryResult] = await pool.execute(
+            'SELECT * FROM projects WHERE projectOwner = ? ORDER BY created_at DESC',
+            [username]
+        );
         return queryResult;
     }
 
     //获取我的项目列表
     static async getMyProjectList(username) {
         const [queryResult] = await pool.execute(
-            'SELECT * FROM projects WHERE projectOwner = ? ORDER BY createTime DESC', 
+            'SELECT * FROM projects WHERE projectOwner = ? ORDER BY created_at DESC',
             [username]
         );
         return queryResult;
     }
-
     //获取项目详情
     static async getProjectDetail(projectId) {
         const [queryResult] = await pool.execute('SELECT * FROM projects WHERE projectId = ?', [projectId]);
