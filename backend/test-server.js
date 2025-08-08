@@ -1,13 +1,16 @@
 // server.js - 项目的"大门"
 import express from 'express';
 import cors from 'cors';
+import { WebSocketServer } from 'ws';
 import accountRoutes from './src/routes/accountRoutes.js';
 import projectManagerRoutes from './src/routes/projectManagerRoutes.js';
 import projectMemberRoutes from './src/routes/projectMemberRoutes.js';
 import milestoneRoutes from './src/routes/milestoneRoutes.js';
 import subtaskRoutes from './src/routes/subtaskRoutes.js';
 import filesRoutes from './src/routes/filesRoutes.js';
+import notificationRoutes from './src/routes/notificationRoutes.js';
 import { testConnection } from './config/database.js';
+import { AccountService } from './src/services/accountService.js';
 
 const app = express();
 const PORT = 5000;
@@ -20,7 +23,7 @@ app.use(express.json());
 // app.use(express.static('../frontend/src')); // React开发文件
 app.use(express.static('../test/frontend')); 
 
-app.get('/', (req, res) => {
+app.get('/log.html', (req, res) => {
     res.sendFile('log.html', { root: './test/backend' });
 });
 
@@ -41,16 +44,8 @@ app.use('/api/projectMembers', projectMemberRoutes);
 app.use('/api/milestones', milestoneRoutes);
 app.use('/api/subtasks', subtaskRoutes);
 app.use('/api/files', filesRoutes);
+app.use('/api/notifications', notificationRoutes);
 
-// 处理React前端路由 - 所有非API请求都返回index.html
-// app.get('*', (req, res) => {
-//     // 对于React路由，返回index.html
-//     res.sendFile('index.html', { root: '../frontend/public' }, (err) => {
-//         if (err) {
-//             res.status(404).json({ message: '页面不存在' });
-//         }
-//     });
-// });
 
 // 启动服务器
 const startServer = async () => {
@@ -61,6 +56,7 @@ const startServer = async () => {
         // 启动服务器
         app.listen(PORT, () => {
             console.log(`服务器运行在 http://localhost:${PORT}`);
+            console.log(`登录页面： http://localhost:${PORT}/log.html`);
         });
     } catch (error) {
         console.error('服务器启动失败:', error);

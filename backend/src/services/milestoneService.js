@@ -33,4 +33,8 @@ export class MilestoneService {
         const [result] = await pool.execute('DELETE FROM milestones WHERE milestoneId = ?', [milestoneId]);
         return result;
     }
+    static async getProjectIdByMilestoneId(milestoneId) {
+        const [queryResult] = await pool.execute('SELECT projectId FROM milestones WHERE milestoneId = ?', [milestoneId]);
+        return queryResult[0].projectId;
+    }
 }

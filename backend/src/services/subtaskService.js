@@ -1,4 +1,5 @@
 import { pool } from '../../config/database.js';
+import { MilestoneService } from './milestoneService.js';
 
 export class SubtaskService {
     static async createSubtask(milestoneId, title, status, description, assignedTo, startTime, endTime, priority) {
@@ -34,5 +35,16 @@ export class SubtaskService {
     static async deleteSubtask(subtaskId) {
         const [result] = await pool.execute('DELETE FROM subtasks WHERE subtaskId = ?', [subtaskId]);
         return result;
+    }
+
+    static async getMilestoneIdBySubtaskId(subtaskId) {
+        const [queryResult] = await pool.execute('SELECT milestoneId FROM subtasks WHERE subtaskId = ?', [subtaskId]);
+        return queryResult[0].milestoneId;
+    }
+
+    static async getProjectIdBySubtaskId(subtaskId) {
+        const milestoneId = await this.getMilestoneIdBySubtaskId(subtaskId);
+        const projectId = await MilestoneService.getProjectIdByMilestoneId(milestoneId);
+        return projectId;
     }
 }

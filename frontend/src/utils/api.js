@@ -137,4 +137,9 @@ export const subtaskAPI = {
     api.delete(`/api/subtasks/deleteSubtask/${subtaskId}`)
 };
 
+export const notificationAPI = {
+  getNotificationList: () => 
+    api.get('/api/notifications/getNotificationList')
+};
+
 export default api;

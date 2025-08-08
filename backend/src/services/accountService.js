@@ -101,20 +101,15 @@ export class AccountService {
 
     // 退出登录 
     static async logout(username) {
-        console.log(`🔍 开始处理用户 ${username} 的登出请求`);
         
         const [user] = await pool.execute('SELECT * FROM user WHERE username = ?', [username]);
         if (user.length === 0) {
-            console.log(`❌ 用户 ${username} 不存在`);
             throw new Error('用户不存在');
         }
         
-        console.log(`✅ 用户 ${username} 存在，当前状态: ${user[0].status}`);
         
         const [updateResult] = await pool.execute('UPDATE user SET status = 0 WHERE username = ?', [username]);
-        console.log(`📝 更新结果:`, updateResult);
         
-        console.log(`✅ 用户 ${username} 状态已更新为离线`);
         
         return {
             success: true,

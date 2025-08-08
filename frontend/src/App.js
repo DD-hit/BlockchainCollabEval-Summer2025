@@ -107,14 +107,14 @@ function App() {
   };
 
   useEffect(() => {
-    // 检查本地存储中的用户信息
+    // 页面刷新后检查本地存储中的用户信息
     const token = sessionStorage.getItem('token');
     const username = sessionStorage.getItem('username');
     const address = sessionStorage.getItem('address');
     
     if (token && username && address) {
       setUser({ token, username, address });
-      // 如果用户已登录，建立WebSocket连接
+      // 如果用户刷新后重新建立WebSocket连接
       connectWebSocket();
     }
     setLoading(false);

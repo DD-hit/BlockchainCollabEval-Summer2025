@@ -17,6 +17,12 @@
             margin: 20px 0;
             border-radius: 8px;
         }
+        .notification-section {
+            background: #e8f4fd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
         .form-group {
             margin: 10px 0;
         }
@@ -50,10 +56,60 @@
             margin-top: 10px;
             white-space: pre-wrap;
         }
+        .notification-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .notification-time {
+            color: #666;
+            font-size: 12px;
+        }
+        .notification-content {
+            margin: 10px 0;
+        }
+        .mark-read-btn {
+            background: #28a745;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .mark-read-btn:hover {
+            background: #218838;
+        }
+        .refresh-btn {
+            background: #17a2b8;
+        }
+        .refresh-btn:hover {
+            background: #138496;
+        }
+        .no-notifications {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>FormData 文件上传测试</h1>
+
+    <div class="notification-section">
+        <h2>通知管理</h2>
+        <div class="form-group">
+            <label>当前用户:</label>
+            <input type="text" id="currentUser" readonly>
+        </div>
+        <button onclick="refreshNotifications()" class="refresh-btn">刷新通知</button>
+        <div id="notificationsList"></div>
+    </div>
 
     <div class="upload-section">
         <h2>单文件上传</h2>
@@ -72,9 +128,135 @@
         <button onclick="uploadSingleFile()">上传单文件与描述</button>
         <div id="singleResult" class="result"></div>
     </div>
+    
 
 
     <script>
+        // 页面加载时自动获取通知
+        window.onload = function() {
+            const username = sessionStorage.getItem('username');
+            if (username) {
+                document.getElementById('currentUser').value = username;
+                loadNotifications();
+            } else {
+                document.getElementById('currentUser').value = '未登录';
+                document.getElementById('notificationsList').innerHTML = '<div class="no-notifications">请先登录</div>';
+            }
+        };
+
+        // 获取通知列表
+        async function loadNotifications() {
+            const username = sessionStorage.getItem('username');
+            const notificationsList = document.getElementById('notificationsList');
+            
+            if (!username) {
+                notificationsList.innerHTML = '<div class="no-notifications">请先登录</div>';
+                return;
+            }
+
+            try {
+                notificationsList.innerHTML = '<div class="no-notifications">加载中...</div>';
+                
+                const response = await fetch(`/api/notifications/getNotificationList/${username}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
+
+                const notifications = await response.json();
+                
+                if (notifications.length === 0) {
+                    notificationsList.innerHTML = '<div class="no-notifications">暂无未读通知</div>';
+                } else {
+                    displayNotifications(notifications);
+                }
+            } catch (error) {
+                notificationsList.innerHTML = '<div class="no-notifications">获取通知失败: ' + error.message + '</div>';
+            }
+        }
+
+        // 显示通知列表
+        function displayNotifications(notifications) {
+            const notificationsList = document.getElementById('notificationsList');
+            let html = '';
+            
+            notifications.forEach(notification => {
+                const time = new Date(notification.createdTime).toLocaleString('zh-CN');
+                let content = '';
+                
+                if (notification.type === 'file') {
+                    const fileContent = JSON.parse(notification.content);
+                    content = `
+                        <div><strong>文件上传通知</strong></div>
+                        <div>文件名: ${fileContent.fileName}</div>
+                        <div>文件大小: ${fileContent.fileSize} bytes</div>
+                        <div>文件类型: ${fileContent.fileType}</div>
+                        <div>描述: ${fileContent.description}</div>
+                        <div>上传时间: ${new Date(fileContent.uploadTime).toLocaleString('zh-CN')}</div>
+                    `;
+                } else {
+                    content = `<div>${notification.content || '未知类型通知'}</div>`;
+                }
+                
+                html += `
+                    <div class="notification-item" data-id="${notification.id}">
+                        <div class="notification-header">
+                            <div>
+                                <strong>来自: ${notification.sender}</strong>
+                                <div class="notification-time">${time}</div>
+                            </div>
+                            <button onclick="markAsRead(${notification.id})" class="mark-read-btn">标记已读</button>
+                        </div>
+                        <div class="notification-content">
+                            ${content}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            notificationsList.innerHTML = html;
+        }
+
+        // 标记通知为已读
+        async function markAsRead(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/markAsRead/${notificationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 从DOM中移除该通知项
+                    const notificationItem = document.querySelector(`[data-id="${notificationId}"]`);
+                    if (notificationItem) {
+                        notificationItem.remove();
+                    }
+                    
+                    // 检查是否还有其他通知
+                    const remainingNotifications = document.querySelectorAll('.notification-item');
+                    if (remainingNotifications.length === 0) {
+                        document.getElementById('notificationsList').innerHTML = '<div class="no-notifications">暂无未读通知</div>';
+                    }
+                } else {
+                    alert('标记已读失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('标记已读失败: ' + error.message);
+            }
+        }
+
+        // 刷新通知
+        function refreshNotifications() {
+            const notificationsList = document.getElementById('notificationsList');
+            notificationsList.innerHTML = '';
+            loadNotifications();
+        }
+
         // 多文件上传
         async function uploadSingleFile() {
             const fileInput = document.getElementById('singleFile');
@@ -124,6 +306,10 @@
                 if (result.success) {
                     fileInput.value = ''; // 清空文件选择
                     descriptionInput.value = '';
+                    // 上传成功后刷新通知
+                    setTimeout(() => {
+                        refreshNotifications();
+                    }, 1000);
                 }
             } catch (error) {
                 resultDiv.textContent = '上传失败: ' + error.message;

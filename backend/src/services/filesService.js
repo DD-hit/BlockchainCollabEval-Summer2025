@@ -59,7 +59,7 @@ export class FilesService {
             );
             
             const uploadedFile = {
-                id: result.insertId,
+                fileId: result.insertId,
                 originalName: file.originalname,
                 fileName: file.filename,
                 filePath: file.path,
@@ -122,4 +122,5 @@ export class FilesService {
             throw new Error(`删除文件失败: ${error.message}`);
         }
     }
+
 }

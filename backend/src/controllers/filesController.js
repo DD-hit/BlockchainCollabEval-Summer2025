@@ -1,6 +1,8 @@
 // controllers/filesController.js - 文件上传控制层
 import { FilesService } from '../services/filesService.js';
-
+import { NotificationService } from '../services/notificationService.js';
+import { SubtaskService } from '../services/subtaskService.js';
+import { ProjectMemberService } from '../services/projectMemberService.js';
 // 处理文件上传请求
 export const uploadFiles = async (req, res) => {
     try {
@@ -37,6 +39,14 @@ export const uploadFiles = async (req, res) => {
         // 2. 调用业务逻辑层处理
         const username = req.user.username;
         const result = await FilesService.uploadFiles(req.file, description.trim(), username, subtaskId, privateKey);
+        //获取除上传者外的所有项目成员
+        const projectId = await SubtaskService.getProjectIdBySubtaskId(subtaskId);
+        const projectMembers = await ProjectMemberService.getProjectMemberList(projectId);
+        for (const member of projectMembers) {
+            if (member.username !== username) {
+                await NotificationService.addFileNotification(username, member.username, projectId, result.fileId);
+            }
+        }
 
         // 3. 返回成功响应
         res.json({
