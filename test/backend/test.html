@@ -1,185 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket 测试</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .container {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .status {
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
-        .connected {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .disconnected {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .connecting {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-
-        #messages {
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            background-color: #f8f9fa;
-        }
-
-        .message {
-            margin-bottom: 10px;
-            padding: 8px;
-            border-radius: 4px;
-        }
-
-        .message.sent {
-            background-color: #e3f2fd;
-            text-align: right;
-        }
-
-        .message.received {
-            background-color: #f3e5f5;
-        }
-
-        .timestamp {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>文件下载</title>
+  <style>
+    .container {
+      margin: 20px;
+    }
+    input {
+      padding: 8px;
+      width: 300px;
+    }
+    button {
+      padding: 8px 16px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    .message {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1>WebSocket 测试</h1>
+  <div class="container">
+    <input type="text" id="filename" placeholder="请输入文件名">
+    <button onclick="download()">下载文件</button>
+    <div id="message" class="message"></div>
+  </div>
 
-        <div id="status" class="status connecting">
-            连接中...
-        </div>
+  <script>
+    
+    async function download() {
+      const filenameInput = document.getElementById('filename');
+      const messageEl = document.getElementById('message');
+      const filename = filenameInput.value.trim();
 
-        <div>
-            <input type="text" id="messageInput" placeholder="输入消息">
-            <button onclick="sendMessage()" id="sendBtn" disabled>发送消息</button>
-            <button onclick="clearMessages()">清空消息</button>
-        </div>
+      // 清空之前的消息
+      messageEl.textContent = '';
+      messageEl.className = 'message';
 
-        <div id="messages"></div>
-    </div>
-    <a href="https://www.baidu.com">百度</a>
+      if (!filename) {
+        messageEl.textContent = '请输入文件名';
+        messageEl.className = 'message error';
+        return;
+      }
 
-    <script>
-        const socket = new WebSocket('ws://localhost:8080/ws');
-        const statusDiv = document.getElementById('status');
-        const sendBtn = document.getElementById('sendBtn');
-        const messagesDiv = document.getElementById('messages');
-
-        // 连接事件
-        socket.onopen = () => {
-            console.log('Connected to server');
-            statusDiv.textContent = '已连接';
-            statusDiv.className = 'status connected';
-            sendBtn.disabled = false;
-        }
-
-        // 接收消息
-        socket.onmessage = (event) => {
-            console.log('Message from server', event.data);
-            try {
-                const data = JSON.parse(event.data);
-                addMessage(data.message, 'received', data.timestamp);
-            } catch (error) {
-                addMessage(event.data, 'received');
-            }
-        }
-
-        // 连接关闭
-        socket.onclose = () => {
-            console.log('Disconnected from server');
-            statusDiv.textContent = '连接已断开';
-            statusDiv.className = 'status disconnected';
-            sendBtn.disabled = true;
-        }
-
-        // 连接错误
-        socket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            statusDiv.textContent = '连接错误';
-            statusDiv.className = 'status disconnected';
-            sendBtn.disabled = true;
-        }
-
-        // 发送消息
-        function sendMessage() {
-            const message = document.getElementById('messageInput').value;
-            if (!message) return;
-            socket.send(message);
-            addMessage(message, 'sent');
-        }
-
-        // 添加消息到界面
-        function addMessage(message, type, timestamp) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            messageDiv.innerHTML = `
-                <div>${message}</div>
-                <div class="timestamp">${timestamp || new Date().toLocaleTimeString()}</div>
-            `;
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        // 清空消息
-        function clearMessages() {
-            messagesDiv.innerHTML = '';
-        }
-
-        window.addEventListener('beforeunload', () => {
-            socket.send('用户离线');
+      try {
+        // 1. 发送请求到后端接口
+        const response = await fetch('http://localhost:3000/api/files/download', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // 如有认证需求，添加Token
+            // 'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify({ filename }) // 传递文件名
         });
-    </script>
-</body>
 
+        // 2. 处理后端错误响应（非200状态码）
+        if (!response.ok) {
+          // 解析后端返回的错误JSON
+          const errorData = await response.json();
+          throw new Error(errorData.message || '下载失败，请重试');
+        }
+
+        // 3. 将响应数据转为Blob（二进制大对象）
+        const blob = await response.blob();
+
+        // 4. 从响应头获取文件名（优先使用后端返回的文件名）
+        let downloadName = filename;
+        const contentDisposition = response.headers.get('Content-Disposition');
+        if (contentDisposition) {
+          // 提取并解码文件名（处理中文）
+          const match = contentDisposition.match(/filename="(.*)"/);
+          if (match && match[1]) {
+            downloadName = decodeURIComponent(match[1]);
+          }
+        }
+
+        // 5. 创建临时URL并触发下载
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = downloadName; // 设置下载文件名
+        document.body.appendChild(a);
+        a.click(); // 模拟点击下载
+
+        // 6. 清理资源，避免内存泄漏
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // 显示成功消息
+        messageEl.textContent = `文件 "${downloadName}" 下载成功`;
+        messageEl.className = 'message success';
+
+      } catch (error) {
+        // 显示错误消息
+        messageEl.textContent = error.message;
+        messageEl.className = 'message error';
+        console.error('下载错误:', error);
+      }
+    }
+
+    // 支持回车键触发下载
+    document.getElementById('filename').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        download();
+      }
+    });
+  </script>
+</body>
 </html>

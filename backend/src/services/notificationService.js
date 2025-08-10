@@ -23,8 +23,7 @@ export class NotificationService {
                 fileSize: fileInfo[0].fileSize,
                 fileType: fileInfo[0].fileType,
                 fileHash: fileInfo[0].fileHash,
-                uploadTime: fileInfo[0].uploadTime,
-                description: fileInfo[0].description,
+                uploadTime: fileInfo[0].uploadTime
             }
             const [result] = await pool.execute(
                 `INSERT INTO notifications (sender, receiver, type, projectId, fileId,content,isRead,createdTime) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,

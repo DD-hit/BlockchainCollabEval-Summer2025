@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { uploadFiles, getFiles, deleteFile } from '../controllers/filesController.js';
+import { uploadFiles, getFiles, deleteFile, downloadFile } from '../controllers/filesController.js';
 import { verifyToken } from '../middleware/verifyToken.js';
 
 const router = express.Router();
@@ -56,5 +56,8 @@ router.get('/files', verifyToken, getFiles);
 
 // 删除文件路由
 router.delete('/files/:fileId', verifyToken, deleteFile);
+
+// 下载文件路由
+router.post('/download', downloadFile);
 
 export default router; 

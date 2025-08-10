@@ -102,3 +102,20 @@ export const deleteFile = async (req, res) => {
         });
     }
 };
+
+//download
+export const downloadFile = async (req, res) => {
+    try {
+        const { filename } = req.body;
+        const file = await FilesService.downloadFile(filename);
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(file);
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: '文件下载失败',
+            error: error.message
+        });
+    }
+};

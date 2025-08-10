@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FormData 文件上传测试</title>
+    <title>文件上传与评分测试</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -76,13 +76,74 @@
         .notification-content {
             margin: 10px 0;
         }
-        .mark-read-btn {
+        .score-btn {
             background: #28a745;
             padding: 5px 10px;
             font-size: 12px;
         }
-        .mark-read-btn:hover {
+        .score-btn:hover {
             background: #218838;
+        }
+        .score-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .score-modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: none;
+            border-radius: 8px;
+            width: 60%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .score-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .score-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .score-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .close-btn {
+            background: #6c757d;
+        }
+        .close-btn:hover {
+            background: #545b62;
+        }
+        .contract-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .contract-info div {
+            margin-bottom: 8px;
+            word-break: break-all;
+        }
+        .contract-info strong {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: block;
         }
         .refresh-btn {
             background: #17a2b8;
@@ -99,7 +160,7 @@
     </style>
 </head>
 <body>
-    <h1>FormData 文件上传测试</h1>
+    <h1>文件上传与评分测试</h1>
 
     <div class="notification-section">
         <h2>通知管理</h2>
@@ -128,7 +189,27 @@
         <button onclick="uploadSingleFile()">上传单文件与描述</button>
         <div id="singleResult" class="result"></div>
     </div>
-    
+
+    <!-- 评分模态框 -->
+    <div id="scoreModal" class="score-modal">
+        <div class="score-modal-content">
+            <h3>文件评分</h3>
+            <div id="contractInfo" class="contract-info"></div>
+            <div class="score-form">
+                <label>评分 (1-10分):</label>
+                <div class="score-value" id="scoreValue">5</div>
+                <input type="range" id="scoreSlider" class="score-slider" min="1" max="10" value="5" oninput="updateScoreValue(this.value)">
+                
+                <label>私钥:</label>
+                <input type="password" id="privateKeyInput" placeholder="请输入您的私钥">
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="closeScoreModal()" class="close-btn">取消</button>
+                    <button onclick="submitScore()" class="score-btn">提交评分</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <script>
@@ -192,12 +273,17 @@
                         <div>文件名: ${fileContent.fileName}</div>
                         <div>文件大小: ${fileContent.fileSize} bytes</div>
                         <div>文件类型: ${fileContent.fileType}</div>
-                        <div>描述: ${fileContent.description}</div>
                         <div>上传时间: ${new Date(fileContent.uploadTime).toLocaleString('zh-CN')}</div>
+                        <div>合约地址: ${fileContent.contractAddress || '未知'}</div>
                     `;
                 } else {
                     content = `<div>${notification.content || '未知类型通知'}</div>`;
                 }
+                
+                // 只有文件通知才显示评分按钮
+                const scoreButton = notification.type === 'file' ? 
+                    `<button onclick="goToScore('${JSON.parse(notification.content).contractAddress}', ${notification.id})" class="score-btn">前往评分</button>` : 
+                    `<button onclick="markAsRead(${notification.id})" class="score-btn">标记已读</button>`;
                 
                 html += `
                     <div class="notification-item" data-id="${notification.id}">
@@ -206,7 +292,7 @@
                                 <strong>来自: ${notification.sender}</strong>
                                 <div class="notification-time">${time}</div>
                             </div>
-                            <button onclick="markAsRead(${notification.id})" class="mark-read-btn">标记已读</button>
+                            ${scoreButton}
                         </div>
                         <div class="notification-content">
                             ${content}
@@ -257,7 +343,154 @@
             loadNotifications();
         }
 
-        // 多文件上传
+        // 全局变量保存当前评分的合约地址和通知ID
+        let currentContractAddress = '';
+        let currentNotificationId = '';
+
+        // 前往评分页面
+        async function goToScore(contractAddress, notificationId) {
+            if (!contractAddress || contractAddress === 'undefined') {
+                alert('合约地址无效');
+                return;
+            }
+
+            currentContractAddress = contractAddress;
+            currentNotificationId = notificationId;
+            
+            try {
+
+                // 获取合约信息
+                const contractResponse = await fetch(`/api/score/contract/${contractAddress}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    }
+                });
+
+                if (!contractResponse.ok) {
+                    const errorText = await contractResponse.text();
+                    console.error('获取合约信息响应错误:', contractResponse.status, errorText);
+                    alert('获取合约信息失败: HTTP ' + contractResponse.status + '\n' + errorText);
+                    return;
+                }
+
+                const contractResult = await contractResponse.json();
+                
+                if (contractResult.success) {
+                    displayContractInfo(contractResult.data);
+                    openScoreModal();
+                } else {
+                    alert('获取合约信息失败: ' + contractResult.message);
+                }
+                
+            } catch (error) {
+                alert('操作失败: ' + error.message);
+            }
+        }
+
+        // 显示合约信息
+        function displayContractInfo(contractData) {
+            const contractInfo = document.getElementById('contractInfo');
+            const deadline = new Date(contractData.subtaskEndtime * 1000);
+            const now = new Date();
+            const isExpired = now > deadline;
+            
+            contractInfo.innerHTML = `
+                <strong>📋 合约信息</strong>
+                <div><strong>👤 贡献者:</strong><br>${contractData.contributor}</div>
+                <div><strong>🔗 贡献哈希:</strong><br>${contractData.contributionHash}</div>
+                <div><strong>⚖️ 权重:</strong> ${contractData.weight}</div>
+                <div><strong>⭐ 当前平均分:</strong> ${contractData.averageScore}/10</div>
+                <div><strong>👥 评分人数:</strong> ${contractData.scoreCount}</div>
+                <div><strong>🎯 贡献点数:</strong> ${contractData.contributionPoints}</div>
+                <div><strong>⏱️ 时间因子:</strong> ${contractData.timeFactor}/1000</div>
+                <div><strong>📅 截止时间:</strong> ${deadline.toLocaleString('zh-CN')} ${isExpired ? '(已过期)' : ''}</div>
+            `;
+        }
+
+        // 打开评分模态框
+        function openScoreModal() {
+            document.getElementById('scoreModal').style.display = 'block';
+            // 重置表单
+            document.getElementById('scoreSlider').value = 5;
+            document.getElementById('scoreValue').textContent = '5';
+            document.getElementById('privateKeyInput').value = '';
+        }
+
+        // 关闭评分模态框
+        function closeScoreModal() {
+            document.getElementById('scoreModal').style.display = 'none';
+        }
+
+        // 更新评分显示值
+        function updateScoreValue(value) {
+            document.getElementById('scoreValue').textContent = value;
+        }
+
+        // 提交评分
+        async function submitScore() {
+            const score = parseInt(document.getElementById('scoreSlider').value);
+            const privateKey = document.getElementById('privateKeyInput').value.trim();
+
+            if (!privateKey) {
+                alert('请输入私钥');
+                return;
+            }
+
+            if (score < 1 || score > 10) {
+                alert('评分必须在1-10之间');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/score/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    },
+                    body: JSON.stringify({
+                        contractAddress: currentContractAddress,
+                        score: score,
+                        privateKey: privateKey
+                    })
+                });
+
+                if (response.status === 400) {
+                    const errorText = await response.text();
+                    alert('评分失败: ' + errorText);
+                    return;
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('评分成功！\n交易哈希: ' + result.data);
+                    console.log('transactionHash', result.data.transactionHash);
+                    // 标记通知为已读
+                    if (currentNotificationId) {
+                        markAsRead(currentNotificationId);
+                    }
+                    closeScoreModal();
+                    // 刷新通知列表
+                    refreshNotifications();
+                } else {
+                    alert('评分失败: ' + result.message);
+                }
+            } catch (error) {
+                alert('评分失败: ' + error.message);
+            }
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('scoreModal');
+            if (event.target === modal) {
+                closeScoreModal();
+            }
+        }
+
+        // 单文件上传
         async function uploadSingleFile() {
             const fileInput = document.getElementById('singleFile');
             const resultDiv = document.getElementById('singleResult');

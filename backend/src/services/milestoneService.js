@@ -23,7 +23,10 @@ export class MilestoneService {
     }
     static async getMilestoneDetail(milestoneId) {
         const [queryResult] = await pool.execute('SELECT * FROM milestones WHERE milestoneId = ?', [milestoneId]);
-        return queryResult;
+        if (queryResult.length === 0) {
+            throw new Error(`里程碑ID ${milestoneId} 不存在`);
+        }
+        return queryResult[0];
     }
     static async updateMilestone(milestoneId, title, description, startTime, endTime) {
         const [result] = await pool.execute('UPDATE milestones SET title = ?, description = ?, startTime = ?, endTime = ? WHERE milestoneId = ?', [title, description, startTime, endTime, milestoneId]);

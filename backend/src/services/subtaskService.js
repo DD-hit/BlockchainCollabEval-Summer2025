@@ -39,6 +39,9 @@ export class SubtaskService {
 
     static async getMilestoneIdBySubtaskId(subtaskId) {
         const [queryResult] = await pool.execute('SELECT milestoneId FROM subtasks WHERE subtaskId = ?', [subtaskId]);
+        if (queryResult.length === 0) {
+            throw new Error(`子任务ID ${subtaskId} 不存在`);
+        }
         return queryResult[0].milestoneId;
     }
 

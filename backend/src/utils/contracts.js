@@ -12,9 +12,9 @@ const abiPath = path.join(__dirname, '../../../contracts/ContributionScore.abi')
 const binPath = path.join(__dirname, '../../../contracts/ContributionScore.bin');
 
 // 读取ABI
-const ContributionScoreFactoryABI = JSON.parse(fs.readFileSync(abiPath, 'utf8'));
+const ContributionScoreABI = JSON.parse(fs.readFileSync(abiPath, 'utf8'));
 
 // 读取字节码
-const ContributionScoreFactoryBytecode = '0x' + fs.readFileSync(binPath, 'utf8');
+const ContributionScoreBytecode = '0x' + fs.readFileSync(binPath, 'utf8');
 
-export { ContributionScoreFactoryABI, ContributionScoreFactoryBytecode };
+export { ContributionScoreABI, ContributionScoreBytecode };

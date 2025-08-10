@@ -2,6 +2,7 @@
 pragma solidity >=0.5.0 <0.6.0;
 
 contract ContributionScore {
+
     address public contributor;      // 贡献者
     string public contributionHash;  // 贡献文件的哈希或描述
     mapping(address => uint8) public scores; // 评分记录
@@ -96,4 +97,11 @@ contract ContributionScore {
             subtaskEndtime
         );
     }
+    
+    // 获取指定地址的评分记录
+    function getScoreRecord(address scorer) public view returns (uint8 score, uint256 timestamp) {
+        ScoreRecord memory record = scores[scorer];
+        return (record.score, record.timestamp);
+    }
+    
 }

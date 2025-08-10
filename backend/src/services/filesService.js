@@ -1,9 +1,27 @@
 import { pool } from '../../config/database.js';
 import { calculateFileHash } from '../utils/calculateHash.js';
 import { deployContract, getAddress } from '../utils/eth.js';
-import { ContributionScoreFactoryABI, ContributionScoreFactoryBytecode } from '../utils/contracts.js';
+import { ContributionScoreABI, ContributionScoreBytecode } from '../utils/contracts.js';
 import { SubtaskService } from './subtaskService.js';
+import fs from 'fs/promises';
+
 export class FilesService {
+
+static async downloadFile(filename) {
+    try {
+        const [rows] = await pool.execute('SELECT filePath FROM files WHERE filename = ?', [filename]);
+        if (rows.length === 0) {
+            throw new Error('文件不存在');
+        }
+        const filePath = rows[0].filePath;
+        // 异步读取
+        const file = await fs.readFile(filePath); 
+        return file;
+    } catch (error) {
+        throw new Error(`下载文件失败: ${error.message}`);
+    }
+}
+
     static async uploadFiles(file, description, username, subtaskId, privateKey) {
         try {
 
@@ -24,9 +42,9 @@ export class FilesService {
             const endTime = parseInt(subtask.endTime) || (startTime + 86400); // 默认24小时后
             const weight = parseInt(subtask.priority) || 1;
 
-            const contractAddress = await deployContract(
-                ContributionScoreFactoryABI,
-                ContributionScoreFactoryBytecode,
+            const receipt = await deployContract(
+                ContributionScoreABI,
+                ContributionScoreBytecode,
                 [
                     fromAddress,           // _contributor: 贡献者地址
                     fileHash,              // _contributionHash: 贡献哈希
@@ -53,7 +71,7 @@ export class FilesService {
                     fileHash,             // 文件哈希值
                     username,             // 上传用户
                     subtaskId,            // 所属任务
-                    contractAddress,      // 合约地址
+                    receipt.contractAddress,      // 合约地址
                     description           // 描述
                 ]
             );
@@ -69,7 +87,7 @@ export class FilesService {
                 username: username,
                 uploadTime: Date.now(),
                 subtaskId: subtaskId,
-                contractAddress: contractAddress,
+                contractAddress: receipt.contractAddress,
                 description: description
             };
             

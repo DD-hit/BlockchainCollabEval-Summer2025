@@ -9,6 +9,7 @@ import milestoneRoutes from './src/routes/milestoneRoutes.js';
 import subtaskRoutes from './src/routes/subtaskRoutes.js';
 import filesRoutes from './src/routes/filesRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
+import scoreRoutes from './src/routes/scoreRoutes.js';
 import { testConnection } from './config/database.js';
 import { AccountService } from './src/services/accountService.js';
 
@@ -30,6 +31,7 @@ app.use('/api/milestones', milestoneRoutes);
 app.use('/api/subtasks', subtaskRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/score', scoreRoutes);
 
 // 处理React前端路由 - 所有非API请求都返回index.html
 app.get('*', (req, res) => {

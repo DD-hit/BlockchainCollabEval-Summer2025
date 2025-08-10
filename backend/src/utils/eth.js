@@ -1,8 +1,6 @@
 import Web3 from 'web3';
 import { pool } from '../../config/database.js';
-
-// Web3 实例配置
-const WEB3_PROVIDER = 'http://192.168.139.129:8545';
+import { WEB3_PROVIDER } from '../config/config.js';
 
 export const getAddress = async (username) => {
     try {
@@ -81,8 +79,16 @@ export const deployContract = async (abi, bytecode, constructorArgs, fromAddress
     // 发送交易
     const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
 
-    // 返回合约地址
-    return receipt.contractAddress;
+
+    // 返回交易回执
+    return receipt;
+}
+
+//获取交易信息
+export const getTransactionInfo = async (transactionHash) => {
+    const web3 = new Web3(WEB3_PROVIDER);
+    const transaction = await web3.eth.getTransaction(transactionHash);
+    return transaction;
 }
 
 
