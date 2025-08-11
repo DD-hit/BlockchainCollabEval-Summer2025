@@ -523,7 +523,7 @@
 
         async function getMyProjectList() {
             try {
-                const response = await fetch(`${API_BASE_URL}/projectManager/getMyProjectList`, {
+                const response = await fetch(`${API_BASE_URL}/projectManager/getMyProjects`, {
                     headers: {
                         'Authorization': 'Bearer ' + sessionStorage.getItem('token')
                     }

@@ -19,3 +19,14 @@ export const markNotificationAsRead = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+//是否全部已读
+export const isAllRead = async (req, res) => {
+    try {
+        const { subtaskId } = req.params;
+        const isAllRead = await NotificationService.isAllRead(subtaskId);
+        res.json({ success: true, message: '是否全部已读', data: isAllRead });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

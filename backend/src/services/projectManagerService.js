@@ -8,11 +8,7 @@ export class ProjectManagerService {
         description, 
         projectOwner, 
         startTime, 
-        endTime,
-        // blockchainType = 'EVM',
-        // enableDAO = false,
-        // templateType = 'solidity',
-        // isPublic = true
+        endTime
     ) {
         if (!projectName) {
             throw new Error('项目名称不能为空');
@@ -49,10 +45,6 @@ export class ProjectManagerService {
             projectOwner: projectOwner,
             startTime: startTime,
             endTime: endTime,
-            // blockchainType: blockchainType, 
-            // enableDAO: enableDAO,
-            // templateType: templateType,
-            // isPublic: isPublic
         }
     }
 
@@ -65,7 +57,7 @@ export class ProjectManagerService {
     //获取我的项目列表
     static async getMyProjectList(username) {
         const [queryResult] = await pool.execute(
-            'SELECT * FROM projects WHERE projectId IN (SELECT projectId FROM project_members WHERE username = ?) ORDER BY projectId DESC', 
+            'SELECT * FROM projects p WHERE p.projectId IN (SELECT projectId FROM project_members pm WHERE pm.username = ?) ORDER BY p.projectId DESC', 
             [username]
         );
         return queryResult;

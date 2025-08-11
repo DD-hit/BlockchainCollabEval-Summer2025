@@ -3,6 +3,7 @@ import { FilesService } from '../services/filesService.js';
 import { NotificationService } from '../services/notificationService.js';
 import { SubtaskService } from '../services/subtaskService.js';
 import { ProjectMemberService } from '../services/projectMemberService.js';
+import { AccountService } from '../services/accountService.js';
 // 处理文件上传请求
 export const uploadFiles = async (req, res) => {
     try {
@@ -14,7 +15,7 @@ export const uploadFiles = async (req, res) => {
             });
         }
 
-        const { description, subtaskId, privateKey } = req.body;
+        const { description, subtaskId, password } = req.body;
         if (!description || !description.trim()) {
             return res.status(400).json({ 
                 success: false, 
@@ -29,22 +30,34 @@ export const uploadFiles = async (req, res) => {
             });
         }
 
-        if (!privateKey) {
+        if (!password) {
             return res.status(400).json({ 
                 success: false, 
-                message: '请提供私钥' 
+                message: '请提供密码以验证身份' 
             });
         }
 
-        // 2. 调用业务逻辑层处理
+        // 2. 验证密码并获取私钥
         const username = req.user.username;
-        const result = await FilesService.uploadFiles(req.file, description.trim(), username, subtaskId, privateKey);
+        let userPrivateKey;
+        try {
+            // 验证密码并获取用户的私钥
+            userPrivateKey = await AccountService.getPrivateKey(username, password);
+        } catch (error) {
+            return res.status(400).json({ 
+                success: false, 
+                message: '密码验证失败：' + error.message 
+            });
+        }
+
+        // 3. 调用业务逻辑层处理
+        const result = await FilesService.uploadFiles(req.file, description.trim(), username, subtaskId, userPrivateKey.privateKey);
         //获取除上传者外的所有项目成员
         const projectId = await SubtaskService.getProjectIdBySubtaskId(subtaskId);
         const projectMembers = await ProjectMemberService.getProjectMemberList(projectId);
         for (const member of projectMembers) {
             if (member.username !== username) {
-                await NotificationService.addFileNotification(username, member.username, projectId, result.fileId);
+                await NotificationService.addFileNotification(username, member.username, subtaskId, result.fileId);
             }
         }
 
