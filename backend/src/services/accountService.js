@@ -117,4 +117,23 @@ export class AccountService {
         };
     }
 
+    // 获取私钥
+    static async getPrivateKey(username, password) {
+        // 验证用户名和密码
+        const [user] = await pool.execute('SELECT * FROM user WHERE username = ?', [username]);
+        if (user.length === 0) {
+            throw new Error('用户不存在');
+        }
+        
+        if (user[0].password !== password) {
+            throw new Error('密码错误');
+        }
+        
+        return {
+            username: username,
+            address: user[0].address,
+            privateKey: user[0].privateKey
+        };
+    }
+
 }

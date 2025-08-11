@@ -34,6 +34,3 @@ const MainLayout = ({ user, onLogout, children }) => {
 };
 
 export default MainLayout;
-
-
-

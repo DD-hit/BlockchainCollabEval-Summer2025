@@ -1,12 +1,22 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
-import App from './App';
+import React from "react"
+import { createRoot } from "react-dom/client"
+import { BrowserRouter } from "react-router-dom"
+import App from "./App"
+import { NotificationsProvider } from "./context/notifications"
+import { ScoreProvider } from "./components/Score/ScoreProvider"
+import "./index.css"
 
-const container = document.getElementById('root');
-const root = createRoot(container);
+const container = document.getElementById("root")
+const root = createRoot(container)
+
 root.render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+    <BrowserRouter>
+      <NotificationsProvider>
+        <ScoreProvider>
+          <App />
+        </ScoreProvider>
+      </NotificationsProvider>
+    </BrowserRouter>
+  </React.StrictMode>,
+)

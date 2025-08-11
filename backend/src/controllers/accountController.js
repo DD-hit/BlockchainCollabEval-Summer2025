@@ -128,4 +128,22 @@ export const logout = async (req, res) => {
             message: error.message
         });
     }
-}
+};
+
+// 处理获取私钥的请求
+export const getPrivateKey = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const result = await AccountService.getPrivateKey(username, password);
+        res.json({
+            success: true,
+            message: '私钥获取成功',
+            data: result
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};

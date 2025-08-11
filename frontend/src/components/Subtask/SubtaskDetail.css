@@ -1,0 +1,158 @@
+.subtask-detail {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.breadcrumb span {
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.breadcrumb span:hover {
+  color: #00d4ff;
+}
+
+.breadcrumb span:last-child {
+  color: #1e293b;
+  font-weight: 600;
+  cursor: default;
+}
+
+.subtask-header {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.subtask-info {
+  flex: 1;
+}
+
+.subtask-info h1 {
+  margin: 0 0 12px 0;
+  color: #1e293b;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.subtask-info p {
+  margin: 0 0 16px 0;
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.subtask-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.status-badge,
+.assignee,
+.priority {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge {
+  background: #00d4ff;
+  color: white;
+}
+
+.assignee {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.priority {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.subtask-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary {
+  background: #00d4ff;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #00b8e6;
+  transform: translateY(-2px);
+}
+
+.subtask-content {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 24px;
+}
+
+.content-left,
+.content-right {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.loading,
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  font-size: 18px;
+  color: #64748b;
+}
+
+.error {
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .subtask-detail {
+    padding: 16px;
+  }
+  
+  .subtask-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .subtask-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .subtask-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

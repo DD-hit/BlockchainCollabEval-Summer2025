@@ -8,11 +8,7 @@ export const createProject = async (req, res) => {
             description, 
             projectOwner, 
             startTime, 
-            endTime,
-            // blockchainType,
-            // enableDAO,
-            // templateType,
-            // isPublic
+            endTime
         } = req.body;
         
         // 输入验证
@@ -23,16 +19,14 @@ export const createProject = async (req, res) => {
             });
         }
         
+        console.log('Received times:', { startTime, endTime }); // 调试日志
+        
         const result = await ProjectManagerService.createProject(
             projectName, 
             description, 
             projectOwner, 
             startTime, 
             endTime
-            // blockchainType,
-            // enableDAO,
-            // templateType,
-            // isPublic
         );
         
         res.json({
@@ -41,6 +35,7 @@ export const createProject = async (req, res) => {
             data: result
         });
     } catch (error) {
+        console.error('创建项目失败:', error);
         res.status(400).json({
             success: false,
             message: error.message
