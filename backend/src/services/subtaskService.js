@@ -17,7 +17,24 @@ export class SubtaskService {
             }
         }
         
-        const [result] = await pool.execute('INSERT INTO subtasks (milestoneId, title, status, description, assignedTo, startTime, endTime, priority) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)', [milestoneId, title, status, description, assignedTo, startTime, endTime, priority]);
+        // 确保所有参数都不是undefined
+        const params = [
+            milestoneId,
+            title,
+            status || 'todo',
+            description || null,
+            assignedTo || null,
+            startTime || null,
+            endTime || null,
+            priority || 2 // 默认中等优先级
+        ];
+        
+        console.log('创建子任务参数:', params); // 调试日志
+        
+        const [result] = await pool.execute(
+            'INSERT INTO subtasks (milestoneId, title, status, description, assignedTo, startTime, endTime, priority) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+            params
+        );
         return result.insertId;
     }
     static async getSubtaskList(milestoneId) {

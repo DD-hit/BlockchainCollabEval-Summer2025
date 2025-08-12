@@ -10,35 +10,29 @@ export class ProjectManagerService {
         startTime, 
         endTime
     ) {
-        if (!projectName) {
-            throw new Error('项目名称不能为空');
+        // 验证输入
+        if (!projectName || !description || !projectOwner) {
+            throw new Error('项目名称、描述和项目负责人不能为空');
         }
         
-        // 先插入项目到数据库
+        // 直接使用前端传来的DATETIME字符串
+        console.log('Storing datetime strings:', { startTime, endTime }); // 调试日志
+        
         const [result] = await pool.execute(
-            `INSERT INTO projects (
-                projectName, 
-                description, 
-                projectOwner, 
-                startTime, 
-                endTime
-            ) VALUES (?, ?, ?, ?, ?)`, 
-            [
-                projectName, 
-                description, 
-                projectOwner, 
-                startTime, 
-                endTime
-            ]
+            'INSERT INTO projects (projectName, description, projectOwner, startTime, endTime) VALUES (?, ?, ?, ?, ?)',
+            [projectName, description, projectOwner, startTime, endTime]
         );
         
-        // 获取生成的projectId
-        const projectId = result.insertId;
-        
-        // 然后添加项目成员
-        await ProjectMemberService.addProjectMember(projectId, projectOwner, '组长');
-
         return {
+<<<<<<< HEAD
+            projectId: result.insertId,
+            projectName,
+            description,
+            projectOwner,
+            startTime,
+            endTime
+        };
+=======
             projectId: projectId,
             projectName: projectName,
             description: description,
@@ -46,6 +40,7 @@ export class ProjectManagerService {
             startTime: startTime,
             endTime: endTime,
         }
+>>>>>>> 2081ad49ebdf9d014002c2298632601fb9231685
     }
 
     //获取项目列表
@@ -65,11 +60,21 @@ export class ProjectManagerService {
 
     //获取项目详情
     static async getProjectDetail(projectId) {
-        const [queryResult] = await pool.execute('SELECT * FROM projects WHERE projectId = ?', [projectId]);
-        if (queryResult.length === 0) {
-            throw new Error('项目不存在');
+        try {
+            const [projects] = await pool.execute(
+                'SELECT * FROM projects WHERE projectId = ?',
+                [projectId]
+            );
+            
+            if (projects.length === 0) {
+                throw new Error('项目不存在');
+            }
+            
+            return projects[0];
+        } catch (error) {
+            console.error('获取项目详情失败:', error);
+            throw error;
         }
-        return queryResult[0];
     }
 
     //删除项目

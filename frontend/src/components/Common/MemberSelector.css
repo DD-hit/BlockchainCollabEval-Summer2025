@@ -1,0 +1,67 @@
+.member-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.member-selector .selector-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.member-selector .selector-control input[type="text"] {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  outline: none;
+}
+
+.member-selector .dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 6px;
+  max-height: 220px;
+  overflow: auto;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.member-selector .option {
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+}
+
+.member-selector .option:hover {
+  background: #f3f4f6;
+}
+
+.member-selector .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.member-selector .chip {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.member-selector .remove-btn {
+  cursor: pointer;
+}

@@ -148,6 +148,7 @@ export class AccountService {
         };
     }
 
+
     static async getContributor(contributorAddress) {
         const [result] = await pool.execute(
             `SELECT * FROM user WHERE address = ?`,
@@ -157,6 +158,7 @@ export class AccountService {
             return null; // 或者抛出错误，取决于业务需求
         }
         return result[0].username;
+
     }
 
 }

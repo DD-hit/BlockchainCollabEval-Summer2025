@@ -1,167 +1,133 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { projectAPI } from '../../utils/api';
+import { Link } from 'react-router-dom';
+import api from '../../utils/api';
+import TodoList from './TodoList';
 import './Dashboard.css';
 
 const Dashboard = ({ user }) => {
-  const [projects, setProjects] = useState([]);
+  const [stats, setStats] = useState({
+    totalProjects: 0,
+    totalTasks: 0,
+    completedTasks: 0,
+    pendingTasks: 0
+  });
+  const [recentProjects, setRecentProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState('grid');
-  const navigate = useNavigate();
 
   useEffect(() => {
-    loadProjects();
+    loadDashboardData();
   }, []);
 
-  const loadProjects = async () => {
+  const loadDashboardData = async () => {
     try {
-      setLoading(true);
-      const response = await projectAPI.getMyProjects();
-      
-      if (response.data.success) {
-        setProjects(response.data.data);
-      } else {
-        setError(response.data.message || '获取项目列表失败');
+      // 加载项目统计和最近项目
+      const [projectsRes, tasksRes] = await Promise.all([
+        api.get('/api/projectMembers/my-projects'),
+        api.get('/api/subtasks/my-tasks')
+      ]);
+
+      if (projectsRes.data.success) {
+        const projects = projectsRes.data.data;
+        setRecentProjects(projects.slice(0, 5));
+        setStats(prev => ({ ...prev, totalProjects: projects.length }));
+      }
+
+      if (tasksRes.data.success) {
+        const tasks = tasksRes.data.data;
+        const completed = tasks.filter(t => t.status === 'completed').length;
+        const pending = tasks.filter(t => t.status !== 'completed').length;
+        
+        setStats(prev => ({
+          ...prev,
+          totalTasks: tasks.length,
+          completedTasks: completed,
+          pendingTasks: pending
+        }));
       }
     } catch (error) {
-      console.error('加载项目失败:', error);
-      setError('加载项目失败');
+      console.error('加载仪表板数据失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getProjectIcon = (projectName) => {
-    if (projectName.includes('区块链') || projectName.includes('智能合约')) return '⛓️';
-    if (projectName.includes('投票')) return '🗳️';
-    if (projectName.includes('DeFi') || projectName.includes('借贷')) return '💰';
-    if (projectName.includes('NFT')) return '🎨';
-    if (projectName.includes('交易')) return '💱';
-    return '🚀';
-  };
-
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'active': return '#48bb78';
-      case 'completed': return '#38a169';
-      case 'planning': return '#ed8936';
-      case 'paused': return '#718096';
-      default: return '#4299e1';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="dashboard-loading">
-        <div className="loading-spinner">⏳</div>
-        <p>加载项目中...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="error-container">
-        <h3>❌ 加载失败</h3>
-        <p>{error}</p>
-        <button className="btn btn-primary" onClick={loadProjects}>
-          重试
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <div className="header-content">
-          <div>
-            <h1 className="page-title">项目管理</h1>
-            <p className="page-subtitle">管理您的所有项目</p>
+        <h1>欢迎回来，{user.username}！</h1>
+        <p>这里是您的工作概览</p>
+      </div>
+
+      <div className="dashboard-grid">
+        {/* 统计卡片 */}
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon">📊</div>
+            <div className="stat-content">
+              <h3>{stats.totalProjects}</h3>
+              <p>参与项目</p>
+            </div>
           </div>
-          <div className="view-controls">
-            <span className="results-count">共 {projects.length} 个项目</span>
-            <button 
-              className="btn btn-primary"
-              onClick={() => navigate('/project/create')}
-            >
-              + 创建项目
-            </button>
+          
+          <div className="stat-card">
+            <div className="stat-icon">📋</div>
+            <div className="stat-content">
+              <h3>{stats.totalTasks}</h3>
+              <p>总任务数</p>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">✅</div>
+            <div className="stat-content">
+              <h3>{stats.completedTasks}</h3>
+              <p>已完成</p>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">⏰</div>
+            <div className="stat-content">
+              <h3>{stats.pendingTasks}</h3>
+              <p>待处理</p>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className={`projects-container ${viewMode}`}>
-        {projects.length > 0 ? (
-          projects.map(project => (
-            <div key={project.projectId} className="project-card">
-              <Link to={`/project/${project.projectId}`} className="project-link">
-                <div 
-                  className="project-cover"
-                  style={{ background: `linear-gradient(135deg, ${getStatusColor('active')} 0%, ${getStatusColor('active')}88 100%)` }}
-                >
-                  <div className="cover-overlay">
-                    <div className="project-badges">
-                      <span className="status-badge" style={{ background: getStatusColor('active') }}>
-                        进行中
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '48px', color: 'white' }}>
-                    {getProjectIcon(project.projectName)}
-                  </div>
-                </div>
-                
-                <div className="project-info">
-                  <h3 className="project-name">{project.projectName}</h3>
-                  <div className="project-meta">
-                    <span>�� {new Date(project.startTime || Date.now()).toLocaleDateString()}</span>
-                    <span>👤 {project.projectOwner || user?.username || '未知'}</span>
-                  </div>
-                  <p className="project-description">{project.description}</p>
-                  
-                  <div className="progress-section">
-                    <div className="progress-header">
-                      <span>项目进度</span>
-                      <span>0%</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill"
-                        style={{ 
-                          width: '0%',
-                          background: getStatusColor('active')
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div className="tech-tags">
-                    <span className="tech-tag">项目管理</span>
-                    <span className="tech-tag">协同开发</span>
-                  </div>
+
+        {/* 待办事项 */}
+        <div className="dashboard-section">
+          <TodoList user={user} />
+        </div>
+
+        {/* 最近项目 */}
+        <div className="dashboard-section">
+          <div className="section-header">
+            <h3>🚀 最近项目</h3>
+            <Link to="/projects" className="view-all-btn">查看全部</Link>
+          </div>
+          
+          <div className="recent-projects">
+            {recentProjects.map(project => (
+              <Link 
+                key={project.id} 
+                to={`/project/${project.id}`}
+                className="project-card"
+              >
+                <h4>{project.name}</h4>
+                <p>{project.description}</p>
+                <div className="project-meta">
+                  <span className="project-role">{project.role}</span>
+                  <span className="project-date">
+                    {new Date(project.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
               </Link>
-            </div>
-          ))
-        ) : (
-          <div className="empty-state">
-            <div className="empty-icon">📋</div>
-            <h3>暂无项目</h3>
-            <p>开始创建您的第一个项目吧！</p>
-            <button 
-              className="btn btn-primary"
-              onClick={() => navigate('/project/create')}
-            >
-              创建项目
-            </button>
+            ))}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default Dashboard;
-

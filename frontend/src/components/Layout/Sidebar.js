@@ -9,30 +9,23 @@ const Sidebar = ({ collapsed, onToggle }) => {
     { 
       path: '/dashboard', 
       icon: '🏠', 
+      label: '首页', 
+      key: 'dashboard',
+      description: '待办事项与概览'
+    },
+    { 
+      path: '/projects', 
+      icon: '📁', 
       label: '项目管理', 
       key: 'projects',
-      description: '管理所有项目'
+      description: '项目概览与管理'
     },
     { 
-      path: '/milestones', 
-      icon: '⏱️', 
-      label: '里程碑', 
-      key: 'milestones',
-      description: '项目里程碑管理'
-    },
-    { 
-      path: '/tasks', 
-      icon: '✅', 
-      label: '任务看板', 
-      key: 'tasks',
-      description: '可视化任务管理'
-    },
-    { 
-      path: '/members', 
-      icon: '👥', 
-      label: '成员管理', 
-      key: 'members',
-      description: '团队协作管理'
+      path: '/profile', 
+      icon: '👤', 
+      label: '个人中心', 
+      key: 'profile',
+      description: '个人信息管理'
     }
   ];
 
@@ -74,5 +67,3 @@ const Sidebar = ({ collapsed, onToggle }) => {
 };
 
 export default Sidebar;
-
-

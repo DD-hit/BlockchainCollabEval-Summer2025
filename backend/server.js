@@ -14,17 +14,69 @@ import { testConnection } from './config/database.js';
 import { AccountService } from './src/services/accountService.js';
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000; // 改为5000端口
 
-// 配置中间件
-app.use(cors());
+// CORS配置 - 支持credentials
+const corsOptions = {
+  origin: function (origin, callback) {
+    // 允许的域名列表
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5000',
+      'http://127.0.0.1:5000',
+      'http://localhost:5000/',  // 添加带斜杠的版本
+      'http://127.0.0.1:5000/'   // 添加带斜杠的版本
+    ];
+    
+    console.log('🔍 请求来源 origin:', origin);
+    
+    // 允许没有origin的请求（如移动应用、Postman等）
+    if (!origin) {
+      console.log('✅ 允许无origin请求');
+      return callback(null, true);
+    }
+    
+    // 更灵活的匹配方式 - 去掉末尾斜杠后比较
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    const normalizedAllowedOrigins = allowedOrigins.map(o => o.replace(/\/$/, ''));
+    
+    if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
+      console.log('✅ 允许的origin:', origin);
+      callback(null, true);
+    } else {
+      console.log('❌ 不允许的origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With', 
+    'Content-Type', 
+    'Accept',
+    'Authorization',
+    'Cache-Control'
+  ]
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 // 静态文件配置 
 app.use(express.static('../frontend/public')); // React构建文件
 app.use('/test', express.static('../test')); // 测试文件
 
+// 添加请求日志中间件
+app.use((req, res, next) => {
+    console.log(`📝 ${req.method} ${req.path}`);
+    console.log('📝 请求体:', req.body);
+    next();
+});
+
 // API 路由
-app.use('/api/accounts', accountRoutes);
+app.use('/api/accounts', accountRoutes);  // 确保这行存在
+app.use('/api/projects', projectManagerRoutes);
 app.use('/api/projectManager', projectManagerRoutes);
 app.use('/api/projectMembers', projectMemberRoutes);
 app.use('/api/milestones', milestoneRoutes);
@@ -33,6 +85,15 @@ app.use('/api/files', filesRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/score', scoreRoutes);
 
+// 添加404处理
+app.use('*', (req, res) => {
+    console.log('❌ 404 - 路由未找到:', req.originalUrl);
+    res.status(404).json({
+        success: false,
+        message: '路由未找到'
+    });
+});
+
 // 处理React前端路由 - 所有非API请求都返回index.html
 app.get('*', (req, res) => {
     // 对于React路由，返回index.html
@@ -40,6 +101,25 @@ app.get('*', (req, res) => {
         if (err) {
             res.status(404).json({ message: '页面不存在' });
         }
+    });
+});
+
+// 添加全局错误处理
+process.on('uncaughtException', (error) => {
+    console.error('❌ 未捕获的异常:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ 未处理的Promise拒绝:', reason);
+});
+
+// 添加Express错误处理中间件
+app.use((error, req, res, next) => {
+    console.error('❌ Express错误处理中间件:', error);
+    res.status(500).json({
+        success: false,
+        message: '服务器内部错误',
+        error: error.message
     });
 });
 

@@ -1,233 +1,113 @@
-.task-board {
-  padding: 24px;
-  background: #f8fafc;
-  min-height: 100vh;
+.task-board-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-.page-header {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 24px;
-  padding: 24px;
-}
-
-.header-content {
+.task-board-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2d3748;
+.project-info h1 {
   margin: 0 0 8px 0;
+  color: #1e293b;
+  font-size: 28px;
 }
 
-.page-subtitle {
-  color: #718096;
-  font-size: 16px;
+.project-info p {
   margin: 0;
+  color: #64748b;
+  font-size: 16px;
 }
 
-.header-actions {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.milestone-filter {
-  padding: 8px 12px;
-  border: 2px solid #e2e8f0;
-  border-radius: 6px;
-  background: white;
-  font-size: 14px;
-}
-
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: #4299e1;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #3182ce;
-}
-
-.task-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-icon {
-  font-size: 32px;
-}
-
-.stat-number {
-  font-size: 32px;
-  font-weight: 700;
-  color: #2d3748;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #718096;
-  margin-top: 4px;
-}
-
-.kanban-board {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.kanban-column {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-
-.column-header {
-  padding: 20px;
-  border-bottom: 2px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.column-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #2d3748;
-}
-
-.column-icon {
-  font-size: 20px;
-}
-
-.task-count {
-  background: #e2e8f0;
-  color: #4a5568;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.column-content {
-  padding: 20px;
-  min-height: 400px;
+.milestone-selector {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  min-width: 200px;
 }
 
-.task-card {
-  background: #f7fafc;
+.milestone-selector label {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.milestone-selector select {
+  padding: 12px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 16px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.task-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.task-header {
-  margin-bottom: 8px;
-}
-
-.task-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0;
-}
-
-.task-description {
   font-size: 14px;
-  color: #4a5568;
-  line-height: 1.5;
-  margin: 0 0 12px 0;
+  background: white;
 }
 
-.task-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.selected-milestone-info {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
 }
 
-.milestone-tag {
-  background: #e2e8f0;
-  color: #4a5568;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+.selected-milestone-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
 }
 
-.empty-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: #a0aec0;
+.selected-milestone-info p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.no-milestone {
   text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.5;
+.no-milestone h3 {
+  margin: 0 0 8px 0;
+  color: #1e293b;
 }
 
-.task-board-loading, .error-container {
+.no-milestone p {
+  margin: 0;
+  color: #64748b;
+}
+
+.loading,
+.error {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 400px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin: 24px;
+  font-size: 18px;
+  color: #64748b;
 }
 
-.loading-spinner {
-  font-size: 48px;
-  margin-bottom: 16px;
+.error {
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .task-board-page {
+    padding: 16px;
+  }
+  
+  .task-board-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .milestone-selector {
+    width: 100%;
+  }
 }

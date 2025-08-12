@@ -17,25 +17,33 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await accountAPI.login(formData);
+      console.log('尝试登录，API URL:', process.env.REACT_APP_API_URL || 'http://localhost:3001');
       
+      const response = await accountAPI.login({
+        username: formData.username,
+        password: formData.password
+      });
+
       if (response.data.success) {
-        const userData = response.data.data;
+        const { token, username, address } = response.data.data;
         
-        sessionStorage.setItem('token', userData.token);
-        sessionStorage.setItem('username', userData.username);
-        sessionStorage.setItem('address', userData.address);
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('username', username);
+        if (address) sessionStorage.setItem('address', address);
         
-        onLogin(userData);
+        console.log('Token saved:', token);
+        onLogin({ username, address, token });
       } else {
         setError(response.data.message || '登录失败');
       }
-    } catch (err) {
-      console.error('登录错误:', err);
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
+    } catch (error) {
+      console.error('登录失败:', error);
+      
+      // 更详细的错误信息
+      if (error.code === 'ERR_NETWORK' || error.message.includes('ERR_CONNECTION_REFUSED')) {
+        setError('无法连接到服务器，请检查：\n1. 后端服务器是否正在运行\n2. 服务器地址是否正确\n3. 网络连接是否正常');
       } else {
-        setError('登录失败，请检查网络连接');
+        setError(error.response?.data?.message || '登录失败，请重试');
       }
     } finally {
       setLoading(false);
