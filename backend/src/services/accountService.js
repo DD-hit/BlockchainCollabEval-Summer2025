@@ -148,25 +148,7 @@ export class AccountService {
         };
     }
 
-<<<<<<< HEAD
-    // 获取私钥
-    static async getPrivateKey(username, password) {
-        // 验证用户名和密码
-        const [user] = await pool.execute('SELECT * FROM user WHERE username = ?', [username]);
-        if (user.length === 0) {
-            throw new Error('用户不存在');
-        }
-        
-        if (user[0].password !== password) {
-            throw new Error('密码错误');
-        }
-        
-        return {
-            username: username,
-            address: user[0].address,
-            privateKey: user[0].privateKey
-        };
-=======
+
     static async getContributor(contributorAddress) {
         const [result] = await pool.execute(
             `SELECT * FROM user WHERE address = ?`,
@@ -176,7 +158,7 @@ export class AccountService {
             return null; // 或者抛出错误，取决于业务需求
         }
         return result[0].username;
->>>>>>> 2081ad49ebdf9d014002c2298632601fb9231685
+
     }
 
 }
