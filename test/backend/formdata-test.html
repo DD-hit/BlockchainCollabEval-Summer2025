@@ -161,6 +161,15 @@
 </head>
 <body>
     <h1>文件上传与评分测试</h1>
+    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+        <h3 style="margin: 0 0 10px 0; color: #155724;">🔒 安全改进说明</h3>
+        <p style="margin: 0; color: #155724;">
+            <strong>密码验证机制：</strong>现在系统使用密码验证而不是直接输入私钥，提供更好的安全性。<br>
+            • 文件上传时需要输入密码验证身份<br>
+            • 评分时需要输入密码验证身份<br>
+            • 私钥在服务器端通过密码解密，不会在前端暴露
+        </p>
+    </div>
 
     <div class="notification-section">
         <h2>通知管理</h2>
@@ -200,8 +209,8 @@
                 <div class="score-value" id="scoreValue">5</div>
                 <input type="range" id="scoreSlider" class="score-slider" min="1" max="10" value="5" oninput="updateScoreValue(this.value)">
                 
-                <label>私钥:</label>
-                <input type="password" id="privateKeyInput" placeholder="请输入您的私钥">
+                <label>密码:</label>
+                <input type="password" id="passwordInput" placeholder="请输入您的密码以验证身份">
                 
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button onclick="closeScoreModal()" class="close-btn">取消</button>
@@ -267,23 +276,40 @@
                 let content = '';
                 
                 if (notification.type === 'file') {
-                    const fileContent = JSON.parse(notification.content);
-                    content = `
-                        <div><strong>文件上传通知</strong></div>
-                        <div>文件名: ${fileContent.fileName}</div>
-                        <div>文件大小: ${fileContent.fileSize} bytes</div>
-                        <div>文件类型: ${fileContent.fileType}</div>
-                        <div>上传时间: ${new Date(fileContent.uploadTime).toLocaleString('zh-CN')}</div>
-                        <div>合约地址: ${fileContent.contractAddress || '未知'}</div>
-                    `;
+                    try {
+                        const fileContent = JSON.parse(notification.content);
+                        content = `
+                            <div><strong>文件上传通知</strong></div>
+                            <div>文件名: ${fileContent.fileName || '未知'}</div>
+                            <div>文件大小: ${fileContent.fileSize || '未知'} bytes</div>
+                            <div>文件类型: ${fileContent.fileType || '未知'}</div>
+                            <div>所属子任务: ${fileContent.subtaskId || '未知'}</div>
+                            <div>上传时间: ${fileContent.uploadTime ? new Date(fileContent.uploadTime).toLocaleString('zh-CN') : '未知'}</div>
+                            <div>合约地址: ${fileContent.contractAddress || '未知'}</div>
+                        `;
+                    } catch (error) {
+                        content = `<div><strong>文件上传通知</strong></div><div>内容解析失败: ${error.message}</div>`;
+                    }
                 } else {
                     content = `<div>${notification.content || '未知类型通知'}</div>`;
                 }
                 
                 // 只有文件通知才显示评分按钮
-                const scoreButton = notification.type === 'file' ? 
-                    `<button onclick="goToScore('${JSON.parse(notification.content).contractAddress}', ${notification.id})" class="score-btn">前往评分</button>` : 
-                    `<button onclick="markAsRead(${notification.id})" class="score-btn">标记已读</button>`;
+                let scoreButton;
+                if (notification.type === 'file') {
+                    try {
+                        const fileContent = JSON.parse(notification.content);
+                        if (fileContent.contractAddress && fileContent.contractAddress !== 'undefined') {
+                            scoreButton = `<button onclick="goToScore('${fileContent.contractAddress}', ${notification.id})" class="score-btn">前往评分</button>`;
+                        } else {
+                            scoreButton = `<button onclick="markAsRead(${notification.id})" class="score-btn">标记已读</button>`;
+                        }
+                    } catch (error) {
+                        scoreButton = `<button onclick="markAsRead(${notification.id})" class="score-btn">标记已读</button>`;
+                    }
+                } else {
+                    scoreButton = `<button onclick="markAsRead(${notification.id})" class="score-btn">标记已读</button>`;
+                }
                 
                 html += `
                     <div class="notification-item" data-id="${notification.id}">
@@ -294,7 +320,7 @@
                             </div>
                             ${scoreButton}
                         </div>
-                        <div class="notification-content">
+                        <div class="notification-content" data-content='${notification.content || ''}'>
                             ${content}
                         </div>
                     </div>
@@ -346,6 +372,7 @@
         // 全局变量保存当前评分的合约地址和通知ID
         let currentContractAddress = '';
         let currentNotificationId = '';
+        let currentSubtaskId = '';
 
         // 前往评分页面
         async function goToScore(contractAddress, notificationId) {
@@ -356,6 +383,29 @@
 
             currentContractAddress = contractAddress;
             currentNotificationId = notificationId;
+            
+            // 从通知内容中获取 subtaskId
+            try {
+                const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+                if (notificationElement) {
+                    const contentElement = notificationElement.querySelector('.notification-content');
+                    const contentData = contentElement.getAttribute('data-content');
+                    
+                    if (contentData) {
+                        const fileContent = JSON.parse(contentData);
+                        currentSubtaskId = fileContent.subtaskId || '';
+                    } else {
+                        console.error('通知内容为空');
+                        currentSubtaskId = '';
+                    }
+                } else {
+                    console.error('找不到通知元素:', notificationId);
+                    currentSubtaskId = '';
+                }
+            } catch (error) {
+                console.error('获取subtaskId失败:', error);
+                currentSubtaskId = '';
+            }
             
             try {
 
@@ -414,7 +464,7 @@
             // 重置表单
             document.getElementById('scoreSlider').value = 5;
             document.getElementById('scoreValue').textContent = '5';
-            document.getElementById('privateKeyInput').value = '';
+            document.getElementById('passwordInput').value = '';
         }
 
         // 关闭评分模态框
@@ -430,10 +480,10 @@
         // 提交评分
         async function submitScore() {
             const score = parseInt(document.getElementById('scoreSlider').value);
-            const privateKey = document.getElementById('privateKeyInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
 
-            if (!privateKey) {
-                alert('请输入私钥');
+            if (!password) {
+                alert('请输入密码以验证身份');
                 return;
             }
 
@@ -452,7 +502,8 @@
                     body: JSON.stringify({
                         contractAddress: currentContractAddress,
                         score: score,
-                        privateKey: privateKey
+                        password: password,
+                        subtaskId: currentSubtaskId
                     })
                 });
 
@@ -465,11 +516,14 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert('评分成功！\n交易哈希: ' + result.data);
-                    console.log('transactionHash', result.data.transactionHash);
+                    alert('评分成功！\n交易哈希: ' + result.data.transactionHash);
                     // 标记通知为已读
                     if (currentNotificationId) {
                         markAsRead(currentNotificationId);
+                    }
+                    let isAllRead = await checkAllScored();
+                    if (isAllRead) {
+                        updateContributionPoint();
                     }
                     closeScoreModal();
                     // 刷新通知列表
@@ -506,10 +560,10 @@
                 return;
             }
 
-            // 弹出私钥输入框
-            const privateKey = prompt('请输入您的私钥:');
-            if (!privateKey || privateKey.trim() === '') {
-                resultDiv.textContent = '请输入私钥';
+            // 弹出密码输入框（用于验证身份和解密私钥）
+            const password = prompt('请输入您的密码以验证身份:');
+            if (!password || password.trim() === '') {
+                resultDiv.textContent = '请输入密码';
                 return;
             }
 
@@ -518,7 +572,7 @@
 
             formData.append('description', descriptionInput.value.trim());
             formData.append('subtaskId', subtaskIdInput.value);
-            formData.append('privateKey', privateKey.trim());
+            formData.append('password', password.trim());
 
             console.log(formData.get('files'));
             
@@ -546,6 +600,34 @@
                 }
             } catch (error) {
                 resultDiv.textContent = '上传失败: ' + error.message;
+            }
+        }
+
+        // 检查是否全部评分
+        async function checkAllScored() {
+            const response = await fetch(`/api/notifications/isAllRead/${currentSubtaskId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                }
+            });
+            const result = await response.json();
+            return result.data;
+        }
+
+        // 更新贡献点
+        async function updateContributionPoint() {
+            const response = await fetch(`/api/score/updateContributionPoint/${currentContractAddress}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                }
+            });
+            const result = await response.json();
+            if (result.success) {
+                console.log('贡献点更新成功');
+            } else {
+                console.log('贡献点更新失败');
             }
         }
 

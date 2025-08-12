@@ -22,8 +22,10 @@ static async downloadFile(filename) {
     }
 }
 
-    static async uploadFiles(file, description, username, subtaskId, privateKey) {
+    static async uploadFiles(file, description, username, subtaskId, verifiedPrivateKey) {
         try {
+            // 注意：verifiedPrivateKey 是已经通过密码验证并解密得到的私钥
+            // 这样可以确保只有知道正确密码的用户才能使用自己的私钥
 
             // 计算文件hash
             const fileHash = await calculateFileHash(file);
@@ -53,7 +55,7 @@ static async downloadFile(filename) {
                     endTime                // _subtaskEndtime: 结束时间
                 ],
                 fromAddress,
-                privateKey
+                verifiedPrivateKey
             );
 
             const [result] = await pool.execute(

@@ -1,23 +1,14 @@
 // controllers/scoreController.js - 评分控制层
 import { ScoreService } from '../services/scoreService.js';
+import { AccountService } from '../services/accountService.js';
 
 /**
  * 提交评分
  */
 export const submitScore = async (req, res) => {
     try {
-        const { contractAddress, score, privateKey } = req.body;
+        const { contractAddress, score, password } = req.body;
         let address = req.user.address; // 从token中获取用户地址
-
-        // 如果token中没有address，则从数据库查询
-        if (!address) {
-            console.log('Token中没有address，从数据库查询用户:', req.user.username);
-            const { getAddress } = await import('../utils/eth.js');
-            address = await getAddress(req.user.username);
-        }
-
-        console.log('用户地址:', address);
-        console.log('合约地址:', contractAddress);
 
         // 验证请求参数
         if (!contractAddress) {
@@ -34,16 +25,28 @@ export const submitScore = async (req, res) => {
             });
         }
 
-        if (!privateKey) {
+        if (!password) {
             return res.status(400).json({
                 success: false,
-                message: '私钥不能为空'
+                message: '密码不能为空'
             });
         }
 
-        // 提交评分（合约会自动处理权限检查）
-        const receipt = await ScoreService.Scored(contractAddress, address, score, privateKey);
+        // 验证密码并获取私钥
+        const username = req.user.username;
+        let userPrivateKey;
+        try {
+            // 验证密码并解密用户的私钥
+            userPrivateKey = await AccountService.getPrivateKey(username, password);
+        } catch (error) {
+            return res.status(400).json({
+                success: false,
+                message: '密码验证失败：' + error.message
+            });
+        }
 
+        // 提交评分（使用验证过的私钥进行区块链交易）
+        const receipt = await ScoreService.Scored(contractAddress, address, score, userPrivateKey.privateKey);
         res.json({
             success: true,
             message: '评分成功',
@@ -53,6 +56,7 @@ export const submitScore = async (req, res) => {
                 blockNumber: receipt.blockNumber ? receipt.blockNumber.toString() : '0'
             }
         });
+
     } catch (error) {
         console.error('提交评分失败:', error);
         res.status(500).json({
@@ -277,6 +281,20 @@ export const getTimeFactor = async (req, res) => {
         });
     } catch (error) {
         console.error('获取时间因子失败:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+export const updateContributionPoint = async (req, res) => {
+    try {
+        const { contractAddress } = req.params;
+        const result = await ScoreService.updateContributionPoint(contractAddress);
+        res.json(result);
+    } catch (error) {
+        console.error('更新贡献点失败:', error);
         res.status(500).json({
             success: false,
             message: error.message

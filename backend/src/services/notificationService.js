@@ -10,7 +10,7 @@ export class NotificationService {
         return result;
     }
 
-    static async addFileNotification(sender, receiver, projectId, fileId) {
+    static async addFileNotification(sender, receiver, subtaskId, fileId) {
         try {
             const [fileInfo] = await pool.execute(
                 `SELECT * FROM files WHERE id = ?`,
@@ -23,11 +23,12 @@ export class NotificationService {
                 fileSize: fileInfo[0].fileSize,
                 fileType: fileInfo[0].fileType,
                 fileHash: fileInfo[0].fileHash,
-                uploadTime: fileInfo[0].uploadTime
+                uploadTime: fileInfo[0].uploadTime,
+                subtaskId: fileInfo[0].subtaskId
             }
             const [result] = await pool.execute(
-                `INSERT INTO notifications (sender, receiver, type, projectId, fileId,content,isRead,createdTime) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-                [sender, receiver, 'file', projectId, fileId, content, false]
+                `INSERT INTO notifications (sender, receiver, type, subtaskId, fileId, content, isRead, createdTime) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+                [sender, receiver, 'file', subtaskId, fileId, JSON.stringify(content), false]
             );
             return result;
         } catch (error) {
@@ -45,6 +46,14 @@ export class NotificationService {
         } catch (error) {
             throw new Error(`标记通知为已读失败: ${error.message}`);
         }
+    }
+
+    static async isAllRead(subtaskId) {
+        const [result] = await pool.execute(
+            `SELECT COUNT(*) as count FROM notifications WHERE subtaskId = ? AND isRead = 0`,
+            [subtaskId]
+        );
+        return result[0].count === 0;
     }
 
 }

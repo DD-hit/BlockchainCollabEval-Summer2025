@@ -1,9 +1,39 @@
 import Web3 from 'web3';
 import { WEB3_PROVIDER } from '../config/config.js';
 import { ContributionScoreABI } from '../utils/contracts.js';
-
+import { pool } from '../../config/database.js';
+import { AccountService } from './accountService.js';
 
 export class ScoreService {
+
+    //更新项目成员表里sender的贡献点
+    static async updateContributionPoint(contractAddress) {
+        console.log(`🔧 开始更新贡献点 - 合约地址: ${contractAddress}`);
+        
+        const web3 = new Web3(WEB3_PROVIDER);
+        const contract = new web3.eth.Contract(ContributionScoreABI, contractAddress);
+        const contributorAddress = await contract.methods.contributor().call();
+        const contributor = await AccountService.getContributor(contributorAddress);
+        
+        console.log(`🔧 贡献者地址: ${contributorAddress}`);
+        console.log(`🔧 贡献者用户名: ${contributor}`);
+        
+        if (!contributor) {
+            throw new Error(`找不到地址 ${contributorAddress} 对应的用户`);
+        }
+        
+        const contributionPoint = await contract.methods.calculateContributionPoint().call();
+        console.log(`🔧 贡献点数: ${contributionPoint}`);
+        
+        const [result] = await pool.execute(
+            `UPDATE project_members SET contributionPoint = contributionPoint + ? WHERE username = ?`,
+            [contributionPoint, contributor]
+        );
+        
+        console.log(`🔧 数据库更新结果:`, result);
+        return result;
+    }
+
     static async Scored(contractAddress, address, score, privateKey) {
         const web3 = new Web3(WEB3_PROVIDER);
 
@@ -25,26 +55,26 @@ export class ScoreService {
             const currentScore = await contract.methods.scores(address).call();
             const endTime = await contract.methods.subtaskEndtime().call();
             const currentTime = Math.floor(Date.now() / 1000);
-            
+
             // 检查各种失败条件
             if (address.toLowerCase() === contributor.toLowerCase()) {
                 throw new Error('不能给自己评分');
             }
-            
+
             if (score < 1 || score > 10) {
                 throw new Error('分数范围必须在1-10之间');
             }
-            
+
             if (parseInt(currentScore) > 0) {
                 throw new Error('您已经评过分了，每个地址只能评分一次');
             }
-            
+
             if (currentTime > parseInt(endTime)) {
                 throw new Error('项目已截止，无法评分');
             }
-            
+
             console.log(`✅ 评分检查通过 - 评分者: ${address}, 分数: ${score}`);
-            
+
             // 获取当前gas价格
             const gasPrice = await web3.eth.getGasPrice();
             const gasLimit = 200000;
@@ -81,16 +111,16 @@ export class ScoreService {
     static async getAverageScore(contractAddress) {
         const web3 = new Web3(WEB3_PROVIDER);
         const contract = new web3.eth.Contract(ContributionScoreABI, contractAddress);
-        
+
         // 直接从合约获取总分和评分数量，在JavaScript中计算精确平均值
         const totalScore = await contract.methods.totalScore().call();
         const scoreCount = await contract.methods.scoreCount().call();
-        
+
         if (parseInt(scoreCount) === 0) return 0;
-        
+
         // 使用JavaScript的浮点运算得到精确平均值
         const average = parseInt(totalScore) / parseInt(scoreCount);
-        
+
         // 保留两位小数
         return Math.round(average * 100) / 100;
     }
@@ -143,7 +173,7 @@ export class ScoreService {
 
         const totalScore = parseInt(info._totalScore);
         const scoreCount = parseInt(info._scoreCount);
-        
+
         // 计算精确的平均分
         const averageScore = scoreCount === 0 ? 0 : Math.round((totalScore / scoreCount) * 100) / 100;
 
@@ -152,7 +182,7 @@ export class ScoreService {
             contributionHash: info._contributionHash,
             totalScore,
             scoreCount,
-            averageScore, 
+            averageScore,
             weight: parseInt(info._weight),
             subtaskEndtime: parseInt(info._subtaskEndtime)
         };

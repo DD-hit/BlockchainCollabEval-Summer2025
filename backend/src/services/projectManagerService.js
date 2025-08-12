@@ -8,11 +8,7 @@ export class ProjectManagerService {
         description, 
         projectOwner, 
         startTime, 
-        endTime,
-        // blockchainType = 'EVM',
-        // enableDAO = false,
-        // templateType = 'solidity',
-        // isPublic = true
+        endTime
     ) {
         // 验证输入
         if (!projectName || !description || !projectOwner) {
@@ -28,6 +24,7 @@ export class ProjectManagerService {
         );
         
         return {
+<<<<<<< HEAD
             projectId: result.insertId,
             projectName,
             description,
@@ -35,6 +32,15 @@ export class ProjectManagerService {
             startTime,
             endTime
         };
+=======
+            projectId: projectId,
+            projectName: projectName,
+            description: description,
+            projectOwner: projectOwner,
+            startTime: startTime,
+            endTime: endTime,
+        }
+>>>>>>> 2081ad49ebdf9d014002c2298632601fb9231685
     }
 
     //获取项目列表
@@ -46,7 +52,7 @@ export class ProjectManagerService {
     //获取我的项目列表
     static async getMyProjectList(username) {
         const [queryResult] = await pool.execute(
-            'SELECT * FROM projects WHERE projectId IN (SELECT projectId FROM project_members WHERE username = ?) ORDER BY projectId DESC', 
+            'SELECT * FROM projects p WHERE p.projectId IN (SELECT projectId FROM project_members pm WHERE pm.username = ?) ORDER BY p.projectId DESC', 
             [username]
         );
         return queryResult;

@@ -8,7 +8,8 @@ import {
     getScorersCount,
     getContributionPoints,
     getUserScore,
-    getTimeFactor
+    getTimeFactor,
+    updateContributionPoint
 } from '../controllers/scoreController.js';
 
 const router = express.Router();
@@ -68,6 +69,13 @@ router.get('/user-score/:contractAddress', verifyToken, getUserScore);
  * 需要验证token
  */
 router.get('/time-factor/:contractAddress', verifyToken, getTimeFactor);
+
+/**
+ * GET /api/score/updateContributionPoint/:contractAddress
+ * 更新贡献点
+ * 需要验证token
+ */
+router.get('/updateContributionPoint/:contractAddress', verifyToken, updateContributionPoint);
 
 
 export default router;
