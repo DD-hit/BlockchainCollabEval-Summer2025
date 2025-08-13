@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import "./TopBar.css"
 
 const TopBar = ({ user, onLogout }) => {
-  const [searchQuery, setSearchQuery] = useState("")
+  // const [searchQuery, setSearchQuery] = useState("")
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
 
@@ -29,8 +29,8 @@ const TopBar = ({ user, onLogout }) => {
   return (
     <div className="top-bar">
       <div className="top-bar-left">
-
-        <div className="search-bar">
+        {/* 搜索框已隐藏 */}
+        {/* <div className="search-bar">
           <span className="search-icon">🔍</span>
           <input
             type="text"
@@ -39,7 +39,7 @@ const TopBar = ({ user, onLogout }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </div>
+        </div> */}
       </div>
 
       <div className="top-bar-right">
