@@ -30,8 +30,13 @@ export default function FileModule({ projectId, subtaskId }) {
   const onUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    
+    // 提示用户输入密码
+    const password = prompt("请输入您的密码以验证身份：")
+    if (!password) return
+    
     setUploading(true)
-    const res = await fileAPI.uploadToSubtask(subtaskId, file)
+    const res = await fileAPI.uploadToSubtask(subtaskId, file, password)
     setUploading(false)
     if (res.ok) {
       addNotification({
@@ -39,7 +44,7 @@ export default function FileModule({ projectId, subtaskId }) {
         title: "文件上传成功",
         message: file.name,
         meta: { projectId, subtaskId, fileId: res.data?.id },
-      })
+      }, false)
       load()
     } else {
       alert(res.error?.message || "上传失败")

@@ -2,6 +2,43 @@
 import { ScoreService } from '../services/scoreService.js';
 import { AccountService } from '../services/accountService.js';
 
+export const getProjectContributions = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const result = await ScoreService.getProjectContributions(projectId);
+        res.json({
+            success: true,
+            message: '获取项目贡献统计成功',
+            data: result
+        });
+    } catch (error) {
+        console.error('获取项目贡献统计失败:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+export const getMemberContributions = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const username = req.user.username;
+        const result = await ScoreService.getMemberContributions(projectId, username);
+        res.json({
+            success: true,
+            message: '获取成员贡献成功',
+            data: result
+        });
+    } catch (error) {
+        console.error('获取成员贡献失败:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 /**
  * 提交评分
  */
@@ -295,6 +332,82 @@ export const updateContributionPoint = async (req, res) => {
         res.json(result);
     } catch (error) {
         console.error('更新贡献点失败:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+/**
+ * 手动更新贡献点（用于调试和手动触发）
+ */
+export const manualUpdateContributionPoint = async (req, res) => {
+    try {
+        const { contractAddress } = req.params;
+        
+        if (!contractAddress) {
+            return res.status(400).json({
+                success: false,
+                message: '合约地址不能为空'
+            });
+        }
+
+
+        
+        // 直接更新贡献点，不检查是否所有人都评分完了
+        const result = await ScoreService.updateContributionPoint(contractAddress);
+        
+        res.json({
+            success: true,
+            message: '贡献点更新成功',
+            data: {
+                affectedRows: result.affectedRows,
+                contractAddress: contractAddress
+            }
+        });
+
+    } catch (error) {
+        console.error('手动更新贡献点失败:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+/**
+ * 检查评分状态
+ */
+export const checkScoreStatus = async (req, res) => {
+    try {
+        const { contractAddress } = req.params;
+        
+        if (!contractAddress) {
+            return res.status(400).json({
+                success: false,
+                message: '合约地址不能为空'
+            });
+        }
+
+        // 检查是否应该更新贡献点
+        const shouldUpdate = await ScoreService.shouldUpdateContributionPoint(contractAddress);
+        
+        // 获取合约信息
+        const contractInfo = await ScoreService.getContractInfo(contractAddress);
+        
+        res.json({
+            success: true,
+            message: '获取评分状态成功',
+            data: {
+                shouldUpdate,
+                contractInfo,
+                contractAddress
+            }
+        });
+
+    } catch (error) {
+        console.error('检查评分状态失败:', error);
         res.status(500).json({
             success: false,
             message: error.message

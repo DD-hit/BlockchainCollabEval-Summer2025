@@ -21,7 +21,7 @@ export class SubtaskService {
         const params = [
             milestoneId,
             title,
-            status || 'todo',
+            status || 'in_progress',
             description || null,
             assignedTo || null,
             startTime || null,
@@ -29,7 +29,7 @@ export class SubtaskService {
             priority || 2 // 默认中等优先级
         ];
         
-        console.log('创建子任务参数:', params); // 调试日志
+
         
         const [result] = await pool.execute(
             'INSERT INTO subtasks (milestoneId, title, status, description, assignedTo, startTime, endTime, priority) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
@@ -66,5 +66,33 @@ export class SubtaskService {
         const milestoneId = await this.getMilestoneIdBySubtaskId(subtaskId);
         const projectId = await MilestoneService.getProjectIdByMilestoneId(milestoneId);
         return projectId;
+    }
+
+    static async getMyTasks(username) {
+        // 获取分配给当前用户的任务
+        const [queryResult] = await pool.execute(`
+            SELECT 
+                s.subtaskId,
+                s.title,
+                s.status,
+                s.description,
+                s.assignedTo,
+                s.startTime,
+                s.endTime,
+                s.priority,
+                s.milestoneId,
+                m.title as milestoneTitle,
+                p.projectId,
+                p.projectName,
+                p.description as projectDescription
+            FROM subtasks s
+            JOIN milestones m ON s.milestoneId = m.milestoneId
+            JOIN projects p ON m.projectId = p.projectId
+            WHERE s.assignedTo = ?
+            ORDER BY s.priority DESC, s.endTime ASC
+        `, [username]);
+        
+
+        return queryResult;
     }
 }

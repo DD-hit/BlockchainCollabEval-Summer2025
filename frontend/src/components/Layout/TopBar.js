@@ -5,24 +5,21 @@ import { useNotifications } from "../../context/notifications"
 import { Link } from 'react-router-dom';
 import "./TopBar.css"
 
-const TopBar = ({ user, currentProject, onProjectChange, onLogout }) => {
+const TopBar = ({ user, onLogout }) => {
   const [searchQuery, setSearchQuery] = useState("")
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showProjectMenu, setShowProjectMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
 
   const userMenuRef = useRef(null)
-  const projectMenuRef = useRef(null)
   const notificationRef = useRef(null)
 
   const { items, unreadCount, markAllRead, clear } = useNotifications()
 
-  const projects = [{ id: 1, name: "区块链投票系统", status: "active", progress: 75 }]
+  const projects = []
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) setShowUserMenu(false)
-      if (projectMenuRef.current && !projectMenuRef.current.contains(event.target)) setShowProjectMenu(false)
       if (notificationRef.current && !notificationRef.current.contains(event.target)) setShowNotifications(false)
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -32,35 +29,6 @@ const TopBar = ({ user, currentProject, onProjectChange, onLogout }) => {
   return (
     <div className="top-bar">
       <div className="top-bar-left">
-        <div className="project-selector" ref={projectMenuRef}>
-          <div className="current-project" onClick={() => setShowProjectMenu(!showProjectMenu)}>
-            <div className="project-info">
-              <h4>{currentProject.name}</h4>
-              <p>{currentProject.description}</p>
-            </div>
-            <span>▼</span>
-          </div>
-
-          {showProjectMenu && (
-            <div className="project-dropdown">
-              {projects.map((project) => (
-                <div
-                  key={project.id}
-                  className="project-option"
-                  onClick={() => {
-                    onProjectChange(project)
-                    setShowProjectMenu(false)
-                  }}
-                >
-                  <div className="project-info">
-                    <h4>{project.name}</h4>
-                    <p>进度: {project.progress}%</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         <div className="search-bar">
           <span className="search-icon">🔍</span>
@@ -103,6 +71,20 @@ const TopBar = ({ user, currentProject, onProjectChange, onLogout }) => {
                       <div className="notification-meta">
                         <span>{new Date(n.timestamp).toLocaleString()}</span>
                       </div>
+                      {/* 为文件上传通知添加"去评分"按钮 */}
+                      {n.meta?.subtaskId && n.type === "file_upload" && (
+                        <div className="notification-actions">
+                          <button 
+                            className="notification-action-btn"
+                            onClick={() => {
+                              // 跳转到子任务页面
+                              window.location.href = n.link || `/subtask/${n.meta.subtaskId}`;
+                            }}
+                          >
+                            去评分
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

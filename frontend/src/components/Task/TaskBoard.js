@@ -17,6 +17,25 @@ const TaskBoard = ({ user }) => {
     }
   }, [projectId]);
 
+  // 监听子任务状态变化，自动刷新项目数据
+  useEffect(() => {
+
+    
+    const handleSubtaskChange = (event) => {
+      
+      loadProjectData();
+    };
+
+    // 监听自定义事件
+    window.addEventListener('subtaskStatusChanged', handleSubtaskChange);
+    
+    
+    return () => {
+      window.removeEventListener('subtaskStatusChanged', handleSubtaskChange);
+      
+    };
+  }, [projectId]);
+
   const loadProjectData = async () => {
     try {
       const [projectRes, milestonesRes] = await Promise.all([
@@ -101,6 +120,7 @@ const TaskBoard = ({ user }) => {
           milestoneId={selectedMilestone.id}
           user={user}
           isProjectOwner={isProjectOwner}
+          onSubtaskChange={loadProjectData}
         />
       )}
     </div>

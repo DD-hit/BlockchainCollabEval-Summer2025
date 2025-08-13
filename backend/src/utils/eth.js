@@ -19,7 +19,7 @@ export const getBalance = async (address) => {
     try {
         const web3 = new Web3(WEB3_PROVIDER);
         const balance = await web3.eth.getBalance(address);
-        console.log(`地址 ${address} 的余额:`, balance);
+
         return balance;
     } catch (error) {
         console.error('获取余额失败:', error);
@@ -53,14 +53,11 @@ export const deployContract = async (abi, bytecode, constructorArgs, fromAddress
     const pendingNonce = await web3.eth.getTransactionCount(fromAddress, 'pending');
     const latestNonce = await web3.eth.getTransactionCount(fromAddress, 'latest');
     
-    console.log(`地址 ${fromAddress} 的 nonce 状态:`);
-    console.log(`  - pending nonce: ${pendingNonce}`);
-    console.log(`  - latest nonce: ${latestNonce}`);
-    console.log(`  - 差异: ${pendingNonce - latestNonce} (pending - latest)`);
+    
     
     // 使用 latest nonce 来避免 pending 交易的影响
     const nonce = latestNonce;
-    console.log(`使用 nonce: ${nonce}`);
+    
     // 获取当前gas价格
     const gasPrice = await web3.eth.getGasPrice();
 

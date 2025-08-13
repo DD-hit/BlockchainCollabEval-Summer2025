@@ -1,22 +1,25 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import api from "../../utils/api"
 import MemberSelector from "../Common/MemberSelector"
+import { projectMemberAPI } from "../../utils/api"
 import "./SubtaskManagement.css"
 
-const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
+const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskChange }) => {
   const [subtasks, setSubtasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingSubtask, setEditingSubtask] = useState(null)
-  const [viewingSubtask, setViewingSubtask] = useState(null)
+  const [projectMembers, setProjectMembers] = useState([])
+
   const [newSubtask, setNewSubtask] = useState({
     title: "",
     description: "",
     assignee: "",
     priority: "medium",
-    status: "todo",
+    status: "in_progress",
     startTime: "",
     endTime: "",
   })
@@ -26,20 +29,33 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
     const priorityMap = {
       'low': 1,
       'medium': 2,
-      'high': 3,
-      'urgent': 4
+      'high': 3
     };
     return priorityMap[priority] || 2; // 默认中等优先级
   }
 
+  const convertNumberToPriority = (priorityNumber) => {
+    const priorityMap = {
+      1: 'low',
+      2: 'medium',
+      3: 'high'
+    };
+    return priorityMap[priorityNumber] || 'medium';
+  }
+
+
+
   useEffect(() => {
     loadSubtasks()
+    if (projectId) {
+      loadProjectMembers()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [milestoneId])
+  }, [milestoneId, projectId])
 
   const loadSubtasks = async () => {
     try {
-      const response = await api.get(`/api/subtasks/getSubtaskList/${milestoneId}`) // 修正路径
+      const response = await api.get(`/api/subtasks/getSubtaskList/${milestoneId}`)
       if (response.data.success) {
         setSubtasks(response.data.data || [])
       }
@@ -47,6 +63,17 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
       console.error("加载子任务列表失败:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadProjectMembers = async () => {
+    try {
+      const response = await projectMemberAPI.members(projectId)
+      if (response.ok) {
+        setProjectMembers(response.data || [])
+      }
+    } catch (error) {
+      console.error("加载项目成员失败:", error)
     }
   }
 
@@ -61,31 +88,37 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
       const subtaskData = {
         milestoneId: Number.parseInt(milestoneId),
         title: newSubtask.title.trim(),
-        status: newSubtask.status || "todo",
+        status: newSubtask.status || "in_progress",
         description: newSubtask.description.trim() || null,
         assignedTo: newSubtask.assignee || null,
-        // 转换为MySQL DATETIME格式 (YYYY-MM-DD HH:mm:ss)
         startTime: newSubtask.startTime ? new Date(newSubtask.startTime).toISOString().slice(0, 19).replace('T', ' ') : null,
         endTime: newSubtask.endTime ? new Date(newSubtask.endTime).toISOString().slice(0, 19).replace('T', ' ') : null,
-        priority: convertPriorityToNumber(newSubtask.priority), // 转换为数字
+        priority: convertPriorityToNumber(newSubtask.priority),
       }
-
-      console.log('发送的子任务数据:', subtaskData) // 调试日志
 
       const response = await api.post("/api/subtasks/createSubtask", subtaskData)
       if (response.data.success) {
-        setSubtasks([...subtasks, response.data.data])
         setNewSubtask({
           title: "",
           description: "",
           assignee: "",
           priority: "medium",
-          status: "todo",
+          status: "in_progress",
           startTime: "",
           endTime: "",
         })
         setShowCreateModal(false)
         alert("子任务创建成功")
+        // 重新加载子任务列表
+        await loadSubtasks()
+        // 通知父组件数据发生变化
+        if (onSubtaskChange) {
+          onSubtaskChange()
+        }
+        // 触发全局事件，通知其他组件刷新进度
+        window.dispatchEvent(new CustomEvent('subtaskStatusChanged', {
+          detail: { action: 'create', milestoneId }
+        }));
       }
     } catch (error) {
       console.error("创建子任务失败:", error)
@@ -103,22 +136,28 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
     try {
       const subtaskData = {
         title: editingSubtask.title.trim(),
-        status: editingSubtask.status || "todo",
+        status: editingSubtask.status || "in_progress",
         description: editingSubtask.description?.trim() || null,
         assignedTo: editingSubtask.assignee || null,
-        // 转换为MySQL DATETIME格式
         startTime: editingSubtask.startTime ? new Date(editingSubtask.startTime).toISOString().slice(0, 19).replace('T', ' ') : null,
         endTime: editingSubtask.endTime ? new Date(editingSubtask.endTime).toISOString().slice(0, 19).replace('T', ' ') : null,
-        priority: convertPriorityToNumber(editingSubtask.priority), // 转换为数字
+        priority: convertPriorityToNumber(editingSubtask.priority),
       }
-
-      console.log('更新的子任务数据:', subtaskData) // 调试日志
 
       const response = await api.put(`/api/subtasks/updateSubtask/${editingSubtask.subtaskId || editingSubtask.id}`, subtaskData)
       if (response.data.success) {
-        setSubtasks(subtasks.map((s) => (s.subtaskId === editingSubtask.subtaskId ? response.data.data : s)))
         setEditingSubtask(null)
         alert("子任务更新成功")
+        // 重新加载子任务列表
+        await loadSubtasks()
+        // 通知父组件数据发生变化
+        if (onSubtaskChange) {
+          onSubtaskChange()
+        }
+        // 触发全局事件，通知其他组件刷新进度
+        window.dispatchEvent(new CustomEvent('subtaskStatusChanged', {
+          detail: { action: 'update', subtaskId: editingSubtask.subtaskId || editingSubtask.id, milestoneId }
+        }));
       }
     } catch (error) {
       console.error("更新子任务失败:", error)
@@ -130,10 +169,19 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
     if (!window.confirm("确定要删除这个子任务吗？")) return
 
     try {
-      const response = await api.delete(`/api/subtasks/deleteSubtask/${subtaskId}`) // 修正路径
+      const response = await api.delete(`/api/subtasks/deleteSubtask/${subtaskId}`)
       if (response.data.success) {
-        setSubtasks(subtasks.filter((s) => s.id !== subtaskId))
         alert("子任务删除成功")
+        // 重新加载子任务列表
+        await loadSubtasks()
+        // 通知父组件数据发生变化
+        if (onSubtaskChange) {
+          onSubtaskChange()
+        }
+        // 触发全局事件，通知其他组件刷新进度
+        window.dispatchEvent(new CustomEvent('subtaskStatusChanged', {
+          detail: { action: 'delete', subtaskId, milestoneId }
+        }));
       }
     } catch (error) {
       console.error("删除子任务失败:", error)
@@ -143,14 +191,12 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
 
   const handleStatusChange = async (subtaskId, newStatus) => {
     try {
-      // 找到要更新的子任务
       const subtask = subtasks.find(s => s.subtaskId === subtaskId || s.id === subtaskId);
       if (!subtask) {
         alert("找不到要更新的子任务");
         return;
       }
 
-      // 使用现有的更新接口，只更新状态
       const subtaskData = {
         title: subtask.title,
         status: newStatus,
@@ -163,11 +209,16 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
 
       const response = await api.put(`/api/subtasks/updateSubtask/${subtask.subtaskId || subtask.id}`, subtaskData)
       if (response.data.success) {
-        setSubtasks(subtasks.map((s) => 
-          (s.subtaskId === subtaskId || s.id === subtaskId) 
-            ? { ...s, status: newStatus } 
-            : s
-        ))
+        // 重新加载子任务列表
+        await loadSubtasks()
+        // 通知父组件数据发生变化
+        if (onSubtaskChange) {
+          onSubtaskChange()
+        }
+        // 触发全局事件，通知其他组件刷新进度
+        window.dispatchEvent(new CustomEvent('subtaskStatusChanged', {
+          detail: { subtaskId, newStatus, milestoneId }
+        }));
       }
     } catch (error) {
       console.error("更新任务状态失败:", error)
@@ -176,38 +227,44 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
   }
 
   const getPriorityColor = (priority) => {
-    const colors = { low: "#10b981", medium: "#f59e0b", high: "#ef4444", urgent: "#dc2626" }
+    const colors = { low: "#10b981", medium: "#f59e0b", high: "#ef4444" }
     return colors[priority] || colors.medium
   }
+  
   const getPriorityText = (priority) => {
-    const texts = { low: "低", medium: "中", high: "高", urgent: "紧急" }
+    const texts = { low: "低", medium: "中", high: "高" }
     return texts[priority] || "中"
   }
+  
   const getStatusColor = (status) => {
-    const colors = { todo: "#64748b", in_progress: "#00d4ff", review: "#f59e0b", done: "#10b981" }
-    return colors[status] || colors.todo
+    const colors = { in_progress: "#00d4ff", completed: "#10b981" }
+    return colors[status] || colors.in_progress
   }
+  
   const getStatusText = (status) => {
-    const texts = { todo: "待开始", in_progress: "进行中", review: "待审核", done: "已完成" }
-    return texts[status] || "待开始"
+    const texts = { in_progress: "进行中", completed: "已完成" }
+    return texts[status] || "进行中"
   }
+  
   const formatDate = (datetimeStr) => (datetimeStr ? new Date(datetimeStr).toLocaleDateString() : "未设置")
   const formatDateForInput = (datetimeStr) => (datetimeStr ? new Date(datetimeStr).toISOString().split("T")[0] : "")
 
   const stats = {
     total: subtasks.length,
-    todo: subtasks.filter((s) => s.status === "todo").length,
     inProgress: subtasks.filter((s) => s.status === "in_progress").length,
-    review: subtasks.filter((s) => s.status === "review").length,
-    done: subtasks.filter((s) => s.status === "done").length,
+    completed: subtasks.filter((s) => s.status === "completed").length,
   }
 
   if (loading) return <div className="loading">加载子任务列表...</div>
 
   return (
     <div className="subtask-management">
+      {/* 头部 */}
       <div className="subtask-header">
-        <h3>📋 子任务管理</h3>
+        <div className="header-content">
+          <h2>📋 子任务管理</h2>
+          <p>管理里程碑下的所有子任务</p>
+        </div>
         {isProjectOwner && (
           <button className="create-subtask-btn" onClick={() => setShowCreateModal(true)}>
             + 创建子任务
@@ -215,157 +272,126 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
         )}
       </div>
 
+      {/* 统计信息 */}
       <div className="subtask-stats">
         <div className="stat-card">
           <div className="stat-number">{stats.total}</div>
           <div className="stat-label">总任务</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{stats.todo}</div>
-          <div className="stat-label">待开始</div>
-        </div>
-        <div className="stat-card">
           <div className="stat-number">{stats.inProgress}</div>
           <div className="stat-label">进行中</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{stats.review}</div>
-          <div className="stat-label">待审核</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-number">{stats.done}</div>
+          <div className="stat-number">{stats.completed}</div>
           <div className="stat-label">已完成</div>
         </div>
       </div>
 
-      <div className="task-board">
-        {["todo", "in_progress", "review", "done"].map((status) => (
-          <div key={status} className="task-column">
-            <div className="column-header">
-              <h4>{getStatusText(status)}</h4>
-              <span className="task-count">{subtasks.filter((s) => s.status === status).length}</span>
-            </div>
-
-            <div className="task-list">
-              {subtasks
-                .filter((s) => s.status === status)
-                .map((subtask) => (
-                  <div key={subtask.subtaskId || subtask.id} className="task-card">
-                    <div className="task-header">
-                      <h5 className="task-title" onClick={() => setViewingSubtask(subtask)}>
-                        {subtask.title}
-                      </h5>
-                      <div className="task-actions">
-                        <span className="priority-badge" style={{ background: getPriorityColor(subtask.priority) }}>
-                          {getPriorityText(subtask.priority)}
-                        </span>
-                        {isProjectOwner && (
-                          <div className="action-dropdown">
-                            <button className="action-btn">⋯</button>
-                            <div className="dropdown-menu">
-                              <button
-                                onClick={() =>
-                                  setEditingSubtask({
-                                    ...subtask,
-                                    startTime: formatDateForInput(subtask.startTime),
-                                    endTime: formatDateForInput(subtask.endTime),
-                                  })
-                                }
-                              >
-                                编辑
-                              </button>
-                              <button onClick={() => handleDeleteSubtask(subtask.subtaskId || subtask.id)}>删除</button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {subtask.description && <p className="task-description">{subtask.description}</p>}
-
-                    <div className="task-meta">
-                      {subtask.assignee && (
-                        <div className="assignee">
-                          <span className="assignee-avatar">👤</span>
-                          <span className="assignee-name">{subtask.assignee}</span>
-                        </div>
-                      )}
-
-                      <div className="task-dates">
-                        {subtask.endTime && <span className="due-date">📅 {formatDate(subtask.endTime)}</span>}
-                      </div>
-                    </div>
-
-                    <div className="status-actions">
-                      {status === "todo" && (
-                        <button
-                          className="status-btn start-btn"
-                          onClick={() => handleStatusChange(subtask.subtaskId || subtask.id, "in_progress")}
-                        >
-                          开始任务
-                        </button>
-                      )}
-                      {status === "in_progress" && (
-                        <>
+      {/* 子任务列表 */}
+      <div className="subtask-list">
+        {subtasks.length === 0 ? (
+          <div className="no-subtasks">
+            <div className="no-subtasks-icon">📋</div>
+            <h3>还没有子任务</h3>
+            <p>创建第一个子任务来开始工作</p>
+            {isProjectOwner && (
+              <button className="create-first-subtask-btn" onClick={() => setShowCreateModal(true)}>
+                创建子任务
+              </button>
+            )}
+          </div>
+        ) : (
+          subtasks.map((subtask) => (
+            <div key={subtask.subtaskId || subtask.id} className="subtask-item">
+              <div className="subtask-main">
+                <div className="subtask-info">
+                  <h3 className="subtask-title">{subtask.title}</h3>
+                  {subtask.description && (
+                    <p className="subtask-description">{subtask.description}</p>
+                  )}
+                  <div className="subtask-meta">
+                    {subtask.assignee && (
+                      <span className="assignee">
+                        <span className="assignee-icon">👤</span>
+                        {subtask.assignee}
+                      </span>
+                    )}
+                    {subtask.endTime && (
+                      <span className="due-date">
+                        <span className="date-icon">📅</span>
+                        {formatDate(subtask.endTime)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="subtask-actions">
+                  <div className="subtask-badges">
+                    <span 
+                      className="status-badge" 
+                      style={{ background: getStatusColor(subtask.status) }}
+                    >
+                      {getStatusText(subtask.status)}
+                    </span>
+                    <span 
+                      className="priority-badge" 
+                      style={{ background: getPriorityColor(convertNumberToPriority(subtask.priority)) }}
+                    >
+                      {getPriorityText(convertNumberToPriority(subtask.priority))}
+                    </span>
+                  </div>
+                  
+                  <div className="action-buttons">
+                    <Link
+                      to={`/subtask/${subtask.subtaskId || subtask.id}`}
+                      className="action-btn primary"
+                    >
+                      详细
+                    </Link>
+                    {isProjectOwner && (
+                      <>
+                        {subtask.status === "completed" && (
                           <button
-                            className="status-btn review-btn"
-                            onClick={() => handleStatusChange(subtask.subtaskId || subtask.id, "review")}
-                          >
-                            提交审核
-                          </button>
-                          <button
-                            className="status-btn pause-btn"
-                            onClick={() => handleStatusChange(subtask.subtaskId || subtask.id, "todo")}
-                          >
-                            暂停
-                          </button>
-                        </>
-                      )}
-                      {status === "review" && isProjectOwner && (
-                        <>
-                          <button
-                            className="status-btn approve-btn"
-                            onClick={() => handleStatusChange(subtask.subtaskId || subtask.id, "done")}
-                          >
-                            通过
-                          </button>
-                          <button
-                            className="status-btn reject-btn"
+                            className="action-btn secondary"
                             onClick={() => handleStatusChange(subtask.subtaskId || subtask.id, "in_progress")}
                           >
-                            退回
+                            重新打开
                           </button>
-                        </>
-                      )}
-                      {status === "done" && isProjectOwner && (
-                        <button
-                          className="status-btn reopen-btn"
-                          onClick={() => handleStatusChange(subtask.subtaskId || subtask.id, "in_progress")}
+                        )}
+                      </>
+                    )}
+                   
+                    {isProjectOwner && (
+                      <div className="subtask-edit-actions">
+                        <button 
+                          className="action-btn secondary"
+                          onClick={() => setEditingSubtask({
+                            ...subtask,
+                            priority: convertNumberToPriority(subtask.priority),
+                            startTime: formatDateForInput(subtask.startTime),
+                            endTime: formatDateForInput(subtask.endTime),
+                          })}
                         >
-                          重新打开
+                          编辑
                         </button>
-                      )}
-                    </div>
+                        <button 
+                          className="action-btn danger"
+                          onClick={() => handleDeleteSubtask(subtask.subtaskId || subtask.id)}
+                        >
+                          删除
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {subtasks.length === 0 && (
-        <div className="no-subtasks">
-          <div className="no-subtasks-icon">📋</div>
-          <h3>还没有子任务</h3>
-          <p>创建第一个子任务来开始工作</p>
-          {isProjectOwner && (
-            <button className="create-first-subtask-btn" onClick={() => setShowCreateModal(true)}>
-              创建子任务
-            </button>
-          )}
-        </div>
-      )}
-
+      {/* 创建子任务模态框 */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -398,29 +424,34 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>指派给</label>
-                  <MemberSelector
-                    projectId={projectId}
-                    selectedMember={newSubtask.assignee}
-                    onMemberSelect={(member) => setNewSubtask({ ...newSubtask, assignee: member.username })}
-                    placeholder="选择负责人"
-                  />
-                </div>
+                             <div className="form-row">
+                 <div className="form-group">
+                   <label>指派给</label>
+                   <select
+                     value={newSubtask.assignee}
+                     onChange={(e) => setNewSubtask({ ...newSubtask, assignee: e.target.value })}
+                     className="form-select"
+                   >
+                     <option value="">选择负责人</option>
+                     {projectMembers.map((member) => (
+                       <option key={member.username} value={member.username}>
+                         {member.username} ({member.role})
+                       </option>
+                     ))}
+                   </select>
+                 </div>
 
-                <div className="form-group">
-                  <label>优先级</label>
-                  <select
-                    value={newSubtask.priority}
-                    onChange={(e) => setNewSubtask({ ...newSubtask, priority: e.target.value })}
-                  >
-                    <option value="low">低</option>
-                    <option value="medium">中</option>
-                    <option value="high">高</option>
-                    <option value="urgent">紧急</option>
-                  </select>
-                </div>
+                                 <div className="form-group">
+                   <label>优先级</label>
+                   <select
+                     value={newSubtask.priority}
+                     onChange={(e) => setNewSubtask({ ...newSubtask, priority: e.target.value })}
+                   >
+                     <option value="low">低</option>
+                     <option value="medium">中</option>
+                     <option value="high">高</option>
+                   </select>
+                 </div>
               </div>
 
               <div className="form-row">
@@ -454,6 +485,7 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
         </div>
       )}
 
+      {/* 编辑子任务模态框 */}
       {editingSubtask && (
         <div className="modal-overlay" onClick={() => setEditingSubtask(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -486,29 +518,34 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>指派给</label>
-                  <MemberSelector
-                    projectId={projectId}
-                    selectedMember={editingSubtask.assignee}
-                    onMemberSelect={(member) => setEditingSubtask({ ...editingSubtask, assignee: member.username })}
-                    placeholder="选择负责人"
-                  />
-                </div>
+                             <div className="form-row">
+                 <div className="form-group">
+                   <label>指派给</label>
+                   <select
+                     value={editingSubtask.assignee}
+                     onChange={(e) => setEditingSubtask({ ...editingSubtask, assignee: e.target.value })}
+                     className="form-select"
+                   >
+                     <option value="">选择负责人</option>
+                     {projectMembers.map((member) => (
+                       <option key={member.username} value={member.username}>
+                         {member.username} ({member.role})
+                       </option>
+                     ))}
+                   </select>
+                 </div>
 
-                <div className="form-group">
-                  <label>优先级</label>
-                  <select
-                    value={editingSubtask.priority}
-                    onChange={(e) => setEditingSubtask({ ...editingSubtask, priority: e.target.value })}
-                  >
-                    <option value="low">低</option>
-                    <option value="medium">中</option>
-                    <option value="high">高</option>
-                    <option value="urgent">紧急</option>
-                  </select>
-                </div>
+                                 <div className="form-group">
+                   <label>优先级</label>
+                   <select
+                     value={editingSubtask.priority}
+                     onChange={(e) => setEditingSubtask({ ...editingSubtask, priority: e.target.value })}
+                   >
+                     <option value="low">低</option>
+                     <option value="medium">中</option>
+                     <option value="high">高</option>
+                   </select>
+                 </div>
               </div>
 
               <div className="form-row">
@@ -537,10 +574,8 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
                   value={editingSubtask.status}
                   onChange={(e) => setEditingSubtask({ ...editingSubtask, status: e.target.value })}
                 >
-                  <option value="todo">待开始</option>
                   <option value="in_progress">进行中</option>
-                  <option value="review">待审核</option>
-                  <option value="done">已完成</option>
+                  <option value="completed">已完成</option>
                 </select>
               </div>
 
@@ -551,62 +586,6 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner }) => {
                 <button type="submit">更新任务</button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {viewingSubtask && (
-        <div className="modal-overlay" onClick={() => setViewingSubtask(null)}>
-          <div className="modal detail-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>任务详情</h3>
-              <button className="close-btn" onClick={() => setViewingSubtask(null)}>
-                ×
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div className="detail-section">
-                <h4>{viewingSubtask.title}</h4>
-                <div className="detail-badges">
-                  <span className="status-badge" style={{ background: getStatusColor(viewingSubtask.status) }}>
-                    {getStatusText(viewingSubtask.status)}
-                  </span>
-                  <span className="priority-badge" style={{ background: getPriorityColor(viewingSubtask.priority) }}>
-                    {getPriorityText(viewingSubtask.priority)}优先级
-                  </span>
-                </div>
-              </div>
-
-              {viewingSubtask.description && (
-                <div className="detail-section">
-                  <h5>任务描述</h5>
-                  <p>{viewingSubtask.description}</p>
-                </div>
-              )}
-
-              <div className="detail-section">
-                <h5>任务信息</h5>
-                <div className="detail-info">
-                  <div className="info-item">
-                    <span className="info-label">指派给:</span>
-                    <span className="info-value">{viewingSubtask.assignee || "未指派"}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">开始时间:</span>
-                    <span className="info-value">{formatDate(viewingSubtask.startTime)}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">截止时间:</span>
-                    <span className="info-value">{formatDate(viewingSubtask.endTime)}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">创建时间:</span>
-                    <span className="info-value">{formatDate(viewingSubtask.createdAt)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}

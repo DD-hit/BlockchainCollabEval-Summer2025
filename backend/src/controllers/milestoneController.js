@@ -102,3 +102,29 @@ export const deleteMilestone = async (req, res) => {
         });
     }
 }
+
+export const updateMilestoneStatus = async (req, res) => {
+    try {
+        const { milestoneId } = req.params;
+        const { status } = req.body;
+        
+        if (!status) {
+            return res.status(400).json({
+                success: false,
+                message: '状态不能为空'
+            });
+        }
+        
+        const result = await MilestoneService.updateMilestoneStatus(milestoneId, status);
+        res.json({
+            success: true,
+            message: '更新里程碑状态成功',
+            data: result
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+}

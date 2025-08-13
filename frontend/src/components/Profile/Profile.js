@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../utils/api';
+import api, { projectAPI, subtaskAPI } from '../../utils/api';
 import { accountAPI } from '../../utils/api';
 import './Profile.css';
 
@@ -15,40 +15,7 @@ const Profile = ({ user }) => {
     newPassword: '',
     confirmPassword: ''
   });
-  const [stats, setStats] = useState({
-    totalProjects: 0,
-    totalTasks: 0,
-    completedTasks: 0,
-    totalScore: 0
-  });
 
-  useEffect(() => {
-    loadUserStats();
-  }, []);
-
-  const loadUserStats = async () => {
-    try {
-      const [projectsRes, tasksRes] = await Promise.all([
-        api.get('/api/projectMembers/my-projects'),
-        api.get('/api/subtasks/my-tasks')
-      ]);
-
-      if (projectsRes.data.success) {
-        setStats(prev => ({ ...prev, totalProjects: projectsRes.data.data.length }));
-      }
-
-      if (tasksRes.data.success) {
-        const tasks = tasksRes.data.data;
-        setStats(prev => ({
-          ...prev,
-          totalTasks: tasks.length,
-          completedTasks: tasks.filter(t => t.status === 'completed').length
-        }));
-      }
-    } catch (error) {
-      console.error('加载用户统计失败:', error);
-    }
-  };
 
   const handleGetPrivateKey = async () => {
     if (!passwordForKey.trim()) {
@@ -122,17 +89,25 @@ const Profile = ({ user }) => {
   return (
     <div className="profile">
       <div className="profile-header">
-        <h1>个人中心</h1>
+        <h1>👤 个人中心</h1>
+        <p>管理您的个人信息和账户安全</p>
       </div>
 
       <div className="profile-content">
         {/* 基本信息卡片 */}
         <div className="profile-card">
-          <div className="user-avatar-large">
-            {userInfo.username.charAt(0).toUpperCase()}
+          <div className="profile-avatar-section">
+            <div className="user-avatar-large">
+              {userInfo.username.charAt(0).toUpperCase()}
+            </div>
+            <div className="user-info">
+              <h2>{userInfo.username}</h2>
+              <div className="user-address-container">
+                <span className="address-label">区块链地址:</span>
+                <span className="user-address">{userInfo.address}</span>
+              </div>
+            </div>
           </div>
-          <h2>{userInfo.username}</h2>
-          <p className="user-address">{userInfo.address}</p>
           
           {!editing ? (
             <button className="edit-btn" onClick={() => setEditing(true)}>
@@ -180,31 +155,20 @@ const Profile = ({ user }) => {
           )}
         </div>
 
-        {/* 统计信息 */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <h3>参与项目</h3>
-            <div className="stat-number">{stats.totalProjects}</div>
-          </div>
-          <div className="stat-card">
-            <h3>总任务数</h3>
-            <div className="stat-number">{stats.totalTasks}</div>
-          </div>
-          <div className="stat-card">
-            <h3>已完成</h3>
-            <div className="stat-number">{stats.completedTasks}</div>
-          </div>
-          <div className="stat-card">
-            <h3>贡献分</h3>
-            <div className="stat-number">{stats.totalScore}</div>
-          </div>
-        </div>
+
 
         {/* 私钥管理 */}
         <div className="private-key-section">
-          <h3>🔐 私钥管理</h3>
+          <div className="section-header">
+            <h3>🔐 私钥管理</h3>
+            <p>安全地查看和管理您的区块链私钥</p>
+          </div>
           <div className="warning-box">
-            <p>⚠️ 私钥是您区块链账户的重要凭证，请妥善保管，不要泄露给他人！</p>
+            <div className="warning-icon">⚠️</div>
+            <div className="warning-content">
+              <h4>安全提醒</h4>
+              <p>私钥是您区块链账户的重要凭证，请妥善保管，不要泄露给他人！</p>
+            </div>
           </div>
           
           {!showPrivateKey ? (

@@ -41,3 +41,23 @@
 .toast.info {
   background: #1f2937;
 }
+
+.toast-action-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color 0.2s;
+}
+
+.toast-action-btn:hover {
+  background: #2563eb;
+}
+
+.toast.file_upload {
+  background: #1e40af;
+}

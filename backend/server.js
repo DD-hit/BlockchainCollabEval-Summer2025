@@ -10,6 +10,8 @@ import subtaskRoutes from './src/routes/subtaskRoutes.js';
 import filesRoutes from './src/routes/filesRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
 import scoreRoutes from './src/routes/scoreRoutes.js';
+import commentRoutes from './src/routes/commentRoutes.js';
+import transactionRoutes from './src/routes/transactionRoutes.js';
 import { testConnection } from './config/database.js';
 import { AccountService } from './src/services/accountService.js';
 
@@ -18,47 +20,47 @@ const PORT = process.env.PORT || 5000; // 改为5000端口
 
 // CORS配置 - 支持credentials
 const corsOptions = {
-  origin: function (origin, callback) {
-    // 允许的域名列表
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      'http://localhost:5000',
-      'http://127.0.0.1:5000',
-      'http://localhost:5000/',  // 添加带斜杠的版本
-      'http://127.0.0.1:5000/'   // 添加带斜杠的版本
-    ];
-    
-    console.log('🔍 请求来源 origin:', origin);
-    
-    // 允许没有origin的请求（如移动应用、Postman等）
-    if (!origin) {
-      console.log('✅ 允许无origin请求');
-      return callback(null, true);
-    }
-    
-    // 更灵活的匹配方式 - 去掉末尾斜杠后比较
-    const normalizedOrigin = origin.replace(/\/$/, '');
-    const normalizedAllowedOrigins = allowedOrigins.map(o => o.replace(/\/$/, ''));
-    
-    if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
-      console.log('✅ 允许的origin:', origin);
-      callback(null, true);
-    } else {
-      console.log('❌ 不允许的origin:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Origin',
-    'X-Requested-With', 
-    'Content-Type', 
-    'Accept',
-    'Authorization',
-    'Cache-Control'
-  ]
+    origin: function (origin, callback) {
+        // 允许的域名列表
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://localhost:5000',
+            'http://127.0.0.1:5000',
+            'http://localhost:5000/',  // 添加带斜杠的版本
+            'http://127.0.0.1:5000/'   // 添加带斜杠的版本
+        ];
+
+
+
+        // 允许没有origin的请求（如移动应用、Postman等）
+        if (!origin) {
+
+            return callback(null, true);
+        }
+
+        // 更灵活的匹配方式 - 去掉末尾斜杠后比较
+        const normalizedOrigin = origin.replace(/\/$/, '');
+        const normalizedAllowedOrigins = allowedOrigins.map(o => o.replace(/\/$/, ''));
+
+        if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
+
+            callback(null, true);
+        } else {
+
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: [
+        'Origin',
+        'X-Requested-With',
+        'Content-Type',
+        'Accept',
+        'Authorization',
+        'Cache-Control'
+    ]
 };
 
 app.use(cors(corsOptions));
@@ -69,8 +71,7 @@ app.use('/test', express.static('../test')); // 测试文件
 
 // 添加请求日志中间件
 app.use((req, res, next) => {
-    console.log(`📝 ${req.method} ${req.path}`);
-    console.log('📝 请求体:', req.body);
+
     next();
 });
 
@@ -84,10 +85,12 @@ app.use('/api/subtasks', subtaskRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/score', scoreRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // 添加404处理
 app.use('*', (req, res) => {
-    console.log('❌ 404 - 路由未找到:', req.originalUrl);
+
     res.status(404).json({
         success: false,
         message: '路由未找到'
@@ -131,8 +134,8 @@ const startServer = async () => {
 
         // 启动Express服务器
         const server = app.listen(PORT, () => {
-            console.log(`🚀 服务器运行在 http://localhost:${PORT}`);
-            console.log(`🔌 WebSocket服务运行在 ws://localhost:${PORT}`);
+            console.log(`服务器运行在 http://localhost:${PORT}`);
+            console.log(`WebSocket服务运行在 ws://localhost:${PORT}`);
         });
 
         // WebSocket服务器
@@ -141,10 +144,55 @@ const startServer = async () => {
         // 保存所有用户的心跳信息
         const userHeartbeats = new Map();
 
-        // 心跳检测机制 - 每6秒检查一次所有连接
+        // 保存用户WebSocket连接
+        const userConnections = new Map();
+
+        // 发送未读通知给用户
+        const sendUnreadNotifications = async (username) => {
+            try {
+                const { NotificationService } = await import('./src/services/notificationService.js');
+                const unreadNotifications = await NotificationService.getNotificationList(username);
+
+
+
+                for (const notification of unreadNotifications) {
+                    const ws = userConnections.get(username);
+                    if (ws && ws.readyState === 1) {
+                        try {
+                            const content = JSON.parse(notification.content || '{}');
+                            ws.send(JSON.stringify({
+                                type: 'notification',
+                                title: '未读通知',
+                                message: `您有来自 ${notification.sender} 的文件上传通知`,
+                                link: `/subtask/${notification.subtaskId}`,
+                                meta: {
+                                    type: 'file_upload',
+                                    projectId: content.projectId,
+                                    subtaskId: notification.subtaskId,
+                                    fileId: notification.fileId,
+                                    fileName: content.fileName,
+                                    uploader: notification.sender,
+                                    notificationId: notification.id
+                                },
+                                timestamp: new Date(notification.createdTime).getTime()
+                            }));
+
+                        } catch (error) {
+                            console.error(`发送未读通知失败: ${error.message}`);
+                        }
+                    } else {
+
+                    }
+                }
+            } catch (error) {
+                console.error(`❌ 获取未读通知失败: ${error.message}`);
+            }
+        };
+
+        // 心跳检测机制 - 每60秒检查一次所有连接
         const heartbeatInterval = setInterval(() => {
             const now = Date.now();
-            const timeout = 9000; // 9秒超时（3个心跳周期）
+            const timeout = 90000; // 90秒超时（3个心跳周期）
 
             // 检查所有用户的心跳
             userHeartbeats.forEach((lastHeartbeat, username) => {
@@ -154,7 +202,7 @@ const startServer = async () => {
                     AccountService.logout(username)
                         .then(() => {
                             userHeartbeats.delete(username); // 移除用户记录
-                            console.log('✅ 心跳超时，用户状态已更新为离线');
+
                         })
                         .catch((error) => {
                             console.error('❌ 心跳超时更新用户状态失败:', error);
@@ -162,7 +210,7 @@ const startServer = async () => {
                         });
                 }
             });
-        }, 6000); // 每6秒检查一次
+        }, 60000); // 每60秒检查一次
 
         wss.on('connection', (ws) => {
 
@@ -177,20 +225,26 @@ const startServer = async () => {
                     // 处理不同类型的消息
                     switch (message.type) {
                         case 'connection':
-                            console.log('🔌 收到' + message.username + '的连接确认消息');
+
                             ws.userInfo = { username: message.username };
                             userHeartbeats.set(message.username, Date.now());
+                            userConnections.set(message.username, ws);
+
+                            // 发送连接确认
                             ws.send(JSON.stringify({
                                 type: 'connection_ack',
                                 message: '连接已确认',
                                 timestamp: Date.now()
                             }));
+
+                            // 发送未读通知
+                            sendUnreadNotifications(message.username);
                             break;
 
                         case 'ping':
                             if (ws.userInfo && ws.userInfo.username) {
                                 userHeartbeats.set(ws.userInfo.username, Date.now());
-                                console.log('💓 收到' + ws.userInfo.username + '的心跳包，更新最后心跳时间');
+
                             }
                             ws.send(JSON.stringify({
                                 type: 'pong',
@@ -199,7 +253,7 @@ const startServer = async () => {
                             break;
 
                         default:
-                            console.log('📨 未处理的消息类型:', message.type);
+
                             break;
                     }
                 } catch (error) {
@@ -212,7 +266,10 @@ const startServer = async () => {
             ws.on('close', async (code, reason) => {
                 // 连接断开时，只记录日志，不立即更新用户状态
                 // 用户状态由心跳机制管理，9秒后无心跳才判定离线
-                console.log('👤 用户'+ws.userInfo.username+'连接断开');
+                if (ws.userInfo && ws.userInfo.username) {
+
+                    userConnections.delete(ws.userInfo.username);
+                }
                 // 注意：不删除userHeartbeats中的记录，让心跳检测继续工作
             });
 
@@ -221,6 +278,24 @@ const startServer = async () => {
                 console.error('❌ WebSocket错误:', error);
             });
         });
+
+        // 导出WebSocket通知函数供其他模块使用
+        global.sendWebSocketNotification = (username, notification) => {
+            const ws = userConnections.get(username);
+            if (ws && ws.readyState === 1) { // WebSocket.OPEN
+                try {
+                    ws.send(JSON.stringify({
+                        type: 'notification',
+                        ...notification
+                    }));
+
+                } catch (error) {
+                    console.error(`发送WebSocket通知失败: ${error.message}`);
+                }
+            } else {
+
+            }
+        };
 
     } catch (error) {
         console.error('服务器启动失败:', error);

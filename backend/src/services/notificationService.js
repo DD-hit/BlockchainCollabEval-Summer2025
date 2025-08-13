@@ -3,10 +3,12 @@ import { pool } from '../../config/database.js';
 export class NotificationService {
     
     static async getNotificationList(username) {
+
         const [result] = await pool.execute(
             `SELECT * FROM notifications WHERE receiver = ? AND isRead = 0 order by createdTime desc`,
             [username]
         );
+
         return result;
     }
 
@@ -48,12 +50,46 @@ export class NotificationService {
         }
     }
 
+    static async markAsReadByFileId(fileId, receiver) {
+        try {
+            const [result] = await pool.execute(
+                `UPDATE notifications SET isRead = 1 WHERE fileId = ? AND receiver = ?`,
+                [fileId, receiver]
+            );
+            return result;
+        } catch (error) {
+            throw new Error(`根据文件ID标记通知为已读失败: ${error.message}`);
+        }
+    }
+
     static async isAllRead(subtaskId) {
         const [result] = await pool.execute(
             `SELECT COUNT(*) as count FROM notifications WHERE subtaskId = ? AND isRead = 0`,
             [subtaskId]
         );
         return result[0].count === 0;
+    }
+
+    static async addSubtaskStatusNotification(sender, receiver, subtaskId, title, status, milestoneId) {
+        try {
+            const content = {
+                subtaskId: subtaskId,
+                title: title,
+                status: status,
+                milestoneId: milestoneId,
+                updateTime: new Date().toISOString()
+            };
+            
+            const [result] = await pool.execute(
+                `INSERT INTO notifications (sender, receiver, type, subtaskId, content, isRead, createdTime) VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+                [sender, receiver, 'subtask_status', subtaskId, JSON.stringify(content), false]
+            );
+            
+    
+            return result;
+        } catch (error) {
+            throw new Error(`添加子任务状态通知失败: ${error.message}`);
+        }
     }
 
 }

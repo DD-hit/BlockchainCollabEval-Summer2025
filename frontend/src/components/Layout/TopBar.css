@@ -246,6 +246,25 @@
   color: #94a3b8;
 }
 
+.notification-actions {
+  margin-top: 8px;
+}
+
+.notification-action-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.notification-action-btn:hover {
+  background: #2563eb;
+}
+
 /* User Menu */
 .user-menu {
   position: relative;

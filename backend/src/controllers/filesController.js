@@ -52,12 +52,37 @@ export const uploadFiles = async (req, res) => {
 
         // 3. 调用业务逻辑层处理
         const result = await FilesService.uploadFiles(req.file, description.trim(), username, subtaskId, userPrivateKey.privateKey);
+        
         //获取除上传者外的所有项目成员
         const projectId = await SubtaskService.getProjectIdBySubtaskId(subtaskId);
         const projectMembers = await ProjectMemberService.getProjectMemberList(projectId);
+        
+
+        
         for (const member of projectMembers) {
             if (member.username !== username) {
+
+                
+                // 添加数据库通知
                 await NotificationService.addFileNotification(username, member.username, subtaskId, result.fileId);
+                
+                // 发送WebSocket通知
+                if (global.sendWebSocketNotification) {
+                    global.sendWebSocketNotification(member.username, {
+                        type: 'file_upload',
+                        title: '新文件上传通知',
+                        message: `${username} 上传了新文件: ${result.originalName}`,
+                        link: `/subtask/${subtaskId}`,
+                        meta: {
+                            type: 'file_upload',
+                            projectId,
+                            subtaskId,
+                            fileId: result.fileId,
+                            fileName: result.originalName,
+                            uploader: username
+                        }
+                    });
+                }
             }
         }
 
@@ -98,6 +123,25 @@ export const getFiles = async (req, res) => {
     }
 };
 
+// 根据子任务ID获取文件列表
+export const getFilesBySubtask = async (req, res) => {
+    try {
+        const { subtaskId } = req.params;
+        const files = await FilesService.getFilesBySubtask(subtaskId);
+        res.json({
+            success: true,
+            message: '获取子任务文件列表成功',
+            data: files
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: '获取子任务文件列表失败',
+            error: error.message
+        });
+    }
+};
+
 // 删除文件
 export const deleteFile = async (req, res) => {
     try {
@@ -132,3 +176,4 @@ export const downloadFile = async (req, res) => {
         });
     }
 };
+

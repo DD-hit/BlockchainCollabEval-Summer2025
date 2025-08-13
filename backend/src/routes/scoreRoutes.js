@@ -9,7 +9,11 @@ import {
     getContributionPoints,
     getUserScore,
     getTimeFactor,
-    updateContributionPoint
+    updateContributionPoint,
+    getMemberContributions,
+    getProjectContributions,
+    manualUpdateContributionPoint,
+    checkScoreStatus
 } from '../controllers/scoreController.js';
 
 const router = express.Router();
@@ -77,5 +81,32 @@ router.get('/time-factor/:contractAddress', verifyToken, getTimeFactor);
  */
 router.get('/updateContributionPoint/:contractAddress', verifyToken, updateContributionPoint);
 
+/**
+ * GET /api/score/getMemberContributions/:projectId
+ * 获取成员贡献
+ * 需要验证token
+ */
+router.get('/getMemberContributions/:projectId', verifyToken, getMemberContributions);
+
+/**
+ * GET /api/score/getProjectContributions/:projectId
+ * 获取项目贡献统计
+ * 需要验证token
+ */
+router.get('/getProjectContributions/:projectId', verifyToken, getProjectContributions);
+
+/**
+ * POST /api/score/manual-update/:contractAddress
+ * 手动更新贡献点（用于调试和手动触发）
+ * 需要验证token
+ */
+router.post('/manual-update/:contractAddress', verifyToken, manualUpdateContributionPoint);
+
+/**
+ * GET /api/score/status/:contractAddress
+ * 检查评分状态
+ * 需要验证token
+ */
+router.get('/status/:contractAddress', verifyToken, checkScoreStatus);
 
 export default router;

@@ -17,7 +17,7 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      console.log('尝试登录，API URL:', process.env.REACT_APP_API_URL || 'http://localhost:3001');
+  
       
       const response = await accountAPI.login({
         username: formData.username,
@@ -31,7 +31,7 @@ const Login = ({ onLogin }) => {
         sessionStorage.setItem('username', username);
         if (address) sessionStorage.setItem('address', address);
         
-        console.log('Token saved:', token);
+
         onLogin({ username, address, token });
       } else {
         setError(response.data.message || '登录失败');

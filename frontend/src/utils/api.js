@@ -3,7 +3,7 @@ import axios from 'axios'
 // 前端在3000端口，API请求也发送到3000端口（通过代理转发到后端5000端口）
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000'
 
-console.log('🔍 API Base URL:', API_BASE_URL); // 调试日志
+
 
 // 创建axios实例
 const api = axios.create({
@@ -72,10 +72,10 @@ export const accountAPI = {
 export const projectAPI = {
   list: (params = {}) => handleApi(api.get("/api/projectManager/getProjectList", { params })),
   create: (payload) => handleApi(api.post("/api/projectManager/createProject", payload)),
-  detail: (projectId) => handleApi(api.get(`/api/projectManager/getProjectDetail/${projectId}`)), // 确保路径正确
+  detail: (projectId) => handleApi(api.get(`/api/projectManager/getProjectDetail/${projectId}`)), 
   update: (projectId, payload) => handleApi(api.put(`/api/projectManager/updateProject/${projectId}`, payload)),
-  myProjects: () => handleApi(api.get("/api/projectManager/my-projects")),
-  members: (projectId) => handleApi(api.get(`/api/projectMembers/getProjectMemberList/${projectId}`)),
+  delete: (projectId) => handleApi(api.delete(`/api/projectManager/deleteProject/${projectId}`)),
+  myProjects: () => handleApi(api.get("/api/projectManager/getMyProjects"))
 }
 
 // 里程碑管理API
@@ -85,6 +85,7 @@ export const milestoneAPI = {
   listByProject: (projectId) => handleApi(api.get(`/api/milestones/getMilestoneList/${projectId}`)),
   detail: (milestoneId) => handleApi(api.get(`/api/milestones/getMilestoneDetail/${milestoneId}`)), // 确保路径正确
   update: (milestoneId, payload) => handleApi(api.put(`/api/milestones/updateMilestone/${milestoneId}`, payload)),
+  updateStatus: (milestoneId, status) => handleApi(api.put(`/api/milestones/updateMilestoneStatus/${milestoneId}`, { status })),
   delete: (milestoneId) => handleApi(api.delete(`/api/milestones/deleteMilestone/${milestoneId}`)),
 }
 
@@ -95,23 +96,28 @@ export const subtaskAPI = {
   detail: (subtaskId) => handleApi(api.get(`/api/subtasks/getSubtaskDetail/${subtaskId}`)), // 修正路径
   update: (subtaskId, payload) => handleApi(api.put(`/api/subtasks/updateSubtask/${subtaskId}`, payload)), // 修正路径
   delete: (subtaskId) => handleApi(api.delete(`/api/subtasks/deleteSubtask/${subtaskId}`)), // 修正路径
+  myTasks: () => handleApi(api.get("/api/subtasks/myTasks"))
 }
 
-// 评论管理API
-export const commentAPI = {
-  create: (payload) => handleApi(api.post("/api/comments/create", payload)),
-  listBySubtask: (subtaskId) => handleApi(api.get(`/api/comments/subtask/${subtaskId}`)),
-  update: (commentId, payload) => handleApi(api.put(`/api/comments/${commentId}`, payload)),
-  delete: (commentId) => handleApi(api.delete(`/api/comments/${commentId}`)),
+// 项目成员管理API
+export const projectMemberAPI = {
+  members: (projectId) => handleApi(api.get(`/api/projectMembers/getProjectMemberList/${projectId}`)),
+  list: (projectId) => handleApi(api.get(`/api/projectMembers/getProjectMemberList/${projectId}`)),
+  add: (payload) => handleApi(api.post("/api/projectMembers/addProjectMember", payload)),
+  update: (projectId, payload) => handleApi(api.put(`/api/projectMembers/updateProjectMember/${projectId}`, payload)),
+  delete: (projectId, payload) => handleApi(api.delete(`/api/projectMembers/deleteProjectMember/${projectId}`, { data: payload }))
 }
+
+
 
 // 文件管理API
 export const fileAPI = {
-  uploadToSubtask: (subtaskId, file) => {
+  uploadToSubtask: (subtaskId, file, password) => {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('subtaskId', subtaskId)
     formData.append('description', file.name)
+    formData.append('password', password)
     return handleApi(api.post("/api/files/upload", formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }))
@@ -140,8 +146,9 @@ export const fileAPI = {
 
 // 通知管理API
 export const notificationAPI = {
-  list: () => handleApi(api.get("/api/notifications")),
-  markAsRead: (notificationId) => handleApi(api.put(`/api/notifications/${notificationId}/read`)),
+  list: (username) => handleApi(api.get(`/api/notifications/getNotificationList/${username}`)),
+  markAsRead: (notificationId) => handleApi(api.put(`/api/notifications/markAsRead/${notificationId}`)),
+  markAsReadByFileId: (fileId) => handleApi(api.put("/api/notifications/markAsReadByFileId", { fileId })),
   markAllAsRead: () => handleApi(api.put("/api/notifications/read-all")),
 }
 
@@ -150,9 +157,21 @@ export const scoreAPI = {
   submit: (payload) => handleApi(api.post("/api/score/submit", payload)),
   getContract: (contractAddress) => handleApi(api.get(`/api/score/contract/${contractAddress}`)),
   getAverage: (contractAddress) => handleApi(api.get(`/api/score/average/${contractAddress}`)),
-  getScorersCount: (contractAddress) => handleApi(api.get(`/api/score/scorers/${contractAddress}`)),
-  getContributionPoints: (contractAddress) => handleApi(api.get(`/api/score/contribution/${contractAddress}`)),
-  getUserScore: (contractAddress, userAddress) => handleApi(api.get(`/api/score/user/${contractAddress}/${userAddress}`)),
+  getScorersCount: (contractAddress) => handleApi(api.get(`/api/score/count/${contractAddress}`)),
+  getContributionPoints: (contractAddress) => handleApi(api.get(`/api/score/points/${contractAddress}`)),
+  getUserScore: (contractAddress, userAddress) => handleApi(api.get(`/api/score/user-score/${contractAddress}?userAddress=${userAddress}`)),
+  getTimeFactor: (contractAddress) => handleApi(api.get(`/api/score/time-factor/${contractAddress}`)),
+  getMemberContributions: (projectId) => handleApi(api.get(`/api/score/getMemberContributions/${projectId}`)),
+  getProjectContributions: (projectId) => handleApi(api.get(`/api/score/getProjectContributions/${projectId}`)),
+  manualUpdate: (contractAddress) => handleApi(api.post(`/api/score/manual-update/${contractAddress}`)),
+  checkStatus: (contractAddress) => handleApi(api.get(`/api/score/status/${contractAddress}`)),
+}
+
+// 评论管理API
+export const commentAPI = {
+  create: (payload) => handleApi(api.post("/api/comments/create", payload)),
+  listBySubtask: (subtaskId) => handleApi(api.get(`/api/comments/subtask/${subtaskId}`)),
+  delete: (commentId) => handleApi(api.delete(`/api/comments/${commentId}`)),
 }
 
 export default api

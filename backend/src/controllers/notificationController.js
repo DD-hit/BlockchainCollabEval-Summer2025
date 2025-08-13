@@ -20,6 +20,18 @@ export const markNotificationAsRead = async (req, res) => {
     }
 };
 
+//根据文件ID标记通知为已读
+export const markAsReadByFileId = async (req, res) => {
+    try {
+        const { fileId } = req.body;
+        const { username } = req.user;
+        const result = await NotificationService.markAsReadByFileId(fileId, username);
+        res.json({ success: true, message: '通知已标记为已读' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 //是否全部已读
 export const isAllRead = async (req, res) => {
     try {

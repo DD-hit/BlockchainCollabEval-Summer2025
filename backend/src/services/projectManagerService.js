@@ -8,39 +8,49 @@ export class ProjectManagerService {
         description, 
         projectOwner, 
         startTime, 
-        endTime
+        endTime,
+        username
     ) {
         // 验证输入
-        if (!projectName || !description || !projectOwner) {
-            throw new Error('项目名称、描述和项目负责人不能为空');
+        if (!projectName || !projectOwner) {
+            throw new Error('项目名称和项目负责人不能为空');
         }
         
-        // 直接使用前端传来的DATETIME字符串
-        console.log('Storing datetime strings:', { startTime, endTime }); // 调试日志
-        
-        const [result] = await pool.execute(
-            'INSERT INTO projects (projectName, description, projectOwner, startTime, endTime) VALUES (?, ?, ?, ?, ?)',
-            [projectName, description, projectOwner, startTime, endTime]
-        );
-        
-        return {
-<<<<<<< HEAD
-            projectId: result.insertId,
-            projectName,
-            description,
-            projectOwner,
-            startTime,
-            endTime
-        };
-=======
-            projectId: projectId,
-            projectName: projectName,
-            description: description,
-            projectOwner: projectOwner,
-            startTime: startTime,
-            endTime: endTime,
+        // 开始事务
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+            
+            // 创建项目
+            const [result] = await connection.execute(
+                'INSERT INTO projects (projectName, description, projectOwner, startTime, endTime) VALUES (?, ?, ?, ?, ?)',
+                [projectName, description || '', projectOwner, startTime, endTime]
+            );
+            
+            const projectId = result.insertId;
+            
+            // 自动将创建者添加为项目成员（组长角色）
+            await connection.execute(
+                'INSERT INTO project_members (projectId, username, role) VALUES (?, ?, ?)',
+                [projectId, username, '组长']
+            );
+            
+            await connection.commit();
+            
+            return {
+                projectId: projectId,
+                projectName,
+                description: description || '',
+                projectOwner,
+                startTime,
+                endTime
+            };
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
         }
->>>>>>> 2081ad49ebdf9d014002c2298632601fb9231685
     }
 
     //获取项目列表
@@ -51,10 +61,22 @@ export class ProjectManagerService {
 
     //获取我的项目列表
     static async getMyProjectList(username) {
+
+        
+        // 先检查项目成员表
+        const [membersResult] = await pool.execute(
+            'SELECT * FROM project_members WHERE username = ?',
+            [username]
+        );
+
+        
         const [queryResult] = await pool.execute(
             'SELECT * FROM projects p WHERE p.projectId IN (SELECT projectId FROM project_members pm WHERE pm.username = ?) ORDER BY p.projectId DESC', 
             [username]
         );
+        
+
+        
         return queryResult;
     }
 
@@ -101,11 +123,7 @@ export class ProjectManagerService {
         projectName, 
         description,
         startTime,
-        endTime,
-        blockchainType,
-        enableDAO,
-        templateType,
-        isPublic
+        endTime
     ) {
         // 检查项目是否存在
         const [project] = await pool.execute('SELECT * FROM projects WHERE projectId = ?', [projectId]);
@@ -114,25 +132,12 @@ export class ProjectManagerService {
         }
 
         const [result] = await pool.execute(
-            `UPDATE projects SET 
-                projectName = ?, 
-                description = ?,
-                startTime = ?,
-                endTime = ?,
-                blockchainType = ?,
-                enableDAO = ?,
-                templateType = ?,
-                isPublic = ?
-            WHERE projectId = ?`, 
+            'UPDATE projects SET projectName = ?, description = ?, startTime = ?, endTime = ? WHERE projectId = ?', 
             [
                 projectName, 
                 description,
                 startTime,
                 endTime,
-                blockchainType,
-                enableDAO,
-                templateType,
-                isPublic,
                 projectId
             ]
         );
@@ -143,10 +148,6 @@ export class ProjectManagerService {
             description,
             startTime,
             endTime,
-            blockchainType,
-            enableDAO,
-            templateType,
-            isPublic,
             updatedRows: result.affectedRows 
         };
     }

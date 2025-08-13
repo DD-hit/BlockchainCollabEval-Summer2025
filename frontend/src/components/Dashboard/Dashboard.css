@@ -468,3 +468,132 @@
   border-color: #cbd5e0;
   transform: translateY(-1px);
 }
+
+/* 交易记录样式 */
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.transaction-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-left: 4px solid #00d4ff;
+}
+
+.transaction-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.transaction-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7fafc;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.transaction-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.transaction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.transaction-type {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.transaction-time {
+  font-size: 12px;
+  color: #718096;
+}
+
+.transaction-description {
+  color: #4a5568;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.transaction-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #718096;
+}
+
+.transaction-user {
+  color: #00d4ff;
+  font-weight: 500;
+}
+
+.transaction-hash {
+  font-family: 'Courier New', monospace;
+  background: #f7fafc;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.transaction-block {
+  background: #edf2f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.transaction-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+.status-badge.success {
+  background: #48bb78;
+}
+
+.status-badge.failed {
+  background: #f56565;
+}
+
+.status-badge.pending {
+  background: #ed8936;
+}
+
+.no-transactions {
+  text-align: center;
+  padding: 40px 20px;
+  color: #718096;
+}
+
+.no-transactions p {
+  margin: 0;
+  font-size: 14px;
+}

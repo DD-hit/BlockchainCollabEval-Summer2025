@@ -17,6 +17,7 @@ import ProjectCreate from "./components/Project/ProjectCreate"
 import MilestoneDetail from "./components/Milestone/MilestoneDetail"
 import SubtaskDetail from "./components/Subtask/SubtaskDetail"
 import Profile from "./components/Profile/Profile"
+import TransactionList from "./components/Transaction/TransactionList"
 import { useNotifications } from "./context/notifications"
 
 function App() {
@@ -35,7 +36,7 @@ function App() {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "ping", timestamp: Date.now() }))
       }
-    }, 3000)
+    }, 30000)
   }
 
   // 停止心跳包
@@ -49,16 +50,16 @@ function App() {
   // 建立WebSocket连接
   const connectWebSocket = () => {
     if (wsRef.current) {
-      console.log("🔌 WebSocket连接已存在，跳过建立")
+      
       return
     }
 
-    console.log("🔌 开始建立WebSocket连接...")
+    
     const ws = new WebSocket("ws://localhost:5000")
     wsRef.current = ws
 
     ws.onopen = () => {
-      console.log("🔌 WebSocket连接已建立")
+      
       const username = sessionStorage.getItem("username")
       ws.send(
         JSON.stringify({
@@ -69,35 +70,49 @@ function App() {
         }),
       )
       startHeartbeat(ws)
-      addNotification({ type: "system", title: "连接成功", message: "实时通知已连接" })
+      // addNotification({ type: "system", title: "连接成功", message: "实时通知已连接" }, false)
     }
 
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data)
-        console.log("📨 收到WebSocket消息:", message)
+
 
         if (message.type === "pong") return
         if (message.type === "connection_ack") return
 
-        // 推送普通业务通知
-        addNotification({
-          type: message.type || "info",
-          title: message.title || "新消息",
-          message: message.message || "",
-          meta: message.meta || {},
-          timestamp: message.timestamp || Date.now(),
-        })
+        // 处理通知消息
+        if (message.type === "notification") {
+          
+          addNotification({
+            type: message.meta?.type || "info",
+            title: message.title || "新消息",
+            message: message.message || "",
+            link: message.link,
+            meta: message.meta || {},
+            timestamp: message.timestamp || Date.now(),
+          })
+        } else {
+          // 推送普通业务通知
+          
+          addNotification({
+            type: message.type || "info",
+            title: message.title || "新消息",
+            message: message.message || "",
+            meta: message.meta || {},
+            timestamp: message.timestamp || Date.now(),
+          })
+        }
       } catch (error) {
         console.error("❌ WebSocket消息解析错误:", error)
       }
     }
 
     ws.onclose = (event) => {
-      console.log("🔌 WebSocket连接已关闭", event.code, event.reason)
+      
       wsRef.current = null
       stopHeartbeat()
-      addNotification({ type: "system", title: "连接断开", message: "实时通知已断开" })
+      // addNotification({ type: "system", title: "连接断开", message: "实时通知已断开" }, false)
     }
 
     ws.onerror = (error) => {
@@ -125,10 +140,10 @@ function App() {
   }
 
   const handleLogout = () => {
-    console.log("🚪 开始登出")
+
     stopHeartbeat()
     if (wsRef.current) {
-      console.log("🔌 登出时关闭WebSocket连接")
+      
       wsRef.current.close()
       wsRef.current = null
     }
@@ -136,7 +151,7 @@ function App() {
     sessionStorage.removeItem("username")
     sessionStorage.removeItem("address")
     setUser(null)
-    console.log("🧹 前端会话已清除")
+
   }
 
   if (loading) {
@@ -234,6 +249,20 @@ function App() {
           }
         />
 
+        {/* 独立子任务详情页 - 用于从子任务管理直接跳转 */}
+        <Route
+          path="/subtask/:subtaskId"
+          element={
+            user ? (
+              <MainLayout user={user} onLogout={handleLogout}>
+                <SubtaskDetail user={user} />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
         {/* 个人中心 */}
         <Route
           path="/profile"
@@ -241,6 +270,20 @@ function App() {
             user ? (
               <MainLayout user={user} onLogout={handleLogout}>
                 <Profile user={user} />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        {/* 交易记录 */}
+        <Route
+          path="/transactions"
+          element={
+            user ? (
+              <MainLayout user={user} onLogout={handleLogout}>
+                <TransactionList user={user} />
               </MainLayout>
             ) : (
               <Navigate to="/login" />

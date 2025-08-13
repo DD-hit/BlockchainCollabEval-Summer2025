@@ -75,16 +75,12 @@
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
   border: 1px solid #f1f5f9;
   cursor: pointer;
 }
 
-.project-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border-color: #00d4ff;
-}
+/* 移除项目卡片的悬停效果，现在由包装器处理 */
 
 .project-header {
   display: flex;
@@ -250,6 +246,55 @@
     flex: 1;
     text-align: center;
   }
+}
+
+/* 项目卡片包装器样式 */
+.project-card-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.project-card-wrapper:hover {
+  transform: translateY(-4px);
+}
+
+.project-card-wrapper:hover .project-card {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #00d4ff;
+}
+
+/* 删除项目按钮样式 */
+.delete-project-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  z-index: 10;
+  opacity: 0.8;
+}
+
+.delete-project-btn:hover {
+  background: #b91c1c;
+  transform: scale(1.1);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.delete-project-btn:active {
+  transform: scale(0.95);
 }
 
 

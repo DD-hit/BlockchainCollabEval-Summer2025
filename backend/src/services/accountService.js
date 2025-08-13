@@ -30,7 +30,7 @@ export class AccountService {
 
     // 创建账户的业务逻辑
     static async createAccount(username, password) {
-        console.log('开始创建账户，密码长度:', password.length);
+
 
         // 1. 验证输入
         const [_username] = await pool.execute('SELECT username FROM user WHERE username = ?', [username]);
@@ -56,7 +56,7 @@ export class AccountService {
             createdAt: new Date().toISOString()
         };
 
-        console.log('区块链账户创建成功:', account.address);
+
 
         // 3. 加密密码和私钥
         const hashedPassword = await EncryptionService.hashPassword(password);
@@ -68,7 +68,7 @@ export class AccountService {
             [username, hashedPassword, account.address, encryptedPrivateKey]
         );
 
-        console.log('账户已保存到数据库');
+
 
         // 4. 返回结果
         return accountInfo;

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { projectAPI } from "../../utils/api"
+import { projectMemberAPI } from "../../utils/api"
 import "./MemberSelector.css"
 
 /**
@@ -33,7 +33,7 @@ export default function MemberSelector({
     if (!projectId) return
     let canceled = false
     ;(async () => {
-      const res = await projectAPI.members(projectId)
+      const res = await projectMemberAPI.members(projectId)
       if (canceled) return
       if (res.ok) {
         setOptions(Array.isArray(res.data) ? res.data : res.data?.list || [])

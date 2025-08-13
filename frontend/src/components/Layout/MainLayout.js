@@ -6,11 +6,6 @@ import './MainLayout.css';
 
 const MainLayout = ({ user, onLogout, children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [currentProject, setCurrentProject] = useState({
-    id: 1,
-    name: '区块链投票系统',
-    description: '基于以太坊的去中心化投票平台'
-  });
 
   return (
     <div className="main-layout">
@@ -21,12 +16,10 @@ const MainLayout = ({ user, onLogout, children }) => {
       <div className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <TopBar 
           user={user}
-          currentProject={currentProject}
-          onProjectChange={setCurrentProject}
           onLogout={onLogout}
         />
         <div className="work-area">
-          {children ? children : <Outlet context={{ currentProject, setCurrentProject }} />}
+          {children ? children : <Outlet />}
         </div>
       </div>
     </div>

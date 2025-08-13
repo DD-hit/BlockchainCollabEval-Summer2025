@@ -1,5 +1,10 @@
 .milestone-management {
   padding: 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: 100vh;
+  border-radius: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .milestone-header {
@@ -7,27 +12,43 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(102, 126, 234, 0.3), 0 4px 6px -2px rgba(102, 126, 234, 0.2);
 }
 
 .milestone-header h2 {
   margin: 0;
-  color: #1e293b;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .create-milestone-btn {
-  background: #00d4ff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
+  padding: 14px 24px;
+  border-radius: 12px;
   font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
 .create-milestone-btn:hover {
-  background: #00b8e6;
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.create-milestone-btn:active {
+  transform: translateY(0);
 }
 
 .milestone-stats {
@@ -35,6 +56,10 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
+  padding: 0 16px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .stat-card {
@@ -42,12 +67,15 @@
   padding: 20px;
   border-radius: 12px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .stat-number {
@@ -58,45 +86,54 @@
 }
 
 .stat-label {
-  color: #64748b;
-  font-size: 14px;
+  color: #374151;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .milestone-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  padding: 0 16px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .milestone-card {
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  max-width: 100%;
 }
 
 .milestone-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .milestone-header-card {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  gap: 16px;
 }
 
 .milestone-info {
   flex: 1;
+  min-width: 0;
 }
 
 .milestone-title {
-  margin: 0 0 8px 0;
-  color: #1e293b;
-  font-size: 20px;
+  margin: 0 0 6px 0;
+  color: #000000;
+  font-size: 18px;
+  font-weight: 700;
   cursor: pointer;
   transition: color 0.3s ease;
 }
@@ -107,69 +144,99 @@
 
 .milestone-description {
   margin: 0;
-  color: #64748b;
+  color: #1e293b;
   line-height: 1.5;
+  font-size: 13px;
 }
 
 .milestone-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
   font-weight: 600;
   color: white;
+  white-space: nowrap;
 }
 
-.action-buttons {
+.detail-link-header {
+  color: #00d4ff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.15);
+  white-space: nowrap;
+}
+
+.detail-link-header:hover {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.25);
+  color: #0284c7;
+  text-decoration: none;
+}
+
+.action-buttons-footer {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  justify-content: flex-end;
 }
 
-.edit-btn,
-.delete-btn {
-  padding: 8px 16px;
+.edit-btn-footer,
+.delete-btn-footer {
+  padding: 3px 8px;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  opacity: 0.8;
 }
 
-.edit-btn {
+.edit-btn-footer {
   background: #f1f5f9;
-  color: #475569;
+  color: #64748b;
 }
 
-.edit-btn:hover {
+.edit-btn-footer:hover {
   background: #e2e8f0;
+  opacity: 1;
 }
 
-.delete-btn {
+.delete-btn-footer {
   background: #fef2f2;
   color: #ef4444;
 }
 
-.delete-btn:hover {
+.delete-btn-footer:hover {
   background: #fee2e2;
+  opacity: 1;
 }
 
 .milestone-progress {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .progress-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #64748b;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
 }
 
 .progress-bar {
@@ -188,8 +255,9 @@
 
 .milestone-dates {
   display: flex;
-  gap: 24px;
-  font-size: 14px;
+  gap: 16px;
+  font-size: 13px;
+  margin-bottom: 6px;
 }
 
 .date-item {
@@ -199,12 +267,12 @@
 }
 
 .date-label {
-  color: #64748b;
+  color: #374151;
   font-weight: 500;
 }
 
 .date-value {
-  color: #1e293b;
+  color: #000000;
   font-weight: 600;
 }
 
@@ -223,28 +291,34 @@
 
 .no-milestones h3 {
   margin: 0 0 8px 0;
-  color: #1e293b;
+  color: #0f172a;
 }
 
 .no-milestones p {
   margin: 0 0 24px 0;
-  color: #64748b;
+  color: #475569;
 }
 
 .create-first-milestone-btn {
-  background: #00d4ff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 14px 28px;
+  border-radius: 12px;
   font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .create-first-milestone-btn:hover {
-  background: #00b8e6;
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.create-first-milestone-btn:active {
+  transform: translateY(0);
 }
 
 .modal-overlay {
@@ -367,7 +441,62 @@
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: #64748b;
+  color: #475569;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.milestone-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.detail-link {
+  color: #00d4ff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.detail-link:hover {
+  color: #00b8e6;
+  text-decoration: underline;
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.milestone-header {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.milestone-stats {
+  animation: slideInLeft 0.6s ease-out 0.2s both;
+}
+
+.milestone-list {
+  animation: fadeInUp 0.6s ease-out 0.4s both;
 }
 
 @media (max-width: 768px) {
@@ -379,6 +508,12 @@
   .milestone-actions {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  
+  .detail-link-header {
+    font-size: 13px;
+    padding: 6px 12px;
   }
   
   .milestone-dates {
@@ -392,5 +527,9 @@
   
   .milestone-stats {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .action-buttons-footer {
+    justify-content: center;
   }
 }

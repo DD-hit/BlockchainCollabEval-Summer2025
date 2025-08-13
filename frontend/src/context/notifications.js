@@ -33,7 +33,8 @@ export function NotificationsProvider({ children, connectSocket = true }) {
 
   const unreadCount = useMemo(() => items.filter((i) => !i.read).length, [items])
 
-  const addNotification = (notification, showToast = true) => {
+  const addNotification = (notification, showToast = false) => {
+
     const n = {
       id: notification.id || `n_${nextId++}`,
       title: notification.title || "通知",
@@ -44,7 +45,15 @@ export function NotificationsProvider({ children, connectSocket = true }) {
       link: notification.link || null,
       meta: notification.meta || {},
     }
+
     setItems((prev) => [n, ...prev])
+    
+    // 触发新通知事件，通知其他组件（如待办事项）刷新
+    window.dispatchEvent(new CustomEvent('newNotification', {
+      detail: { notification: n }
+    }));
+    
+    // 禁用toast弹出，只在通知面板中显示
     if (showToast) {
       setToasts((prev) => [...prev, { id: `t_${nextId++}`, ...n }])
       // auto dismiss after 4s
@@ -73,13 +82,23 @@ export function NotificationsProvider({ children, connectSocket = true }) {
         try {
           const data = JSON.parse(evt.data)
           // data: { type, title, message, link, meta }
-          addNotification({
-            type: data.type || "info",
-            title: data.title || "新消息",
-            message: data.message,
-            link: data.link,
-            meta: data.meta,
-          })
+          if (data.type === "notification") {
+            addNotification({
+              type: data.meta?.type || "info",
+              title: data.title || "新消息",
+              message: data.message,
+              link: data.link,
+              meta: data.meta,
+            })
+          } else {
+            addNotification({
+              type: data.type || "info",
+              title: data.title || "新消息",
+              message: data.message,
+              link: data.link,
+              meta: data.meta,
+            })
+          }
         } catch {
           // ignore malformed
         }
@@ -121,6 +140,17 @@ export function NotificationsProvider({ children, connectSocket = true }) {
               <div className="toast-title">{t.title}</div>
               {t.message ? <div>{t.message}</div> : null}
               <div className="toast-meta">{new Date(t.timestamp).toLocaleTimeString()}</div>
+              {t.meta?.subtaskId && t.type === "file_upload" && (
+                <button 
+                  className="toast-action-btn"
+                  onClick={() => {
+                    // 跳转到子任务页面
+                    window.location.href = t.link || `/subtask/${t.meta.subtaskId}`;
+                  }}
+                >
+                  去评分
+                </button>
+              )}
             </div>
           </div>
         ))}

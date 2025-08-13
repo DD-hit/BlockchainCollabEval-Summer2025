@@ -6,7 +6,8 @@ const dbConfig = {
     user: 'root',
     password: '123456',
     database: 'bce',
-    port: 3306
+    port: 3306,
+    charset: 'utf8mb4'
 };
 
 // 创建连接池（推荐）
@@ -14,7 +15,8 @@ const pool = mysql.createPool({
     ...dbConfig,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    charset: 'utf8mb4'
 });
 
 // 测试连接

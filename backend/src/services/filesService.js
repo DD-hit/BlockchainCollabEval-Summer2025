@@ -3,6 +3,7 @@ import { calculateFileHash } from '../utils/calculateHash.js';
 import { deployContract, getAddress } from '../utils/eth.js';
 import { ContributionScoreABI, ContributionScoreBytecode } from '../utils/contracts.js';
 import { SubtaskService } from './subtaskService.js';
+import { TransactionService } from './transactionService.js';
 import fs from 'fs/promises';
 
 export class FilesService {
@@ -29,7 +30,7 @@ static async downloadFile(filename) {
 
             // 计算文件hash
             const fileHash = await calculateFileHash(file);
-            console.log(`文件 ${file.originalname} 的哈希值: ${fileHash}`);
+
 
             //部署合约
             const fromAddress = await getAddress(username);
@@ -65,7 +66,7 @@ static async downloadFile(filename) {
                     address, description
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
                 [
-                    file.originalname,    // 原始文件名
+                    file.originalname,    // 原始文件名（已在中间件中处理编码）
                     file.filename,        // 服务器文件名
                     file.path,            // 文件路径
                     file.mimetype,        // 文件类型
@@ -89,9 +90,23 @@ static async downloadFile(filename) {
                 username: username,
                 uploadTime: Date.now(),
                 subtaskId: subtaskId,
+                address: fromAddress,  // 添加用户地址
                 contractAddress: receipt.contractAddress,
                 description: description
             };
+
+            // 记录文件上传交易
+            try {
+                await TransactionService.recordFileUpload(
+                    uploadedFile,
+                    receipt.transactionHash,
+                    receipt.blockNumber,
+                    receipt.gasUsed
+                );
+            } catch (error) {
+                console.error('记录文件上传交易失败:', error);
+                // 不影响文件上传的主要流程
+            }
             
             return uploadedFile;
         } catch (error) {
@@ -105,6 +120,15 @@ static async downloadFile(filename) {
             return rows;
         } catch (error) {
             throw new Error(`获取文件列表失败: ${error.message}`);
+        }
+    }
+
+    static async getFilesBySubtask(subtaskId) {
+        try {
+            const [rows] = await pool.execute('SELECT * FROM files WHERE subtaskId = ? ORDER BY uploadTime DESC', [subtaskId]);
+            return rows;
+        } catch (error) {
+            throw new Error(`获取子任务文件列表失败: ${error.message}`);
         }
     }
 
@@ -142,5 +166,7 @@ static async downloadFile(filename) {
             throw new Error(`删除文件失败: ${error.message}`);
         }
     }
+
+
 
 }

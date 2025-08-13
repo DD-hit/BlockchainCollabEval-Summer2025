@@ -3,34 +3,141 @@ import { WEB3_PROVIDER } from '../config/config.js';
 import { ContributionScoreABI } from '../utils/contracts.js';
 import { pool } from '../../config/database.js';
 import { AccountService } from './accountService.js';
+import { TransactionService } from './transactionService.js';
 
 export class ScoreService {
 
-    //更新项目成员表里sender的贡献点
-    static async updateContributionPoint(contractAddress) {
-        console.log(`🔧 开始更新贡献点 - 合约地址: ${contractAddress}`);
+    static async getMemberContributions(projectId, username) {
+        const [result] = await pool.execute(
+            `SELECT * FROM project_members WHERE projectId = ? AND username = ?`,
+            [projectId, username]
+        );
+        return result[0].contributionPoint;
+    }
+
+    static async getProjectContributions(projectId) {
+        // 获取项目中所有成员的贡献统计
+        const [result] = await pool.execute(
+            `SELECT 
+                pm.username,
+                COALESCE(pm.contributionPoint, 0) as score,
+                COUNT(s.subtaskId) as tasks
+            FROM project_members pm
+            LEFT JOIN subtasks s ON pm.username = s.assignedTo 
+                AND s.milestoneId IN (
+                    SELECT milestoneId FROM milestones WHERE projectId = ?
+                )
+            WHERE pm.projectId = ?
+            GROUP BY pm.username, pm.contributionPoint
+            ORDER BY pm.contributionPoint DESC`,
+            [projectId, projectId]
+        );
+        
+        return result;
+    }
+
+    // 检查是否所有人都评分完了
+    static async shouldUpdateContributionPoint(contractAddress) {
+
         
         const web3 = new Web3(WEB3_PROVIDER);
         const contract = new web3.eth.Contract(ContributionScoreABI, contractAddress);
-        const contributorAddress = await contract.methods.contributor().call();
-        const contributor = await AccountService.getContributor(contributorAddress);
         
-        console.log(`🔧 贡献者地址: ${contributorAddress}`);
-        console.log(`🔧 贡献者用户名: ${contributor}`);
+        // 获取当前评分者数量
+        const scoreCount = await contract.methods.scoreCount().call();
+
         
-        if (!contributor) {
-            throw new Error(`找不到地址 ${contributorAddress} 对应的用户`);
-        }
+        // 获取合约中的贡献者地址用于验证
+        const contractContributor = await contract.methods.contributor().call();
+
         
-        const contributionPoint = await contract.methods.calculateContributionPoint().call();
-        console.log(`🔧 贡献点数: ${contributionPoint}`);
-        
-        const [result] = await pool.execute(
-            `UPDATE project_members SET contributionPoint = contributionPoint + ? WHERE username = ?`,
-            [contributionPoint, contributor]
+        // 获取文件信息，确定项目ID和子任务ID
+        const [fileInfo] = await pool.execute(
+            `SELECT f.subtaskId, f.username, s.milestoneId, m.projectId 
+             FROM files f 
+             JOIN subtasks s ON f.subtaskId = s.subtaskId 
+             JOIN milestones m ON s.milestoneId = m.milestoneId 
+             WHERE f.address = ?`,
+            [contractAddress]
         );
         
-        console.log(`🔧 数据库更新结果:`, result);
+        if (fileInfo.length === 0) {
+    
+            return false;
+        }
+        
+        const projectId = fileInfo[0].projectId;
+        const subtaskId = fileInfo[0].subtaskId;
+        const contributorUsername = fileInfo[0].username;
+
+        
+        // 获取所有项目成员信息（用于调试）
+        const [allMembers] = await pool.execute(
+            `SELECT username, role, contributionPoint 
+             FROM project_members 
+             WHERE projectId = ?`,
+            [projectId]
+        );
+
+        
+        // 获取项目成员数量（排除贡献者自己）
+        const [members] = await pool.execute(
+            `SELECT COUNT(*) as memberCount 
+             FROM project_members 
+             WHERE projectId = ? AND username != ?`,
+            [projectId, contributorUsername]
+        );
+        
+        const memberCount = members[0].memberCount;
+
+        
+        // 只有当评分者数量等于成员数量时，说明所有人都评分完了
+        const shouldUpdate = parseInt(scoreCount) === memberCount;
+
+        
+        return shouldUpdate;
+    }
+
+    //更新项目成员表里sender的贡献点
+    static async updateContributionPoint(contractAddress) {
+
+        
+        // 首先获取文件信息，确定项目ID和贡献者
+        const [fileInfo] = await pool.execute(
+            `SELECT f.subtaskId, f.username, s.milestoneId, m.projectId 
+             FROM files f 
+             JOIN subtasks s ON f.subtaskId = s.subtaskId 
+             JOIN milestones m ON s.milestoneId = m.milestoneId 
+             WHERE f.address = ?`,
+            [contractAddress]
+        );
+        
+        if (fileInfo.length === 0) {
+            throw new Error(`找不到合约地址 ${contractAddress} 对应的文件信息`);
+        }
+        
+        const projectId = fileInfo[0].projectId;
+        const contributor = fileInfo[0].username;
+
+        
+        // 从合约获取贡献点
+        const web3 = new Web3(WEB3_PROVIDER);
+        const contract = new web3.eth.Contract(ContributionScoreABI, contractAddress);
+        const contributionPoint = await contract.methods.calculateContributionPoint().call();
+
+        
+        // 更新指定项目的贡献点（累加，因为每个文件都有独立的贡献点）
+        const [result] = await pool.execute(
+            `UPDATE project_members SET contributionPoint = contributionPoint + ? WHERE username = ? AND projectId = ?`,
+            [contributionPoint, contributor, projectId]
+        );
+        
+
+        
+        if (result.affectedRows === 0) {
+            throw new Error(`未找到用户 ${contributor} 在项目 ${projectId} 中的记录`);
+        }
+        
         return result;
     }
 
@@ -73,7 +180,7 @@ export class ScoreService {
                 throw new Error('项目已截止，无法评分');
             }
 
-            console.log(`✅ 评分检查通过 - 评分者: ${address}, 分数: ${score}`);
+    
 
             // 获取当前gas价格
             const gasPrice = await web3.eth.getGasPrice();
@@ -83,8 +190,7 @@ export class ScoreService {
             const balance = await web3.eth.getBalance(address);
             const requiredAmount = BigInt(gasPrice) * BigInt(gasLimit);
 
-            console.log(`账户余额: ${balance} wei`);
-            console.log(`需要gas费: ${requiredAmount} wei`);
+            
 
             if (BigInt(balance) < requiredAmount) {
                 throw new Error(`余额不足。当前余额: ${web3.utils.fromWei(balance, 'ether')} ETH，需要: ${web3.utils.fromWei(requiredAmount.toString(), 'ether')} ETH`);
@@ -96,6 +202,39 @@ export class ScoreService {
                     gas: gasLimit,
                     gasPrice: gasPrice
                 });
+            
+            // 记录评分交易
+            try {
+                const scoreData = {
+                    score: score,
+                    contractAddress: contractAddress,
+                    scorer: address,
+                    username: await this.getUsernameByAddress(address)
+                };
+                
+                await TransactionService.recordScore(
+                    scoreData,
+                    receipt.transactionHash,
+                    receipt.blockNumber,
+                    receipt.gasUsed
+                );
+            } catch (error) {
+                console.error('记录评分交易失败:', error);
+                // 不影响评分的主要流程
+            }
+            
+            // 检查是否所有人都评分完了，如果是，才更新贡献点
+            try {
+                const shouldUpdate = await ScoreService.shouldUpdateContributionPoint(contractAddress);
+                if (shouldUpdate) {
+                    await ScoreService.updateContributionPoint(contractAddress);
+            
+                }
+            } catch (error) {
+                console.error(`❌ 贡献点更新检查失败: ${error.message}`);
+                // 不抛出错误，因为评分已经成功，贡献点更新失败不应该影响评分结果
+            }
+            
             return receipt;
         } catch (error) {
             console.error("交易失败:", error);
@@ -283,6 +422,24 @@ export class ScoreService {
         const contract = new web3.eth.Contract(ContributionScoreABI, contractAddress);
         const score = await contract.methods.scores(scorerAddress).call();
         return parseInt(score);
+    }
+
+    /**
+     * 根据地址获取用户名
+     * @param {string} address - 区块链地址
+     * @returns {Promise<string>} - 用户名
+     */
+    static async getUsernameByAddress(address) {
+        try {
+            const [result] = await pool.execute(
+                'SELECT username FROM user WHERE address = ?',
+                [address]
+            );
+            return result.length > 0 ? result[0].username : 'unknown';
+        } catch (error) {
+            console.error('根据地址获取用户名失败:', error);
+            return 'unknown';
+        }
     }
 
 }
