@@ -1,7 +1,5 @@
-"use client"
-
 import { useState, useEffect, useRef } from "react"
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { Routes, Route, Navigate } from "react-router-dom"
 import "./App.css"
 
 // 布局组件
@@ -55,7 +53,10 @@ function App() {
     }
 
     
-    const ws = new WebSocket("ws://localhost:5000")
+    const wsUrl = process.env.NODE_ENV === 'production' 
+      ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}` 
+      : "ws://localhost:5000";
+    const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
     ws.onopen = () => {

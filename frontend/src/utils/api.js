@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-// 前端在3000端口，API请求也发送到3000端口（通过代理转发到后端5000端口）
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000'
+// API基础URL - 开发环境用本地后端，生产环境用当前域名
+const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? window.location.origin : 'http://localhost:5000')
 
 
 

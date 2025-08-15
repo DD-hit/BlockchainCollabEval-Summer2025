@@ -2,6 +2,8 @@
 import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import accountRoutes from './src/routes/accountRoutes.js';
 import projectManagerRoutes from './src/routes/projectManagerRoutes.js';
 import projectMemberRoutes from './src/routes/projectMemberRoutes.js';
@@ -15,67 +17,31 @@ import transactionRoutes from './src/routes/transactionRoutes.js';
 import { testConnection } from './config/database.js';
 import { AccountService } from './src/services/accountService.js';
 
+// 获取当前文件的目录路径
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 5000; // 改为5000端口
 
-// CORS配置 - 支持credentials
-const corsOptions = {
-    origin: function (origin, callback) {
-        // 允许的域名列表
-        const allowedOrigins = [
-            'http://localhost:3000',
-            'http://127.0.0.1:3000',
-            'http://localhost:5000',
-            'http://127.0.0.1:5000',
-            'http://localhost:5000/',  // 添加带斜杠的版本
-            'http://127.0.0.1:5000/'   // 添加带斜杠的版本
-        ];
-
-
-
-        // 允许没有origin的请求（如移动应用、Postman等）
-        if (!origin) {
-
-            return callback(null, true);
-        }
-
-        // 更灵活的匹配方式 - 去掉末尾斜杠后比较
-        const normalizedOrigin = origin.replace(/\/$/, '');
-        const normalizedAllowedOrigins = allowedOrigins.map(o => o.replace(/\/$/, ''));
-
-        if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
-
-            callback(null, true);
-        } else {
-
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: [
-        'Origin',
-        'X-Requested-With',
-        'Content-Type',
-        'Accept',
-        'Authorization',
-        'Cache-Control'
-    ]
-};
-
-app.use(cors(corsOptions));
+// CORS配置 - 允许前端开发环境访问
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://120.55.189.119:5000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
-// 静态文件配置 
-app.use(express.static('../frontend/public')); // React构建文件
-app.use('/test', express.static('../test')); // 测试文件
+
+// 1. 静态文件托管（最优先）- 使用绝对路径
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 添加请求日志中间件
 app.use((req, res, next) => {
-
     next();
 });
 
-// API 路由
+// 2. API 路由（其次）
 app.use('/api/accounts', accountRoutes);  // 确保这行存在
 app.use('/api/projects', projectManagerRoutes);
 app.use('/api/projectManager', projectManagerRoutes);
@@ -88,22 +54,20 @@ app.use('/api/score', scoreRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/transactions', transactionRoutes);
 
-// 添加404处理
-app.use('*', (req, res) => {
-
-    res.status(404).json({
-        success: false,
-        message: '路由未找到'
-    });
-});
-
-// 处理React前端路由 - 所有非API请求都返回index.html
+// 3. React路由兜底（处理单页应用路由，必须在API路由之后）
 app.get('*', (req, res) => {
-    // 对于React路由，返回index.html
-    res.sendFile('index.html', { root: '../frontend/public' }, (err) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
         if (err) {
             res.status(404).json({ message: '页面不存在' });
         }
+    });
+});
+
+// 4. 404错误处理（最后，处理非API且非前端路由的请求）
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: '路由未找到'
     });
 });
 
@@ -133,9 +97,9 @@ const startServer = async () => {
         await testConnection();
 
         // 启动Express服务器
-        const server = app.listen(PORT, () => {
+        const server = app.listen(PORT, '0.0.0.0', () => {
+            // console.log(`服务器运行在 http://120.55.189.119:${PORT}`);
             console.log(`服务器运行在 http://localhost:${PORT}`);
-            console.log(`WebSocket服务运行在 ws://localhost:${PORT}`);
         });
 
         // WebSocket服务器

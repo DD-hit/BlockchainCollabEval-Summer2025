@@ -2,7 +2,7 @@ import mysql from 'mysql2/promise';
 
 // 数据库配置
 const dbConfig = {
-    host: 'localhost',
+    host: 'localhost', // 使用localhost，因为数据库在同一台服务器上
     user: 'root',
     password: '123456',
     database: 'bce',
