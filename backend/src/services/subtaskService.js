@@ -22,7 +22,7 @@ export class SubtaskService {
             milestoneId,
             title,
             status || 'in_progress',
-            description || null,
+            description || '', // 改为空字符串而不是null，因为数据库字段是NOT NULL
             assignedTo || null,
             startTime || null,
             endTime || null,
@@ -46,7 +46,7 @@ export class SubtaskService {
         return queryResult[0];
     }
     static async updateSubtask(subtaskId, title, status, description, assignedTo, startTime, endTime, priority) {
-        const [result] = await pool.execute('UPDATE subtasks SET title = ?, status = ?, description = ?, assignedTo = ?, startTime = ?, endTime = ?, priority = ? WHERE subtaskId = ?', [title, status, description, assignedTo, startTime, endTime, priority, subtaskId]);
+        const [result] = await pool.execute('UPDATE subtasks SET title = ?, status = ?, description = ?, assignedTo = ?, startTime = ?, endTime = ?, priority = ? WHERE subtaskId = ?', [title, status, description || '', assignedTo, startTime, endTime, priority, subtaskId]);
         return result;
     }
     static async deleteSubtask(subtaskId) {

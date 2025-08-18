@@ -11,19 +11,74 @@ export const createProject = async (req, res) => {
             endTime
         } = req.body;
         const username = req.user.username;
+        
         // 输入验证
-        if (!projectName || !projectOwner) {
+        if (!projectName || !projectName.trim()) {
             return res.status(400).json({
                 success: false,
-                message: '项目名称和项目负责人不能为空'
+                message: '项目名称不能为空'
+            });
+        }
+
+        if(description === null){
+            return res.status(400).json({
+                success: false,
+                message: '项目描述不能为空'
             });
         }
         
+        if (!projectOwner || !projectOwner.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '项目负责人不能为空'
+            });
+        }
+        
+        if (!startTime) {
+            return res.status(400).json({
+                success: false,
+                message: '开始时间不能为空'
+            });
+        }
+        
+        if (!endTime) {
+            return res.status(400).json({
+                success: false,
+                message: '结束时间不能为空'
+            });
+        }
+        
+        // 项目名称长度验证
+        if (projectName.trim().length < 2 || projectName.trim().length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: '项目名称长度必须在2-100个字符之间'
+            });
+        }
+        
+        // 时间验证
+        const startDate = new Date(startTime);
+        const endDate = new Date(endTime);
+        const now = new Date();
+        
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: '时间格式不正确'
+            });
+        }
+        
+        if (endDate <= startDate) {
+            return res.status(400).json({
+                success: false,
+                message: '结束时间必须晚于开始时间'
+            });
+        }
         
         const result = await ProjectManagerService.createProject(
-            projectName, 
+            projectName.trim(), 
             description || '', 
-            projectOwner, 
+            projectOwner.trim(), 
             startTime, 
             endTime,
             username
@@ -112,16 +167,52 @@ export const updateProject = async (req, res) => {
             isPublic
         } = req.body;
         
-        if (!projectName) {
+        // 参数验证
+        if (!projectId || isNaN(parseInt(projectId))) {
+            return res.status(400).json({
+                success: false,
+                message: '项目ID必须是有效的数字'
+            });
+        }
+        
+        if (!projectName || !projectName.trim()) {
             return res.status(400).json({
                 success: false,
                 message: '项目名称不能为空'
             });
         }
         
+        // 项目名称长度验证
+        if (projectName.trim().length < 2 || projectName.trim().length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: '项目名称长度必须在2-100个字符之间'
+            });
+        }
+        
+        // 时间验证（如果提供了时间）
+        if (startTime && endTime) {
+            const startDate = new Date(startTime);
+            const endDate = new Date(endTime);
+            
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                return res.status(400).json({
+                    success: false,
+                    message: '时间格式不正确'
+                });
+            }
+            
+            if (endDate <= startDate) {
+                return res.status(400).json({
+                    success: false,
+                    message: '结束时间必须晚于开始时间'
+                });
+            }
+        }
+        
         const result = await ProjectManagerService.updateProject(
-            projectId,
-            projectName,
+            parseInt(projectId),
+            projectName.trim(),
             description,
             startTime,
             endTime
@@ -144,6 +235,14 @@ export const deleteProject = async (req, res) => {
     try {
         const { projectId } = req.params;
         const { username } = req.user; // 从token中获取用户名
+        
+        // 参数验证
+        if (!projectId || isNaN(parseInt(projectId))) {
+            return res.status(400).json({
+                success: false,
+                message: '项目ID必须是有效的数字'
+            });
+        }
         
         // 检查用户是否为项目所有者
         const project = await ProjectManagerService.getProjectDetail(projectId);

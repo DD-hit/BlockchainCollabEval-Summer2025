@@ -5,7 +5,23 @@ import { AccountService } from '../services/accountService.js';
 export const loginAccount = async (req, res) => {
     try {
         const { username, password } = req.body;
-        const result = await AccountService.loginAccount(username, password);
+        
+        // 参数验证
+        if (!username || !username.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名不能为空'
+            });
+        }
+        
+        if (!password || !password.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '密码不能为空'
+            });
+        }
+        
+        const result = await AccountService.loginAccount(username.trim(), password);
         res.json({
             success: true,
             message: '登录成功',
@@ -22,15 +38,36 @@ export const loginAccount = async (req, res) => {
 // 处理创建账户的请求
 export const createAccount = async (req, res) => {
     try {
-
-        
         // 1. 获取请求数据
         const { username, password } = req.body;
         
-        // 2. 调用业务逻辑层处理
-        const result = await AccountService.createAccount(username, password);
+        // 2. 参数验证
+        if (!username || !username.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名不能为空'
+            });
+        }
         
-        // 3. 返回成功响应
+        if (!password || !password.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '密码不能为空'
+            });
+        }
+        
+        // 用户名长度验证
+        if (username.trim().length < 2 || username.trim().length > 20) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名长度必须在2-20个字符之间'
+            });
+        }
+        
+        // 3. 调用业务逻辑层处理
+        const result = await AccountService.createAccount(username.trim(), password);
+        
+        // 4. 返回成功响应
         res.json({
             success: true,
             message: '账户创建成功',
@@ -40,7 +77,7 @@ export const createAccount = async (req, res) => {
     } catch (error) {
         console.error('创建账户失败:', error);
         
-        // 4. 返回错误响应
+        // 5. 返回错误响应
         res.status(400).json({
             success: false,
             message: error.message
@@ -69,7 +106,24 @@ export const getBalance = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const { username, password } = req.body;
-        const result = await AccountService.updateProfile(username, password);
+        
+        // 参数验证
+        if (!username || !username.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名不能为空'
+            });
+        }
+        
+        // 用户名长度验证
+        if (username.trim().length < 2 || username.trim().length > 20) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名长度必须在2-20个字符之间'
+            });
+        }
+        
+        const result = await AccountService.updateProfile(username.trim(), password);
         res.json({
             success: true,
             message: '用户信息更新成功',
@@ -132,7 +186,23 @@ export const logout = async (req, res) => {
 export const getPrivateKey = async (req, res) => {
     try {
         const { username, password } = req.body;
-        const result = await AccountService.getPrivateKey(username, password);
+        
+        // 参数验证
+        if (!username || !username.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名不能为空'
+            });
+        }
+        
+        if (!password || !password.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '密码不能为空'
+            });
+        }
+        
+        const result = await AccountService.getPrivateKey(username.trim(), password);
         res.json({
             success: true,
             message: '私钥获取成功',

@@ -6,14 +6,80 @@ export const createSubtask = async (req, res) => {
         const { milestoneId, title, status, description, assignedTo, startTime, endTime, priority } = req.body;
         
         // 输入验证
-        if (!milestoneId || !title) {
+        if (!milestoneId || isNaN(parseInt(milestoneId))) {
             return res.status(400).json({
                 success: false,
-                message: '里程碑ID和标题不能为空'
+                message: '里程碑ID必须是有效的数字'
             });
         }
         
-        const result = await SubtaskService.createSubtask(milestoneId, title, status, description, assignedTo, startTime, endTime, priority);
+        if (!title || !title.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '子任务标题不能为空'
+            });
+        }
+
+        if(description === null){
+            return res.status(400).json({
+                success: false,
+                message: '子任务描述不能为空'
+            });
+        }
+        
+        // 标题长度验证
+        if (title.trim().length < 2 || title.trim().length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: '子任务标题长度必须在2-100个字符之间'
+            });
+        }
+        
+        // 优先级验证
+        if (priority && (isNaN(parseInt(priority)) || parseInt(priority) < 1 || parseInt(priority) > 5)) {
+            return res.status(400).json({
+                success: false,
+                message: '优先级必须是1-5之间的数字'
+            });
+        }
+        
+        // 时间验证
+        if (startTime && endTime) {
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                return res.status(400).json({
+                    success: false,
+                    message: '时间格式不正确'
+                });
+            }
+            
+            if (end <= start) {
+                return res.status(400).json({
+                    success: false,
+                    message: '结束时间必须晚于开始时间'
+                });
+            }
+        }
+
+        if(startTime === null || endTime === null){
+            return res.status(400).json({
+                success: false,
+                message: '开始时间和结束时间不能为空'
+            });
+        }
+        
+        const result = await SubtaskService.createSubtask(
+            parseInt(milestoneId), 
+            title.trim(), 
+            status, 
+            description, 
+            assignedTo, 
+            startTime, 
+            endTime, 
+            priority ? parseInt(priority) : undefined
+        );
         
         // 如果分配了负责人，发送通知
         if (assignedTo) {
@@ -63,7 +129,16 @@ export const createSubtask = async (req, res) => {
 export const getSubtaskList = async (req, res) => {
     try {
         const { milestoneId } = req.params;
-        const result = await SubtaskService.getSubtaskList(milestoneId);
+        
+        // 参数验证
+        if (!milestoneId || isNaN(parseInt(milestoneId))) {
+            return res.status(400).json({
+                success: false,
+                message: '里程碑ID必须是有效的数字'
+            });
+        }
+        
+        const result = await SubtaskService.getSubtaskList(parseInt(milestoneId));
         res.json({
             success: true,
             message: '获取子任务列表成功',
@@ -80,7 +155,16 @@ export const getSubtaskList = async (req, res) => {
 export const getSubtaskDetail = async (req, res) => {
     try {
         const { subtaskId } = req.params;
-        const result = await SubtaskService.getSubtaskDetail(subtaskId);
+        
+        // 参数验证
+        if (!subtaskId || isNaN(parseInt(subtaskId))) {
+            return res.status(400).json({
+                success: false,
+                message: '子任务ID必须是有效的数字'
+            });
+        }
+        
+        const result = await SubtaskService.getSubtaskDetail(parseInt(subtaskId));
         res.json({
             success: true,
             message: '获取子任务详情成功',
@@ -99,14 +183,67 @@ export const updateSubtask = async (req, res) => {
         const { subtaskId } = req.params;
         const { title, status, description, assignedTo, startTime, endTime, priority } = req.body;
         
-        if (!title) {
+        // 参数验证
+        if (!subtaskId || isNaN(parseInt(subtaskId))) {
             return res.status(400).json({
                 success: false,
-                message: '标题不能为空'
+                message: '子任务ID必须是有效的数字'
             });
         }
         
-        const result = await SubtaskService.updateSubtask(subtaskId, title, status, description, assignedTo, startTime, endTime, priority);
+        if (!title || !title.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '子任务标题不能为空'
+            });
+        }
+        
+        // 标题长度验证
+        if (title.trim().length < 2 || title.trim().length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: '子任务标题长度必须在2-100个字符之间'
+            });
+        }
+        
+        // 优先级验证
+        if (priority && (isNaN(parseInt(priority)) || parseInt(priority) < 1 || parseInt(priority) > 5)) {
+            return res.status(400).json({
+                success: false,
+                message: '优先级必须是1-5之间的数字'
+            });
+        }
+        
+        // 时间验证
+        if (startTime && endTime) {
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                return res.status(400).json({
+                    success: false,
+                    message: '时间格式不正确'
+                });
+            }
+            
+            if (end <= start) {
+                return res.status(400).json({
+                    success: false,
+                    message: '结束时间必须晚于开始时间'
+                });
+            }
+        }
+        
+        const result = await SubtaskService.updateSubtask(
+            parseInt(subtaskId), 
+            title.trim(), 
+            status, 
+            description, 
+            assignedTo, 
+            startTime, 
+            endTime, 
+            priority ? parseInt(priority) : undefined
+        );
         
         // 如果状态发生变化，发送通知给相关人员
         if (status && assignedTo) {
@@ -161,7 +298,16 @@ export const updateSubtask = async (req, res) => {
 export const deleteSubtask = async (req, res) => {
     try {
         const { subtaskId } = req.params;
-        const result = await SubtaskService.deleteSubtask(subtaskId);
+        
+        // 参数验证
+        if (!subtaskId || isNaN(parseInt(subtaskId))) {
+            return res.status(400).json({
+                success: false,
+                message: '子任务ID必须是有效的数字'
+            });
+        }
+        
+        const result = await SubtaskService.deleteSubtask(parseInt(subtaskId));
         res.json({
             success: true,
             message: '删除子任务成功',

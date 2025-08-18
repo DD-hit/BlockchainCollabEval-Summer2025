@@ -6,6 +6,15 @@ import { TransactionService } from '../services/transactionService.js';
 export const getRecentTransactions = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
+        
+        // 参数验证
+        if (limit < 1 || limit > 100) {
+            return res.status(400).json({
+                success: false,
+                message: '限制数量必须在1-100之间'
+            });
+        }
+        
         const transactions = await TransactionService.getRecentTransactions(limit);
         
         res.json({
