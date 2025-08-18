@@ -8,7 +8,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 
 // 创建axios实例
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 60000,
 })
 
 // 请求拦截器 - 自动添加token
@@ -61,7 +61,7 @@ const handleApi = async (apiCall) => {
 
 // 账户管理API
 export const accountAPI = {
-  login: (payload) => api.post("/api/accounts/login", payload),
+  login: (payload) => api.post("/api/accounts/login", payload, { timeout: 60000 }),
   register: (payload) => api.post("/api/accounts/createAccount", payload),
   getBalance: () => handleApi(api.get("/api/accounts/getBalance")),
   updateProfile: (payload) => handleApi(api.put("/api/accounts/updateProfile", payload)),

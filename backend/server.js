@@ -33,6 +33,13 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// 设置请求超时时间（60秒）
+app.use((req, res, next) => {
+    req.setTimeout(60000);
+    res.setTimeout(60000);
+    next();
+});
+
 // 1. 静态文件托管（最优先）- 使用绝对路径
 app.use(express.static(path.join(__dirname, 'public')));
 

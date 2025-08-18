@@ -1,1 +1,1 @@
-export const WEB3_PROVIDER = 'http://192.168.139.129:8545';
+export const WEB3_PROVIDER = 'http://120.55.189.119:8545';
