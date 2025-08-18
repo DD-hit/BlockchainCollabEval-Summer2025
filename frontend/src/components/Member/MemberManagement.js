@@ -6,7 +6,7 @@ const MemberManagement = ({ projectId, user, isProjectOwner }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newMember, setNewMember] = useState({ username: '', role: '成员' });
+  const [newMember, setNewMember] = useState({ username: '', role: '项目负责人' });
   const [memberStats, setMemberStats] = useState({});
 
   useEffect(() => {
@@ -91,7 +91,7 @@ const MemberManagement = ({ projectId, user, isProjectOwner }) => {
 
              if (response.ok) {
          setMembers([...members, response.data]);
-         setNewMember({ username: '', role: '成员' });
+         setNewMember({ username: '', role: '项目负责人' });
          setShowAddModal(false);
          alert('成员添加成功');
          loadMembers(); // 重新加载成员列表
@@ -149,23 +149,43 @@ const MemberManagement = ({ projectId, user, isProjectOwner }) => {
 
   const getRoleColor = (role) => {
     const colors = {
-      '组长': '#f59e0b', 
-      '成员': '#6366f1'
+      '项目负责人': '#dc2626', // 红色
+      '技术负责人': '#ea580c', // 橙色
+      '前端开发': '#2563eb', // 蓝色
+      '后端开发': '#7c3aed', // 紫色
+      '全栈开发': '#059669', // 绿色
+      'UI/UX设计师': '#db2777', // 粉色
+      '产品经理': '#0891b2', // 青色
+      '测试工程师': '#65a30d', // 青绿色
+      '运维工程师': '#9333ea', // 深紫色
+      '数据分析师': '#ea580c', // 橙色
+      '文档编写': '#6b7280', // 灰色
+      '组长': '#f59e0b'
     };
-    return colors[role] || colors['成员'];
+    return colors[role] || '#6366f1'; // 默认蓝色
   };
 
   const getRoleText = (role) => {
     // 如果已经是中文，直接返回
-    if (role === '组长' || role === '成员') {
+    if (['组长', '项目负责人', '技术负责人', '前端开发', '后端开发', '全栈开发', 'UI/UX设计师', '产品经理', '测试工程师', '运维工程师', '数据分析师', '文档编写'].includes(role)) {
       return role;
     }
     // 如果是英文，转换为中文
     const texts = {
       'leader': '组长',
-      'member': '成员'
+      'project_manager': '项目负责人',
+      'tech_lead': '技术负责人',
+      'frontend_dev': '前端开发',
+      'backend_dev': '后端开发',
+      'fullstack_dev': '全栈开发',
+      'ui_ux_designer': 'UI/UX设计师',
+      'product_manager': '产品经理',
+      'test_engineer': '测试工程师',
+      'devops_engineer': '运维工程师',
+      'data_analyst': '数据分析师',
+      'documentation': '文档编写'
     };
-    return texts[role] || '成员';
+    return texts[role] || '项目负责人';
   };
 
   if (loading) {
@@ -318,7 +338,17 @@ const MemberManagement = ({ projectId, user, isProjectOwner }) => {
                   value={newMember.role}
                   onChange={(e) => setNewMember({...newMember, role: e.target.value})}
                 >
-                  <option value="成员">成员</option>
+                  <option value="项目负责人">项目负责人</option>
+                  <option value="技术负责人">技术负责人</option>
+                  <option value="前端开发">前端开发</option>
+                  <option value="后端开发">后端开发</option>
+                  <option value="全栈开发">全栈开发</option>
+                  <option value="UI/UX设计师">UI/UX设计师</option>
+                  <option value="产品经理">产品经理</option>
+                  <option value="测试工程师">测试工程师</option>
+                  <option value="运维工程师">运维工程师</option>
+                  <option value="数据分析师">数据分析师</option>
+                  <option value="文档编写">文档编写</option>
                 </select>
               </div>
               

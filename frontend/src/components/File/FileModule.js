@@ -12,6 +12,11 @@ export default function FileModule({ projectId, subtaskId }) {
   const [uploading, setUploading] = useState(false)
   const { addNotification } = useNotifications()
   const { openScore } = useScore()
+  
+  // 添加密码输入模态框状态
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [password, setPassword] = useState('')
+  const [pendingFile, setPendingFile] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -31,24 +36,44 @@ export default function FileModule({ projectId, subtaskId }) {
     const file = e.target.files?.[0]
     if (!file) return
     
-    // 提示用户输入密码
-    const password = prompt("请输入您的密码以验证身份：")
-    if (!password) return
-    
+    // 显示密码输入模态框
+    setPendingFile(file)
+    setShowPasswordModal(true)
+  }
+
+  const handlePasswordSubmit = async () => {
+    if (!password.trim()) {
+      alert('请输入密码')
+      return
+    }
+
+    if (!pendingFile) return
+
     setUploading(true)
-    const res = await fileAPI.uploadToSubtask(subtaskId, file, password)
+    setShowPasswordModal(false)
+    
+    const res = await fileAPI.uploadToSubtask(subtaskId, pendingFile, password.trim())
     setUploading(false)
+    
     if (res.ok) {
       addNotification({
         type: "file",
         title: "文件上传成功",
-        message: file.name,
+        message: pendingFile.name,
         meta: { projectId, subtaskId, fileId: res.data?.id },
       }, false)
+      setPassword("")
+      setPendingFile(null)
       load()
     } else {
       alert(res.error?.message || "上传失败")
     }
+  }
+
+  const handlePasswordCancel = () => {
+    setShowPasswordModal(false)
+    setPassword("")
+    setPendingFile(null)
   }
 
   const onDownload = async (item) => {
@@ -124,6 +149,36 @@ export default function FileModule({ projectId, subtaskId }) {
           </table>
         )}
       </div>
+
+      {/* 密码输入模态框 */}
+      {showPasswordModal && (
+        <div className="password-modal-overlay">
+          <div className="password-modal">
+            <div className="password-modal-header">
+              <h3>身份验证</h3>
+            </div>
+            <div className="password-modal-body">
+              <p>请输入您的密码以验证身份:</p>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="请输入密码"
+                onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+                autoFocus
+              />
+            </div>
+            <div className="password-modal-actions">
+              <button onClick={handlePasswordCancel} className="btn-secondary">
+                取消
+              </button>
+              <button onClick={handlePasswordSubmit} className="btn-primary">
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

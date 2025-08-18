@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import api, { fileAPI } from "../../utils/api"
 import ScoreModal from "../Score/ScoreModal"
@@ -21,6 +21,11 @@ const SubtaskDetail = () => {
   const [showFileUpload, setShowFileUpload] = useState(false)
   const [showScoreModal, setShowScoreModal] = useState(false)
   const [selectedFileForScore, setSelectedFileForScore] = useState(null)
+
+  // 添加密码输入模态框状态
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [password, setPassword] = useState('')
+  const [pendingUpload, setPendingUpload] = useState(null)
 
   useEffect(() => {
     const username = sessionStorage.getItem('username')
@@ -80,22 +85,32 @@ const SubtaskDetail = () => {
       return
     }
 
-    // 弹出密码输入框（用于验证身份和解密私钥）
-    const password = prompt('请输入您的密码以验证身份:')
-    if (!password || password.trim() === '') {
+    // 显示密码输入模态框
+    setPendingUpload({ file: selectedFile, description: fileDescription })
+    setShowPasswordModal(true)
+  }
+
+  const handlePasswordSubmit = async () => {
+    if (!password.trim()) {
       alert('请输入密码')
       return
     }
 
+    if (!pendingUpload) return
+
     setUploadingFile(true)
+    setShowPasswordModal(false)
+    
     try {
-      const result = await fileAPI.uploadToSubtask(subtaskId, selectedFile, password.trim())
+      const result = await fileAPI.uploadToSubtask(subtaskId, pendingUpload.file, password.trim())
       
       if (result.ok) {
         alert("文件上传成功！\n系统已自动创建评分合约，其他成员将收到评分通知。\n请提醒成员及时评分，否则将扣除贡献点。")
         setSelectedFile(null)
         setFileDescription("")
         setShowFileUpload(false)
+        setPassword("")
+        setPendingUpload(null)
         loadFiles()
         // 上传成功后刷新评论
         setTimeout(() => {
@@ -110,6 +125,12 @@ const SubtaskDetail = () => {
     } finally {
       setUploadingFile(false)
     }
+  }
+
+  const handlePasswordCancel = () => {
+    setShowPasswordModal(false)
+    setPassword("")
+    setPendingUpload(null)
   }
 
   const handleSubmitComment = async (e) => {
@@ -510,6 +531,36 @@ const SubtaskDetail = () => {
           </div>
         )}
       </div>
+
+      {/* 密码输入模态框 */}
+      {showPasswordModal && (
+        <div className="password-modal-overlay">
+          <div className="password-modal">
+            <div className="password-modal-header">
+              <h3>身份验证</h3>
+            </div>
+            <div className="password-modal-body">
+              <p>请输入您的密码以验证身份:</p>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="请输入密码"
+                onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+                autoFocus
+              />
+            </div>
+            <div className="password-modal-actions">
+              <button onClick={handlePasswordCancel} className="btn-secondary">
+                取消
+              </button>
+              <button onClick={handlePasswordSubmit} className="btn-primary">
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 评分模态框 */}
       {showScoreModal && selectedFileForScore && (

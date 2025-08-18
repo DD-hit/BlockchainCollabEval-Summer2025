@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import MemberManagement from "../Member/MemberManagement"
 import MilestoneManagement from "../Milestone/MilestoneManagement"
-import { projectAPI } from "../../utils/api"
+import { projectAPI, milestoneAPI, subtaskAPI, projectMemberAPI } from "../../utils/api"
 import "./ProjectDetail.css"
 
 export default function ProjectDetail() {
@@ -20,6 +20,12 @@ export default function ProjectDetail() {
     startTime: "", 
     endTime: "", 
     ownerId: null 
+  })
+  const [projectStats, setProjectStats] = useState({
+    completedMilestones: 0,
+    inProgressMilestones: 0,
+    totalMembers: 0,
+    projectProgress: 0
   })
 
   // 添加编辑功能
@@ -69,6 +75,65 @@ export default function ProjectDetail() {
     setEditOpen(false)
   }
 
+  // 计算项目统计数据
+  const calculateProjectStats = async () => {
+    try {
+      // 获取项目成员数量
+      const membersResponse = await projectMemberAPI.list(projectIdNum)
+      const totalMembers = membersResponse.ok && membersResponse.data ? membersResponse.data.length : 0
+
+      // 获取所有里程碑
+      const milestonesResponse = await milestoneAPI.listByProject(projectIdNum)
+      let completedMilestones = 0
+      let inProgressMilestones = 0
+      let totalSubtasks = 0
+      let completedSubtasks = 0
+
+      if (milestonesResponse.ok && milestonesResponse.data) {
+        const milestones = Array.isArray(milestonesResponse.data) ? milestonesResponse.data : []
+        
+        // 遍历每个里程碑，统计里程碑状态和子任务信息
+        for (const milestone of milestones) {
+          // 统计里程碑状态
+          if (milestone.status === 'completed') {
+            completedMilestones++
+          } else if (milestone.status === 'in_progress') {
+            inProgressMilestones++
+          }
+          
+          // 获取子任务信息用于计算总体进度
+          try {
+            const subtasksResponse = await subtaskAPI.list(milestone.milestoneId)
+            if (subtasksResponse.ok && subtasksResponse.data) {
+              const subtasks = Array.isArray(subtasksResponse.data) ? subtasksResponse.data : []
+              totalSubtasks += subtasks.length
+              
+              subtasks.forEach(subtask => {
+                if (subtask.status === 'completed') {
+                  completedSubtasks++
+                }
+              })
+            }
+          } catch (error) {
+            console.error(`获取里程碑 ${milestone.milestoneId} 的子任务失败:`, error)
+          }
+        }
+      }
+
+      // 计算项目进度百分比（基于子任务完成情况）
+      const projectProgress = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0
+
+      setProjectStats({
+        completedMilestones,
+        inProgressMilestones,
+        totalMembers,
+        projectProgress
+      })
+    } catch (error) {
+      console.error('计算项目统计数据失败:', error)
+    }
+  }
+
   useEffect(() => {
     let canceled = false
     ;(async () => {
@@ -78,7 +143,8 @@ export default function ProjectDetail() {
       if (canceled) return
       if (res.ok) {
         setData(res.data)
-
+        // 计算项目统计数据
+        await calculateProjectStats()
       } else {
         console.error('获取项目详情失败:', res.error);
       }
@@ -86,6 +152,20 @@ export default function ProjectDetail() {
     })()
     return () => {
       canceled = true
+    }
+  }, [projectIdNum])
+
+  // 监听任务状态变化，实时更新统计数据
+  useEffect(() => {
+    const handleTaskStatusChange = () => {
+      calculateProjectStats()
+    }
+
+    // 监听子任务状态变化事件
+    window.addEventListener('subtaskStatusChanged', handleTaskStatusChange)
+    
+    return () => {
+      window.removeEventListener('subtaskStatusChanged', handleTaskStatusChange)
     }
   }, [projectIdNum])
 
@@ -164,20 +244,36 @@ export default function ProjectDetail() {
             <h3>📊 项目统计</h3>
             <div className="stats-grid">
               <div className="stat-item">
-                <div className="stat-number">0</div>
-                <div className="stat-label">已完成任务</div>
+                <div className="stat-number">{projectStats.completedMilestones}</div>
+                <div className="stat-label">已完成里程碑</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number">0</div>
-                <div className="stat-label">进行中任务</div>
+                <div className="stat-number">{projectStats.inProgressMilestones}</div>
+                <div className="stat-label">进行中里程碑</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number">0</div>
+                <div className="stat-number">{projectStats.totalMembers}</div>
                 <div className="stat-label">总成员数</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number">0%</div>
-                <div className="stat-label">项目进度</div>
+                <div className="stat-number">{projectStats.completedMilestones + projectStats.inProgressMilestones}</div>
+                <div className="stat-label">总里程碑数</div>
+              </div>
+            </div>
+            
+            {/* 项目进度条 */}
+            <div className="project-progress-section">
+              <h4>🎯 项目进度</h4>
+              <div className="progress-container">
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{ width: `${projectStats.projectProgress}%` }}
+                  ></div>
+                </div>
+                <div className="progress-text">
+                  {projectStats.projectProgress}% 完成
+                </div>
               </div>
             </div>
           </div>

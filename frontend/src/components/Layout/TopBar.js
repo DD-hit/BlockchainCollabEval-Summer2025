@@ -15,8 +15,6 @@ const TopBar = ({ user, onLogout }) => {
 
   const { items, unreadCount, markAllRead, clear } = useNotifications()
 
-  const projects = []
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) setShowUserMenu(false)
@@ -111,14 +109,6 @@ const TopBar = ({ user, onLogout }) => {
                 <span>👤</span>
                 个人资料
               </Link>
-              <div className="dropdown-item">
-                <span>⚙️</span>
-                设置
-              </div>
-              <div className="dropdown-item">
-                <span>💰</span>
-                钱包
-              </div>
               <div className="dropdown-item logout" onClick={onLogout}>
                 <span>🚪</span>
                 退出登录

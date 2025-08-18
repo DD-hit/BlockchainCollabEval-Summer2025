@@ -1,6 +1,6 @@
 .milestone-management {
   padding: 0;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
   min-height: 100vh;
   border-radius: 16px;
   max-width: 1000px;
@@ -13,23 +13,23 @@
   align-items: center;
   margin-bottom: 24px;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   border-radius: 12px;
-  color: white;
+  color: white !important;
   box-shadow: 0 10px 15px -3px rgba(102, 126, 234, 0.3), 0 4px 6px -2px rgba(102, 126, 234, 0.2);
 }
 
 .milestone-header h2 {
   margin: 0;
-  color: white;
+  color: white !important;
   font-size: 24px;
   font-weight: 700;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .create-milestone-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
   border: none;
   padding: 14px 24px;
   border-radius: 12px;
@@ -63,7 +63,7 @@
 }
 
 .stat-card {
-  background: white;
+  background: white !important;
   padding: 20px;
   border-radius: 12px;
   text-align: center;
@@ -86,7 +86,7 @@
 }
 
 .stat-label {
-  color: #374151;
+  color: #374151 !important;
   font-size: 13px;
   font-weight: 500;
 }
@@ -101,7 +101,7 @@
 }
 
 .milestone-card {
-  background: white;
+  background: white !important;
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -131,7 +131,7 @@
 
 .milestone-title {
   margin: 0 0 6px 0;
-  color: #000000;
+  color: #000000 !important;
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
@@ -144,7 +144,7 @@
 
 .milestone-description {
   margin: 0;
-  color: #1e293b;
+  color: #1e293b !important;
   line-height: 1.5;
   font-size: 13px;
 }
