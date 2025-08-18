@@ -5,6 +5,62 @@ import { getBalance } from '../utils/eth.js';
 import { EncryptionService } from '../utils/encryption.js';
 import { WEB3_PROVIDER } from '../config/config.js';
 
+// 密码强度验证函数
+function validatePasswordStrength(password) {
+    const feedback = [];
+    let score = 0;
+
+    // 长度检查
+    if (password.length < 8) {
+        feedback.push('密码长度至少需要8位');
+    } else if (password.length >= 12) {
+        score += 2;
+    } else {
+        score += 1;
+    }
+
+    // 包含数字
+    if (/\d/.test(password)) {
+        score += 1;
+    } else {
+        feedback.push('密码需要包含数字');
+    }
+
+    // 包含小写字母
+    if (/[a-z]/.test(password)) {
+        score += 1;
+    } else {
+        feedback.push('密码需要包含小写字母');
+    }
+
+    // 包含大写字母
+    if (/[A-Z]/.test(password)) {
+        score += 1;
+    } else {
+        feedback.push('密码需要包含大写字母');
+    }
+
+    // 包含特殊字符
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        score += 1;
+    } else {
+        feedback.push('密码需要包含特殊字符');
+    }
+
+    // 不能包含常见弱密码
+    const weakPasswords = ['123456', 'password', 'qwerty', 'admin', '123456789', '12345678'];
+    if (weakPasswords.includes(password.toLowerCase())) {
+        feedback.push('不能使用常见弱密码');
+        score = 0;
+    }
+
+    // 要求至少3分才能通过
+    const isValid = score >= 3;
+    const message = isValid ? '密码强度符合要求' : feedback.join(', ');
+
+    return { isValid, score, message, feedback };
+}
+
 export class AccountService {
 
     //登录账号
@@ -80,8 +136,14 @@ export class AccountService {
             throw new Error('密码不能为空');
         }
 
-        if (password.length < 6) {
-            throw new Error('密码长度至少需要6位');
+        if (password.length < 8) {
+            throw new Error('密码长度至少需要8位');
+        }
+
+        // 增强的密码强度验证
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.isValid) {
+            throw new Error(`密码强度不够: ${passwordValidation.message}`);
         }
 
         // 2. 创建区块链账户
@@ -136,7 +198,17 @@ export class AccountService {
         }
 
         // 更新密码
-        if (password && password.length >= 6) {
+        if (password) {
+            if (password.length < 8) {
+                throw new Error('密码长度至少需要8位');
+            }
+            
+            // 增强的密码强度验证
+            const passwordValidation = validatePasswordStrength(password);
+            if (!passwordValidation.isValid) {
+                throw new Error(`密码强度不够: ${passwordValidation.message}`);
+            }
+            
             const hashedPassword = await EncryptionService.hashPassword(password);
             await pool.execute('UPDATE user SET password = ? WHERE username = ?', [hashedPassword, username]);
         }

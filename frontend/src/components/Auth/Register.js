@@ -13,7 +13,89 @@ const Register = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    feedback: []
+  });
   const navigate = useNavigate();
+
+  // 密码强度验证函数
+  const validatePasswordStrength = (password) => {
+    const feedback = [];
+    let score = 0;
+
+    // 长度检查
+    if (password.length < 8) {
+      feedback.push('密码长度至少需要8位');
+    } else if (password.length >= 12) {
+      score += 2;
+    } else {
+      score += 1;
+    }
+
+    // 包含数字
+    if (/\d/.test(password)) {
+      score += 1;
+    } else {
+      feedback.push('密码需要包含数字');
+    }
+
+    // 包含小写字母
+    if (/[a-z]/.test(password)) {
+      score += 1;
+    } else {
+      feedback.push('密码需要包含小写字母');
+    }
+
+    // 包含大写字母
+    if (/[A-Z]/.test(password)) {
+      score += 1;
+    } else {
+      feedback.push('密码需要包含大写字母');
+    }
+
+    // 包含特殊字符
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      score += 1;
+    } else {
+      feedback.push('密码需要包含特殊字符');
+    }
+
+    // 不能包含常见弱密码
+    const weakPasswords = ['123456', 'password', 'qwerty', 'admin', '123456789'];
+    if (weakPasswords.includes(password.toLowerCase())) {
+      feedback.push('不能使用常见弱密码');
+      score = 0;
+    }
+
+    return { score, feedback };
+  };
+
+  const handlePasswordChange = (e) => {
+    const password = e.target.value;
+    setFormData({...formData, password});
+    
+    if (password) {
+      const strength = validatePasswordStrength(password);
+      setPasswordStrength(strength);
+    } else {
+      setPasswordStrength({ score: 0, feedback: [] });
+    }
+  };
+
+  const getPasswordStrengthColor = (score) => {
+    if (score >= 4) return '#28a745'; // 绿色 - 强
+    if (score >= 3) return '#ffc107'; // 黄色 - 中
+    if (score >= 2) return '#fd7e14'; // 橙色 - 弱
+    return '#dc3545'; // 红色 - 很弱
+  };
+
+  const getPasswordStrengthText = (score) => {
+    if (score >= 4) return '强';
+    if (score >= 3) return '中';
+    if (score >= 2) return '弱';
+    return '很弱';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,8 +108,15 @@ const Register = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('密码长度至少需要6位');
+    // 增强的密码验证
+    if (formData.password.length < 8) {
+      setError('密码长度至少需要8位');
+      setLoading(false);
+      return;
+    }
+
+    if (passwordStrength.score < 3) {
+      setError('密码强度不够，请参考下方提示');
       setLoading(false);
       return;
     }
@@ -97,10 +186,33 @@ const Register = () => {
               <input
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                placeholder="请输入密码"
+                onChange={handlePasswordChange}
+                placeholder="请输入密码（至少8位，包含大小写字母、数字和特殊字符）"
                 required
               />
+              {formData.password && (
+                <div className="password-strength-container">
+                  <div className="password-strength-bar">
+                    <div 
+                      className="password-strength-fill" 
+                      style={{ 
+                        width: `${(passwordStrength.score / 5) * 100}%`,
+                        backgroundColor: getPasswordStrengthColor(passwordStrength.score)
+                      }}
+                    ></div>
+                  </div>
+                  <span className="password-strength-text" style={{ color: getPasswordStrengthColor(passwordStrength.score) }}>
+                    强度: {getPasswordStrengthText(passwordStrength.score)}
+                  </span>
+                  {passwordStrength.feedback.length > 0 && (
+                    <ul className="password-strength-feedback">
+                      {passwordStrength.feedback.map((item, index) => (
+                        <li key={index} className="feedback-item">• {item}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="form-group">

@@ -3,6 +3,58 @@ import api, { projectAPI, subtaskAPI } from '../../utils/api';
 import { accountAPI } from '../../utils/api';
 import './Profile.css';
 
+// 密码强度验证函数
+const validatePasswordStrength = (password) => {
+  const feedback = [];
+  let score = 0;
+
+  // 长度检查
+  if (password.length < 8) {
+    feedback.push('密码长度至少需要8位');
+  } else if (password.length >= 12) {
+    score += 2;
+  } else {
+    score += 1;
+  }
+
+  // 包含数字
+  if (/\d/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push('密码需要包含数字');
+  }
+
+  // 包含小写字母
+  if (/[a-z]/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push('密码需要包含小写字母');
+  }
+
+  // 包含大写字母
+  if (/[A-Z]/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push('密码需要包含大写字母');
+  }
+
+  // 包含特殊字符
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push('密码需要包含特殊字符');
+  }
+
+  // 不能包含常见弱密码
+  const weakPasswords = ['123456', 'password', 'qwerty', 'admin', '123456789'];
+  if (weakPasswords.includes(password.toLowerCase())) {
+    feedback.push('不能使用常见弱密码');
+    score = 0;
+  }
+
+  return { score, feedback };
+};
+
 const Profile = ({ user }) => {
   const [userInfo, setUserInfo] = useState(user);
   const [editing, setEditing] = useState(false);
@@ -53,9 +105,18 @@ const Profile = ({ user }) => {
       return;
     }
 
-    if (editForm.newPassword && editForm.newPassword.length < 6) {
-      alert('密码长度至少需要6位');
+    if (editForm.newPassword && editForm.newPassword.length < 8) {
+      alert('密码长度至少需要8位');
       return;
+    }
+
+    // 增强的密码强度验证
+    if (editForm.newPassword) {
+      const passwordValidation = validatePasswordStrength(editForm.newPassword);
+      if (passwordValidation.score < 3) {
+        alert(`密码强度不够: ${passwordValidation.feedback.join(', ')}`);
+        return;
+      }
     }
 
     try {
