@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { projectAPI } from '../../utils/api';
+import { projectAPI, milestoneAPI, subtaskAPI } from '../../utils/api';
+import { calculateProjectStatus, getStatusColor, getStatusText, convertStatusToEnglish } from '../../utils/overdueUtils';
 import './ProjectList.css';
 
 const ProjectList = ({ user }) => {
@@ -34,6 +35,78 @@ const ProjectList = ({ user }) => {
     }
   }, [location.state, navigate, currentUser]);
 
+  // 监听子任务状态变化，自动刷新项目列表
+  useEffect(() => {
+    const handleSubtaskChange = () => {
+      loadProjects();
+    };
+
+    // 监听自定义事件
+    window.addEventListener('subtaskStatusChanged', handleSubtaskChange);
+    
+    // 添加定时器，每分钟检查一次逾期状态
+    const intervalId = setInterval(() => {
+      loadProjects();
+    }, 60000); // 每分钟刷新一次
+    
+    return () => {
+      window.removeEventListener('subtaskStatusChanged', handleSubtaskChange);
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  // 计算项目实际状态
+  const calculateProjectActualStatus = async (project) => {
+    try {
+      // 获取项目的所有里程碑
+      const milestonesResponse = await milestoneAPI.listByProject(project.projectId)
+      if (!milestonesResponse.ok || !milestonesResponse.data) {
+        return project.status || '进行中'
+      }
+
+      const milestones = Array.isArray(milestonesResponse.data) ? milestonesResponse.data : []
+      if (milestones.length === 0) {
+        return project.status || '进行中'
+      }
+
+      // 获取所有里程碑的子任务信息
+      const milestoneSubtasks = {}
+      for (const milestone of milestones) {
+        try {
+          const subtasksResponse = await subtaskAPI.list(milestone.milestoneId)
+          if (subtasksResponse.ok && subtasksResponse.data) {
+            const subtasks = Array.isArray(subtasksResponse.data) ? subtasksResponse.data : []
+            milestoneSubtasks[milestone.milestoneId] = subtasks
+          } else {
+            milestoneSubtasks[milestone.milestoneId] = []
+          }
+        } catch (error) {
+          console.error(`获取里程碑 ${milestone.milestoneId} 的子任务失败:`, error)
+          milestoneSubtasks[milestone.milestoneId] = []
+        }
+      }
+
+      // 使用工具函数计算项目状态（基于里程碑状态和子任务信息）
+      const calculatedStatus = calculateProjectStatus(project, milestones, milestoneSubtasks)
+      
+      // 如果计算出的状态与数据库状态不一致，更新数据库
+      if (calculatedStatus !== project.status) {
+        try {
+          // 将中文状态转换为英文状态用于API调用
+          const englishStatus = convertStatusToEnglish(calculatedStatus)
+          await projectAPI.updateStatus(project.projectId, englishStatus)
+        } catch (updateError) {
+          console.error(`更新项目 ${project.projectId} 状态失败:`, updateError)
+        }
+      }
+      
+      return calculatedStatus
+    } catch (error) {
+      console.error(`计算项目 ${project.projectId} 状态失败:`, error)
+      return project.status || '进行中'
+    }
+  }
+
   const loadProjects = async () => {
     try {
       setLoading(true);
@@ -42,7 +115,20 @@ const ProjectList = ({ user }) => {
       const response = await projectAPI.myProjects();
       
       if (response.ok) {
-        setProjects(response.data || []);
+        const projectsData = response.data || [];
+        
+        // 为每个项目计算实际状态
+        const projectsWithStatus = await Promise.all(
+          projectsData.map(async (project) => {
+            const actualStatus = await calculateProjectActualStatus(project)
+            return {
+              ...project,
+              actualStatus
+            }
+          })
+        )
+        
+        setProjects(projectsWithStatus);
         
       } else {
         console.error('获取项目列表失败:', response.error);
@@ -115,7 +201,19 @@ const ProjectList = ({ user }) => {
               <div className="project-card">
                 <div className="project-header">
                   <h3>{project.projectName}</h3>
-                  <span className="project-status">{project.status || '进行中'}</span>
+                  <span 
+                    className="project-status" 
+                    data-status={project.actualStatus || project.status || '进行中'}
+                    style={{ 
+                      background: getStatusColor(project.actualStatus || project.status || '进行中'),
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px'
+                    }}
+                  >
+                    {getStatusText(project.actualStatus || project.status || '进行中')}
+                  </span>
                 </div>
                 <p className="project-description">{project.description || '暂无描述'}</p>
                 <div className="project-meta">
@@ -155,6 +253,7 @@ const ProjectList = ({ user }) => {
 };
 
 export default ProjectList;
+
 
 
 

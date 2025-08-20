@@ -160,28 +160,30 @@ const startServer = async () => {
             }
         };
 
-        // 心跳检测机制 - 每60秒检查一次所有连接
-        const heartbeatInterval = setInterval(() => {
-            const now = Date.now();
-            const timeout = 90000; // 90秒超时（3个心跳周期）
-
-            // 检查所有用户的心跳
-            userHeartbeats.forEach((lastHeartbeat, username) => {
-                const timeSinceLastHeartbeat = now - lastHeartbeat;
-                if (timeSinceLastHeartbeat > timeout) {
-                    // 更新用户状态为离线
-                    AccountService.logout(username)
-                        .then(() => {
-                            userHeartbeats.delete(username); // 移除用户记录
-
-                        })
-                        .catch((error) => {
-                            console.error('❌ 心跳超时更新用户状态失败:', error);
-                            userHeartbeats.delete(username); // 移除用户记录
-                        });
-                }
-            });
-        }, 60000); // 每60秒检查一次
+                 // 心跳检测机制 - 每30秒检查一次所有连接
+         const heartbeatInterval = setInterval(() => {
+             const now = Date.now();
+             const timeout = 60000; // 60秒超时（2个心跳周期）
+ 
+             // 检查所有用户的心跳
+             userHeartbeats.forEach((lastHeartbeat, username) => {
+                 const timeSinceLastHeartbeat = now - lastHeartbeat;
+                 
+                 if (timeSinceLastHeartbeat > timeout) {
+                     // 更新用户状态为离线
+                     AccountService.updateUserStatus(username, 0)
+                         .then(() => {
+                             userHeartbeats.delete(username); // 移除用户记录
+                             userConnections.delete(username); // 移除连接记录
+                         })
+                         .catch((error) => {
+                             console.error('心跳超时更新用户状态失败:', error);
+                             userHeartbeats.delete(username); // 移除用户记录
+                             userConnections.delete(username); // 移除连接记录
+                         });
+                 }
+             });
+         }, 30000); // 每30秒检查一次
 
         wss.on('connection', (ws) => {
 
@@ -189,7 +191,7 @@ const startServer = async () => {
             ws.userInfo = null;
 
             // 处理消息
-            ws.on('message', (data) => {
+            ws.on('message', async (data) => {
                 try {
                     const message = JSON.parse(data.toString());
 
@@ -200,6 +202,13 @@ const startServer = async () => {
                             ws.userInfo = { username: message.username };
                             userHeartbeats.set(message.username, Date.now());
                             userConnections.set(message.username, ws);
+
+                                                         // 更新用户状态为在线
+                             try {
+                                 await AccountService.updateUserStatus(message.username, 1);
+                             } catch (error) {
+                                 console.error('更新用户在线状态失败:', error);
+                             }
 
                             // 发送连接确认
                             ws.send(JSON.stringify({
@@ -212,16 +221,15 @@ const startServer = async () => {
                             // sendUnreadNotifications(message.username);
                             break;
 
-                        case 'ping':
-                            if (ws.userInfo && ws.userInfo.username) {
-                                userHeartbeats.set(ws.userInfo.username, Date.now());
-
-                            }
-                            ws.send(JSON.stringify({
-                                type: 'pong',
-                                timestamp: Date.now()
-                            }));
-                            break;
+                                                 case 'ping':
+                             if (ws.userInfo && ws.userInfo.username) {
+                                 userHeartbeats.set(ws.userInfo.username, Date.now());
+                             }
+                             ws.send(JSON.stringify({
+                                 type: 'pong',
+                                 timestamp: Date.now()
+                             }));
+                             break;
 
                         default:
 
@@ -233,16 +241,15 @@ const startServer = async () => {
                 }
             });
 
-            // 处理连接关闭
-            ws.on('close', async (code, reason) => {
-                // 连接断开时，只记录日志，不立即更新用户状态
-                // 用户状态由心跳机制管理，9秒后无心跳才判定离线
-                if (ws.userInfo && ws.userInfo.username) {
-
-                    userConnections.delete(ws.userInfo.username);
-                }
-                // 注意：不删除userHeartbeats中的记录，让心跳检测继续工作
-            });
+                         // 处理连接关闭
+             ws.on('close', async (code, reason) => {
+                 // 连接断开时，只清理连接记录，不立即更新状态
+                 // 让心跳机制来处理状态更新
+                 if (ws.userInfo && ws.userInfo.username) {
+                     userConnections.delete(ws.userInfo.username);
+                     // 注意：不删除userHeartbeats中的记录，让心跳检测继续工作
+                 }
+             });
 
             // 处理错误
             ws.on('error', (error) => {

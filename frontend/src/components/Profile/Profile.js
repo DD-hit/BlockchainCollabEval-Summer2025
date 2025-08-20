@@ -129,11 +129,13 @@ const Profile = ({ user }) => {
       }
 
       const response = await accountAPI.updateProfile(updateData);
-      if (response.data.success) {
+      if (response.ok) {
         setUserInfo({ ...userInfo, username: editForm.username });
         setEditing(false);
         setEditForm({ ...editForm, newPassword: '', confirmPassword: '' });
         alert('个人信息更新成功');
+      } else {
+        alert(response.error?.message || '更新失败');
       }
     } catch (error) {
       console.error('更新个人信息失败:', error);

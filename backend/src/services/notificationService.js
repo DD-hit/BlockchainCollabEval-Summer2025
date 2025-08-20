@@ -109,6 +109,19 @@ export class NotificationService {
         }
     }
 
+    // 删除用户所有通知
+    static async deleteAllNotifications(username) {
+        try {
+            const [result] = await pool.execute(
+                `DELETE FROM notifications WHERE receiver = ?`,
+                [username]
+            );
+            return result;
+        } catch (error) {
+            throw new Error(`删除所有通知失败: ${error.message}`);
+        }
+    }
+
     static async addSubtaskStatusNotification(sender, receiver, subtaskId, title, status, milestoneId) {
         try {
             const content = {

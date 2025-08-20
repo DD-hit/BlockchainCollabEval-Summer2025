@@ -63,7 +63,7 @@ const TopBar = ({ user, onLogout }) => {
                   items.map((n) => (
                     <div key={n.id} className={`notification-item ${n.read ? "read" : ""}`}>
                       <div className="notification-title">
-                        {n.type === "file" ? "📄" : n.type === "comment" ? "💬" : "🔔"} {n.title}
+                        {n.type === "file_upload" ? "📄" : n.type === "subtask_status" ? "🔄" : n.type === "comment" ? "💬" : "🔔"} {n.title}
                       </div>
                       {n.message && <div className="notification-message">{n.message}</div>}
                       <div className="notification-meta">

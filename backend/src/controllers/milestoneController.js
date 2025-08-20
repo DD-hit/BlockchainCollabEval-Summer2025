@@ -42,23 +42,28 @@ export const createMilestone = async (req, res) => {
         }
         
         // 时间验证
-        if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                return res.status(400).json({
-                    success: false,
-                    message: '时间格式不正确'
-                });
-            }
-            
-            if (end <= start) {
-                return res.status(400).json({
-                    success: false,
-                    message: '结束时间必须晚于开始时间'
-                });
-            }
+        if (!startDate || !endDate) {
+            return res.status(400).json({
+                success: false,
+                message: '开始时间和结束时间不能为空'
+            });
+        }
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: '时间格式不正确'
+            });
+        }
+        
+        if (end <= start) {
+            return res.status(400).json({
+                success: false,
+                message: '结束时间必须晚于开始时间'
+            });
         }
         
         const result = await MilestoneService.createMilestone(
@@ -161,24 +166,29 @@ export const updateMilestone = async (req, res) => {
             });
         }
         
-        // 时间验证（如果提供了时间）
-        if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                return res.status(400).json({
-                    success: false,
-                    message: '时间格式不正确'
-                });
-            }
-            
-            if (end <= start) {
-                return res.status(400).json({
-                    success: false,
-                    message: '结束时间必须晚于开始时间'
-                });
-            }
+        // 时间验证
+        if (!startDate || !endDate) {
+            return res.status(400).json({
+                success: false,
+                message: '开始时间和结束时间不能为空'
+            });
+        }
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: '时间格式不正确'
+            });
+        }
+        
+        if (end <= start) {
+            return res.status(400).json({
+                success: false,
+                message: '结束时间必须晚于开始时间'
+            });
         }
         
         const result = await MilestoneService.updateMilestone(
@@ -248,11 +258,11 @@ export const updateMilestoneStatus = async (req, res) => {
         }
         
         // 状态值验证
-        const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+        const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled', 'overdue'];
         if (!validStatuses.includes(status.trim())) {
             return res.status(400).json({
                 success: false,
-                message: '状态值无效，必须是：pending、in_progress、completed、cancelled 之一'
+                message: '状态值无效，必须是：pending、in_progress、completed、cancelled、overdue 之一'
             });
         }
         

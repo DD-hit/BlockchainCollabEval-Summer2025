@@ -139,18 +139,14 @@ export const updateProfile = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
-        
         // 支持从请求体、查询参数或token获取username
         let username;
         if (req.body && req.body.username) {
             username = req.body.username;
-    
         } else if (req.query && req.query.username) {
             username = req.query.username;
-
         } else if (req.user && req.user.username) {
             username = req.user.username;
-
         } else {
             throw new Error('用户名不能为空');
         }
@@ -160,19 +156,12 @@ export const logout = async (req, res) => {
         }
         
         const result = await AccountService.logout(username);
-
         
-        // 对于sendBeacon请求，返回简单的响应
-        if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
-            res.json({
-                success: true,
-                message: '退出登录成功',
-                data: result
-            });
-        } else {
-            // 对于其他类型的请求，返回简单的文本响应
-            res.status(200).send('OK');
-        }
+        res.json({
+            success: true,
+            message: '退出登录成功',
+            data: result
+        });
     } catch (error) {
         console.error('logout控制器错误:', error);
         res.status(400).json({

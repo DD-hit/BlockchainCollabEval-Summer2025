@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import MemberSelector from "../Common/MemberSelector"
-import { milestoneAPI, subtaskAPI } from "../../utils/api"
+import { milestoneAPI, subtaskAPI, projectAPI } from "../../utils/api"
+import { validateMilestoneTime, validateTimeRange, validateTimeHierarchy } from "../../utils/timeValidation"
+import { calculateMilestoneStatus, getStatusColor, getStatusText } from "../../utils/overdueUtils"
 import "./MilestoneManagement.css"
 
 function toDateTime(dateStr) {
@@ -26,23 +28,7 @@ function formatDate(dateString) {
   }
 }
 
-function getStatusColor(status) {
-  const colors = {
-    'in_progress': '#3b82f6',
-    'completed': '#10b981',
-    'overdue': '#ef4444'
-  }
-  return colors[status] || colors['in_progress']
-}
 
-function getStatusText(status) {
-  const texts = {
-    'in_progress': '进行中',
-    'completed': '已完成',
-    'overdue': '已逾期'
-  }
-  return texts[status] || '进行中'
-}
 
 
 
@@ -64,6 +50,20 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
     startDate: "",
     endDate: "",
   })
+  const [projectInfo, setProjectInfo] = useState(null)
+
+  const loadProjectInfo = async () => {
+    try {
+      const response = await projectAPI.detail(projectId)
+      if (response.ok) {
+        setProjectInfo(response.data)
+      } else {
+        console.error('加载项目信息失败:', response.error)
+      }
+    } catch (error) {
+      console.error('加载项目信息失败:', error)
+    }
+  }
 
   const loadMilestones = async () => {
     setLoading(true)
@@ -87,21 +87,32 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
                 const completedSubtasks = subtasks.filter(subtask => subtask.status === 'completed')
                 progressData[milestone.milestoneId] = Math.round((completedSubtasks.length / subtasks.length) * 100)
                 
-                // 确定状态
-                if (completedSubtasks.length === subtasks.length) {
-                  statusData[milestone.milestoneId] = 'completed'
-                  // 如果所有子任务完成，自动更新里程碑状态为已完成
+                // 使用工具函数计算里程碑状态
+                const milestoneStatus = calculateMilestoneStatus(milestone, subtasks)
+                statusData[milestone.milestoneId] = milestoneStatus
+                
+                // 如果状态发生变化，自动更新里程碑状态
+                if (milestoneStatus !== milestone.status) {
                   try {
-                    await milestoneAPI.updateStatus(milestone.milestoneId, 'completed')
+                    await milestoneAPI.updateStatus(milestone.milestoneId, milestoneStatus)
                   } catch (updateError) {
                     console.error(`更新里程碑 ${milestone.milestoneId} 状态失败:`, updateError)
                   }
-                } else {
-                  statusData[milestone.milestoneId] = 'in_progress'
                 }
               } else {
                 progressData[milestone.milestoneId] = 0
-                statusData[milestone.milestoneId] = 'in_progress'
+                // 使用工具函数计算里程碑状态（包括没有子任务的情况）
+                const milestoneStatus = calculateMilestoneStatus(milestone, [])
+                statusData[milestone.milestoneId] = milestoneStatus
+                
+                // 如果状态发生变化，自动更新里程碑状态
+                if (milestoneStatus !== milestone.status) {
+                  try {
+                    await milestoneAPI.updateStatus(milestone.milestoneId, milestoneStatus)
+                  } catch (updateError) {
+                    console.error(`更新里程碑 ${milestone.milestoneId} 状态失败:`, updateError)
+                  }
+                }
               }
             } else {
               progressData[milestone.milestoneId] = 0
@@ -130,24 +141,26 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
 
   useEffect(() => {
     loadMilestones()
+    loadProjectInfo()
   }, [projectId])
 
   // 监听子任务状态变化，自动刷新里程碑进度
   useEffect(() => {
-
-    
     const handleSubtaskChange = (event) => {
-      
       loadMilestones();
     };
 
     // 监听自定义事件
     window.addEventListener('subtaskStatusChanged', handleSubtaskChange);
     
+    // 添加定时器，每分钟检查一次逾期状态
+    const intervalId = setInterval(() => {
+      loadMilestones();
+    }, 60000); // 每分钟刷新一次
     
     return () => {
       window.removeEventListener('subtaskStatusChanged', handleSubtaskChange);
-      
+      clearInterval(intervalId);
     };
   }, [projectId]);
 
@@ -166,18 +179,23 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
             [milestoneId]: progress
           }))
           
-          const status = completedSubtasks.length === subtasks.length ? 'completed' : 'in_progress'
-          setMilestoneStatus(prev => ({
-            ...prev,
-            [milestoneId]: status
-          }))
-          
-          // 如果所有子任务完成，自动更新里程碑状态为已完成
-          if (completedSubtasks.length === subtasks.length) {
-            try {
-              await milestoneAPI.updateStatus(milestoneId, 'completed')
-            } catch (updateError) {
-              console.error(`更新里程碑 ${milestoneId} 状态失败:`, updateError)
+          // 获取里程碑信息来计算状态
+          const milestoneResponse = await milestoneAPI.detail(milestoneId)
+          if (milestoneResponse.ok) {
+            const milestone = milestoneResponse.data
+            const status = calculateMilestoneStatus(milestone, subtasks)
+            setMilestoneStatus(prev => ({
+              ...prev,
+              [milestoneId]: status
+            }))
+            
+            // 如果状态发生变化，自动更新里程碑状态
+            if (status !== milestone.status) {
+              try {
+                await milestoneAPI.updateStatus(milestoneId, status)
+              } catch (updateError) {
+                console.error(`更新里程碑 ${milestoneId} 状态失败:`, updateError)
+              }
             }
           }
         } else {
@@ -209,6 +227,33 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
     e.preventDefault()
     if (!form.title.trim()) {
       alert("请输入里程碑名称")
+      return
+    }
+
+    // 时间验证
+    if (!form.startDate || !form.endDate) {
+      alert("开始时间和结束时间不能为空")
+      return
+    }
+
+    const timeRangeValidation = validateTimeRange(form.startDate, form.endDate)
+    if (!timeRangeValidation.isValid) {
+      alert(`时间验证失败: ${timeRangeValidation.errors.join(', ')}`)
+      return
+    }
+
+    // 项目时间验证
+    if (!projectInfo) {
+      alert("无法获取项目信息，请刷新页面重试")
+      return
+    }
+
+    const milestoneValidation = validateMilestoneTime(projectInfo, {
+      startTime: form.startDate,
+      endTime: form.endDate
+    })
+    if (!milestoneValidation.isValid) {
+      alert(`里程碑时间验证失败: ${milestoneValidation.errors.join(', ')}`)
       return
     }
 
@@ -244,8 +289,8 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
     setForm({
       title: milestone.title || "",
       description: milestone.description || "",
-      startDate: milestone.startDate ? milestone.startDate.split(' ')[0] : "",
-      endDate: milestone.endDate ? milestone.endDate.split(' ')[0] : "",
+      startDate: milestone.startTime ? milestone.startTime.split(' ')[0] : "",
+      endDate: milestone.endTime ? milestone.endTime.split(' ')[0] : "",
     })
     setShowEditModal(true)
   }
@@ -254,6 +299,33 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
     e.preventDefault()
     if (!form.title.trim()) {
       alert("请输入里程碑名称")
+      return
+    }
+
+    // 时间验证
+    if (!form.startDate || !form.endDate) {
+      alert("开始时间和结束时间不能为空")
+      return
+    }
+
+    const timeRangeValidation = validateTimeRange(form.startDate, form.endDate)
+    if (!timeRangeValidation.isValid) {
+      alert(`时间验证失败: ${timeRangeValidation.errors.join(', ')}`)
+      return
+    }
+
+    // 项目时间验证
+    if (!projectInfo) {
+      alert("无法获取项目信息，请刷新页面重试")
+      return
+    }
+
+    const milestoneValidation = validateMilestoneTime(projectInfo, {
+      startTime: form.startDate,
+      endTime: form.endDate
+    })
+    if (!milestoneValidation.isValid) {
+      alert(`里程碑时间验证失败: ${milestoneValidation.errors.join(', ')}`)
       return
     }
 
@@ -272,6 +344,12 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
         setEditingMilestone(null)
         resetForm()
         loadMilestones() // 重新加载所有里程碑数据
+        
+        // 触发全局事件，通知项目列表刷新
+        window.dispatchEvent(new CustomEvent('subtaskStatusChanged', {
+          detail: { action: 'milestone_update', milestoneId: editingMilestone.milestoneId }
+        }));
+        
         alert('里程碑更新成功')
       } else {
         alert(response.error?.message || "更新失败")
@@ -307,13 +385,7 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
     const total = milestones.length
     const completed = milestones.filter(m => milestoneStatus[m.milestoneId] === 'completed').length
     const inProgress = milestones.filter(m => milestoneStatus[m.milestoneId] === 'in_progress').length
-    const overdue = milestones.filter(m => {
-      // 检查是否逾期（基于时间）
-      if (!m.startDate || !m.endDate) return false
-      const now = new Date()
-      const end = new Date(m.endDate)
-      return now > end && milestoneStatus[m.milestoneId] !== 'completed'
-    }).length
+    const overdue = milestones.filter(m => milestoneStatus[m.milestoneId] === 'overdue').length
 
     return { total, completed, inProgress, overdue }
   }
@@ -428,11 +500,11 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
                 <div className="milestone-dates">
                   <div className="date-item">
                     <span className="date-label">开始时间:</span>
-                    <span className="date-value">{formatDate(milestone.startDate)}</span>
+                    <span className="date-value">{formatDate(milestone.startTime)}</span>
                   </div>
                   <div className="date-item">
                     <span className="date-label">结束时间:</span>
-                    <span className="date-value">{formatDate(milestone.endDate)}</span>
+                    <span className="date-value">{formatDate(milestone.endTime)}</span>
                   </div>
                 </div>
 

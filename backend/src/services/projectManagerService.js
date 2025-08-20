@@ -151,4 +151,24 @@ export class ProjectManagerService {
             updatedRows: result.affectedRows 
         };
     }
+
+    //更新项目状态
+    static async updateProjectStatus(projectId, status) {
+        // 检查项目是否存在
+        const [project] = await pool.execute('SELECT * FROM projects WHERE projectId = ?', [projectId]);
+        if (project.length === 0) {
+            throw new Error('项目不存在');
+        }
+
+        const [result] = await pool.execute(
+            'UPDATE projects SET status = ? WHERE projectId = ?', 
+            [status, projectId]
+        );
+        
+        return { 
+            projectId,
+            status,
+            updatedRows: result.affectedRows 
+        };
+    }
 }

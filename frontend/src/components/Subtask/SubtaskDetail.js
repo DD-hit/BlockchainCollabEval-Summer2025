@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import api, { fileAPI } from "../../utils/api"
 import ScoreModal from "../Score/ScoreModal"
+import { calculateSubtaskStatus, getStatusColor, getStatusText } from "../../utils/overdueUtils"
 import "./SubtaskDetail.css"
 
 const SubtaskDetail = () => {
@@ -215,12 +216,9 @@ const SubtaskDetail = () => {
     }
   }
 
-  const getStatusText = (status) => {
-    const statusMap = {
-      'in_progress': '进行中',
-      'completed': '已完成'
-    }
-    return statusMap[status] || '进行中'
+  // 获取实际状态（考虑逾期情况）
+  const getActualStatus = (subtask) => {
+    return calculateSubtaskStatus(subtask)
   }
 
   const getPriorityText = (priority) => {
@@ -261,7 +259,8 @@ const SubtaskDetail = () => {
   }
 
   const isAssignee = subtask.assignedTo === currentUser
-  const canUpload = isAssignee && subtask.status === 'in_progress'
+  const actualStatus = getActualStatus(subtask)
+  const canUpload = isAssignee && (actualStatus === 'in_progress' || actualStatus === 'overdue')
 
   return (
     <div className="subtask-detail-container">
@@ -277,8 +276,11 @@ const SubtaskDetail = () => {
               <div className="task-info">
                 <h1 className="task-title">{subtask.title}</h1>
                 <div className="task-meta">
-                  <span className={`status-badge ${subtask.status}`}>
-                    {getStatusText(subtask.status)}
+                  <span 
+                    className="status-badge" 
+                    style={{ background: getStatusColor(getActualStatus(subtask)) }}
+                  >
+                    {getStatusText(getActualStatus(subtask))}
                   </span>
                   <span className="priority-badge">
                     {getPriorityText(subtask.priority)}优先级
@@ -330,7 +332,7 @@ const SubtaskDetail = () => {
                   <div className="info-icon">📊</div>
                   <div className="info-content">
                     <span className="info-label">状态</span>
-                    <span className="info-value">{getStatusText(subtask.status)}</span>
+                    <span className="info-value">{getStatusText(getActualStatus(subtask))}</span>
                   </div>
                 </div>
               </div>

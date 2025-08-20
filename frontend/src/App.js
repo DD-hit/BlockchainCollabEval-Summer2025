@@ -17,6 +17,7 @@ import SubtaskDetail from "./components/Subtask/SubtaskDetail"
 import Profile from "./components/Profile/Profile"
 import TransactionList from "./components/Transaction/TransactionList"
 import { useNotifications } from "./context/notifications"
+import { accountAPI } from "./utils/api"
 
 function App() {
   const [user, setUser] = useState(null)
@@ -34,7 +35,7 @@ function App() {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "ping", timestamp: Date.now() }))
       }
-    }, 30000)
+    }, 30000) // 30秒发送一次心跳
   }
 
   // 停止心跳包
@@ -78,7 +79,6 @@ function App() {
       try {
         const message = JSON.parse(event.data)
 
-
         if (message.type === "pong") return
         if (message.type === "connection_ack") return
 
@@ -109,8 +109,8 @@ function App() {
       }
     }
 
-    ws.onclose = (event) => {
-      
+    ws.onclose = async (event) => {
+      // 连接关闭时，不立即更新状态，让心跳机制来处理
       wsRef.current = null
       stopHeartbeat()
       // addNotification({ type: "system", title: "连接断开", message: "实时通知已断开" }, false)
@@ -135,12 +135,22 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+
+
   const handleLogin = (userData) => {
     setUser(userData)
     connectWebSocket()
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // 调用后端API更新用户状态为离线
+      if (user?.username) {
+        await accountAPI.logout(user.username);
+      }
+    } catch (error) {
+      console.error('登出API调用失败:', error);
+    }
 
     stopHeartbeat()
     if (wsRef.current) {
@@ -152,7 +162,6 @@ function App() {
     sessionStorage.removeItem("username")
     sessionStorage.removeItem("address")
     setUser(null)
-
   }
 
   if (loading) {

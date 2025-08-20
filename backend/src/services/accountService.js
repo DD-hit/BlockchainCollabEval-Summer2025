@@ -243,22 +243,24 @@ export class AccountService {
         };
     }
 
-    // 退出登录 
-    static async logout(username) {
-        
+    // 更新用户状态
+    static async updateUserStatus(username, status) {
         const [user] = await pool.execute('SELECT * FROM user WHERE username = ?', [username]);
         if (user.length === 0) {
             throw new Error('用户不存在');
         }
         
-        
-        const [updateResult] = await pool.execute('UPDATE user SET status = 0 WHERE username = ?', [username]);
-        
+        const [updateResult] = await pool.execute('UPDATE user SET status = ? WHERE username = ?', [status, username]);
         
         return {
             success: true,
-            message: '退出登录成功'
+            message: status === 1 ? '用户状态已更新为在线' : '用户状态已更新为离线'
         };
+    }
+
+    // 退出登录 
+    static async logout(username) {
+        return await this.updateUserStatus(username, 0);
     }
 
 

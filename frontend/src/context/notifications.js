@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { notificationAPI } from "../utils/api"
 import "./notifications.css"
 
 const NotificationsContext = createContext(null)
@@ -51,7 +52,7 @@ export function NotificationsProvider({ children, connectSocket = true }) {
 
       const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? window.location.origin : 'http://localhost:5000');
       
-      const response = await fetch(`${API_BASE_URL}/api/notifications/getAllNotifications`, {
+      const response = await fetch(`${API_BASE_URL}/api/notifications/getNotificationList/${username}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -62,21 +63,50 @@ export function NotificationsProvider({ children, connectSocket = true }) {
         
         if (result.success && result.data) {
           // 转换后端数据格式为前端格式
-          const notifications = result.data.map(notification => ({
-            id: notification.id,
-            title: notification.type === 'file' ? '文件上传通知' : '通知',
-            message: `您有来自 ${notification.sender} 的文件上传通知`,
-            type: notification.type === 'file' ? 'file_upload' : 'info',
-            timestamp: new Date(notification.createdTime).getTime(),
-            read: notification.isRead === 1,
-            link: `/subtask/${notification.subtaskId}`,
-            meta: {
-              type: 'file_upload',
-              subtaskId: notification.subtaskId,
-              fileId: notification.fileId,
-              notificationId: notification.id
+          const notifications = result.data.map(notification => {
+            let title, message, type, link;
+            
+            if (notification.type === 'file') {
+              title = '文件上传通知';
+              message = `您有来自 ${notification.sender} 的文件上传通知`;
+              type = 'file_upload';
+              link = `/subtask/${notification.subtaskId}`;
+            } else if (notification.type === 'subtask_status') {
+              try {
+                const content = JSON.parse(notification.content || '{}');
+                title = '子任务状态更新';
+                message = `您的子任务"${content.title || '未知任务'}"状态已更新为${content.status === 'completed' ? '已完成' : '进行中'}`;
+                type = 'subtask_status';
+                link = `/subtask/${notification.subtaskId}`;
+              } catch (error) {
+                title = '子任务状态更新';
+                message = `您有来自 ${notification.sender} 的子任务状态更新通知`;
+                type = 'subtask_status';
+                link = `/subtask/${notification.subtaskId}`;
+              }
+            } else {
+              title = '通知';
+              message = `您有来自 ${notification.sender} 的通知`;
+              type = 'info';
+              link = `/subtask/${notification.subtaskId}`;
             }
-          }));
+            
+            return {
+              id: notification.id,
+              title,
+              message,
+              type,
+              timestamp: new Date(notification.createdTime).getTime(),
+              read: notification.isRead === 1,
+              link,
+              meta: {
+                type,
+                subtaskId: notification.subtaskId,
+                fileId: notification.fileId,
+                notificationId: notification.id
+              }
+            };
+          });
           
           setItems(notifications);
         }
@@ -135,25 +165,14 @@ export function NotificationsProvider({ children, connectSocket = true }) {
 
   const markAllRead = async () => {
     try {
-      const token = sessionStorage.getItem('token');
-      
       // 调用后端API标记所有通知为已读
-      const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? window.location.origin : 'http://localhost:5000');
-      
-      const response = await fetch(`${API_BASE_URL}/api/notifications/markAllAsRead`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await notificationAPI.markAllAsRead();
       
       if (response.ok) {
-        // 重新加载通知以获取最新状态
-        await loadNotifications();
+        // 标记成功后，更新前端状态，将所有通知标记为已读
+        setItems(prev => prev.map(item => ({ ...item, read: true })));
       } else {
-        const errorData = await response.json();
-        console.error('标记全部已读失败');
+        console.error('标记全部已读失败:', response.error);
       }
     } catch (error) {
       console.error('标记全部已读失败:', error);
@@ -162,8 +181,6 @@ export function NotificationsProvider({ children, connectSocket = true }) {
 
   const clear = async () => {
     try {
-      const token = sessionStorage.getItem('token');
-      
       // 检查是否有未读通知
       const hasUnread = items.some(item => !item.read);
       
@@ -175,23 +192,14 @@ export function NotificationsProvider({ children, connectSocket = true }) {
         }
       }
       
-      // 先标记所有通知为已读
-      const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? window.location.origin : 'http://localhost:5000');
-      
-      const response = await fetch(`${API_BASE_URL}/api/notifications/markAllAsRead`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // 调用标记所有通知为已读的API
+      const response = await notificationAPI.markAllAsRead();
       
       if (response.ok) {
-        // 标记成功后，前端直接清空显示
+        // 标记成功后，前端直接清空显示（因为只显示未读通知）
         setItems([]);
       } else {
-        const errorData = await response.json();
-        console.error('清空通知失败');
+        console.error('清空通知失败:', response.error);
       }
     } catch (error) {
       console.error('清空通知失败:', error);

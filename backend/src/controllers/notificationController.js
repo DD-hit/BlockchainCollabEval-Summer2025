@@ -175,3 +175,30 @@ export const getAllNotifications = async (req, res) => {
         });
     }
 };
+
+// 删除用户所有通知
+export const deleteAllNotifications = async (req, res) => {
+    try {
+        const { username } = req.user;
+        
+        // 参数验证
+        if (!username || !username.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名不能为空'
+            });
+        }
+        
+        const result = await NotificationService.deleteAllNotifications(username.trim());
+        res.json({ 
+            success: true, 
+            message: '所有通知已删除',
+            data: result
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false,
+            message: error.message 
+        });
+    }
+};

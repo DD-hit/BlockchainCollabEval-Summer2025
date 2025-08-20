@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router-dom"
 import MemberManagement from "../Member/MemberManagement"
 import MilestoneManagement from "../Milestone/MilestoneManagement"
 import { projectAPI, milestoneAPI, subtaskAPI, projectMemberAPI } from "../../utils/api"
+import { calculateProjectStatus, getStatusColor, getStatusText, convertStatusToEnglish } from "../../utils/overdueUtils"
 import "./ProjectDetail.css"
 
 export default function ProjectDetail() {
@@ -25,7 +26,8 @@ export default function ProjectDetail() {
     completedMilestones: 0,
     inProgressMilestones: 0,
     totalMembers: 0,
-    projectProgress: 0
+    projectProgress: 0,
+    projectStatus: '进行中'
   })
 
   // 添加编辑功能
@@ -75,9 +77,14 @@ export default function ProjectDetail() {
     setEditOpen(false)
   }
 
-  // 计算项目统计数据
-  const calculateProjectStats = async () => {
+  // 计算项目统计数据（使用传入的项目数据）
+  const calculateProjectStatsWithData = async (projectData) => {
     try {
+      // 确保项目数据已加载
+      if (!projectData) {
+        return
+      }
+      
       // 获取项目成员数量
       const membersResponse = await projectMemberAPI.list(projectIdNum)
       const totalMembers = membersResponse.ok && membersResponse.data ? membersResponse.data.length : 0
@@ -88,24 +95,20 @@ export default function ProjectDetail() {
       let inProgressMilestones = 0
       let totalSubtasks = 0
       let completedSubtasks = 0
+      const milestoneSubtasks = {}
+      let projectStatus = '进行中' // 默认状态
 
       if (milestonesResponse.ok && milestonesResponse.data) {
         const milestones = Array.isArray(milestonesResponse.data) ? milestonesResponse.data : []
         
         // 遍历每个里程碑，统计里程碑状态和子任务信息
         for (const milestone of milestones) {
-          // 统计里程碑状态
-          if (milestone.status === 'completed') {
-            completedMilestones++
-          } else if (milestone.status === 'in_progress') {
-            inProgressMilestones++
-          }
-          
           // 获取子任务信息用于计算总体进度
           try {
             const subtasksResponse = await subtaskAPI.list(milestone.milestoneId)
             if (subtasksResponse.ok && subtasksResponse.data) {
               const subtasks = Array.isArray(subtasksResponse.data) ? subtasksResponse.data : []
+              milestoneSubtasks[milestone.milestoneId] = subtasks
               totalSubtasks += subtasks.length
               
               subtasks.forEach(subtask => {
@@ -113,9 +116,44 @@ export default function ProjectDetail() {
                   completedSubtasks++
                 }
               })
+            } else {
+              milestoneSubtasks[milestone.milestoneId] = []
             }
           } catch (error) {
             console.error(`获取里程碑 ${milestone.milestoneId} 的子任务失败:`, error)
+            milestoneSubtasks[milestone.milestoneId] = []
+          }
+        }
+
+        // 使用工具函数计算项目状态（基于里程碑状态和子任务信息）
+        const calculatedStatus = projectData ? calculateProjectStatus(projectData, milestones, milestoneSubtasks) : '进行中'
+        projectStatus = calculatedStatus
+        
+        // 如果计算出的状态与数据库状态不一致，更新数据库
+        if (projectData && calculatedStatus !== projectData.status) {
+          try {
+            // 将中文状态转换为英文状态用于API调用
+            const englishStatus = convertStatusToEnglish(calculatedStatus)
+            await projectAPI.updateStatus(projectIdNum, englishStatus)
+            // 更新本地数据
+            setData(prev => ({ ...prev, status: calculatedStatus }))
+          } catch (updateError) {
+            console.error(`更新项目 ${projectIdNum} 状态失败:`, updateError)
+          }
+        }
+        
+        // 重新统计里程碑状态（基于实际计算）
+        completedMilestones = 0
+        inProgressMilestones = 0
+        
+        for (const milestone of milestones) {
+          const subtasks = milestoneSubtasks[milestone.milestoneId] || []
+          const completedSubtasksInMilestone = subtasks.filter(s => s.status === 'completed').length
+          
+          if (subtasks.length > 0 && completedSubtasksInMilestone === subtasks.length) {
+            completedMilestones++
+          } else {
+            inProgressMilestones++
           }
         }
       }
@@ -127,7 +165,8 @@ export default function ProjectDetail() {
         completedMilestones,
         inProgressMilestones,
         totalMembers,
-        projectProgress
+        projectProgress,
+        projectStatus
       })
     } catch (error) {
       console.error('计算项目统计数据失败:', error)
@@ -143,8 +182,8 @@ export default function ProjectDetail() {
       if (canceled) return
       if (res.ok) {
         setData(res.data)
-        // 计算项目统计数据
-        await calculateProjectStats()
+        // 直接使用 res.data 计算项目统计数据，避免时序问题
+        await calculateProjectStatsWithData(res.data)
       } else {
         console.error('获取项目详情失败:', res.error);
       }
@@ -154,6 +193,13 @@ export default function ProjectDetail() {
       canceled = true
     }
   }, [projectIdNum])
+
+  // 计算项目统计数据（使用当前状态中的data）
+  const calculateProjectStats = async () => {
+    if (data) {
+      await calculateProjectStatsWithData(data)
+    }
+  }
 
   // 监听任务状态变化，实时更新统计数据
   useEffect(() => {
@@ -189,9 +235,15 @@ export default function ProjectDetail() {
             </div>
             <div className="project-info">
               <h1 className="project-title">{data.projectName || data.name}</h1>
-              <div className="project-badges">
-                <span className="owner-badge">👤 负责人：{data.projectOwner || "未设置"}</span>
-              </div>
+                          <div className="project-badges">
+              <span className="owner-badge">👤 负责人：{data.projectOwner || "未设置"}</span>
+              <span 
+                className="status-badge" 
+                style={{ background: getStatusColor(projectStats.projectStatus) }}
+              >
+                {getStatusText(projectStats.projectStatus)}
+              </span>
+            </div>
             </div>
           </div>
           <div className="project-actions">

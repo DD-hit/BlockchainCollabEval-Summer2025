@@ -44,29 +44,27 @@ export const createSubtask = async (req, res) => {
         }
         
         // 时间验证
-        if (startTime && endTime) {
-            const start = new Date(startTime);
-            const end = new Date(endTime);
-            
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                return res.status(400).json({
-                    success: false,
-                    message: '时间格式不正确'
-                });
-            }
-            
-            if (end <= start) {
-                return res.status(400).json({
-                    success: false,
-                    message: '结束时间必须晚于开始时间'
-                });
-            }
-        }
-
-        if(startTime === null || endTime === null){
+        if (!startTime || !endTime) {
             return res.status(400).json({
                 success: false,
                 message: '开始时间和结束时间不能为空'
+            });
+        }
+        
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: '时间格式不正确'
+            });
+        }
+        
+        if (end <= start) {
+            return res.status(400).json({
+                success: false,
+                message: '结束时间必须晚于开始时间'
             });
         }
         
@@ -215,23 +213,28 @@ export const updateSubtask = async (req, res) => {
         }
         
         // 时间验证
-        if (startTime && endTime) {
-            const start = new Date(startTime);
-            const end = new Date(endTime);
-            
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                return res.status(400).json({
-                    success: false,
-                    message: '时间格式不正确'
-                });
-            }
-            
-            if (end <= start) {
-                return res.status(400).json({
-                    success: false,
-                    message: '结束时间必须晚于开始时间'
-                });
-            }
+        if (!startTime || !endTime) {
+            return res.status(400).json({
+                success: false,
+                message: '开始时间和结束时间不能为空'
+            });
+        }
+        
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: '时间格式不正确'
+            });
+        }
+        
+        if (end <= start) {
+            return res.status(400).json({
+                success: false,
+                message: '结束时间必须晚于开始时间'
+            });
         }
         
         const result = await SubtaskService.updateSubtask(

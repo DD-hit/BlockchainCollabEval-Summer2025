@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import { milestoneAPI } from '../../utils/api';
 import SubtaskManagement from '../Subtask/SubtaskManagement';
+import { calculateMilestoneStatus, getStatusColor, getStatusText } from '../../utils/overdueUtils';
 import './MilestoneDetail.css';
 
 const MilestoneDetail = ({ user }) => {
@@ -88,31 +89,18 @@ const MilestoneDetail = ({ user }) => {
       }
 
       // 根据子任务完成情况动态更新里程碑状态
-      if (milestoneRes.data.success && subtasksData.length > 0) {
-        const completedSubtasks = subtasksData.filter(subtask => subtask.status === 'completed');
-        const shouldBeCompleted = completedSubtasks.length === subtasksData.length;
+      if (milestoneRes.data.success) {
+        // 使用工具函数计算里程碑状态（包括没有子任务的情况）
+        const actualStatus = calculateMilestoneStatus(milestoneRes.data.data, subtasksData);
         
-        // 如果所有子任务完成但里程碑状态不是completed，或者有子任务未完成但里程碑状态是completed
-        if ((shouldBeCompleted && milestoneRes.data.data.status !== 'completed') ||
-            (!shouldBeCompleted && milestoneRes.data.data.status === 'completed')) {
-          
-          // 更新里程碑状态
-          const newStatus = shouldBeCompleted ? 'completed' : 'in_progress';
+        // 如果计算出的状态与数据库状态不一致，更新数据库
+        if (actualStatus !== milestoneRes.data.data.status) {
           try {
-            const updateRes = await api.put(`/api/milestones/updateMilestoneStatus/${milestoneId}`, {
-              status: newStatus
-            });
-            
-            if (updateRes.data.success) {
-              // 更新本地状态
-              setMilestone(prev => ({
-                ...prev,
-                status: newStatus
-              }));
-      
-            }
+            await milestoneAPI.updateStatus(milestoneId, actualStatus);
+            // 更新本地状态
+            setMilestone(prev => ({ ...prev, status: actualStatus }));
           } catch (updateError) {
-            console.error('更新里程碑状态失败:', updateError);
+            console.error(`更新里程碑 ${milestoneId} 状态失败:`, updateError);
           }
         }
       }
@@ -302,9 +290,9 @@ const MilestoneDetail = ({ user }) => {
                 <div className="milestone-badges">
                   <span 
                     className="status-badge" 
-                    style={{ background: getStatusColor(milestone.status) }}
+                    style={{ background: getStatusColor(calculateMilestoneStatus(milestone, subtasks)) }}
                   >
-                    {getStatusText(milestone.status)}
+                    {getStatusText(calculateMilestoneStatus(milestone, subtasks))}
                   </span>
                   <span className="date-badge">
                     {formatDate(milestone.startTime)} - {formatDate(milestone.endTime)}
@@ -373,7 +361,15 @@ const MilestoneDetail = ({ user }) => {
                 <div className="stat-label">进行中</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number">0</div>
+                <div className="stat-number">{subtasks.filter(s => {
+                  if (s.status === 'completed') return false;
+                  if (s.endTime) {
+                    const now = new Date();
+                    const endTime = new Date(s.endTime);
+                    return now > endTime;
+                  }
+                  return false;
+                }).length}</div>
                 <div className="stat-label">已逾期</div>
               </div>
             </div>

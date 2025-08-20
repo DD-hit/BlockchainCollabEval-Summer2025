@@ -6,7 +6,8 @@ import {
     isAllRead,
     markAllAsRead,
     getUnreadCount,
-    getAllNotifications
+    getAllNotifications,
+    deleteAllNotifications
 } from '../controllers/notificationController.js';
 import { verifyToken } from '../middleware/verifyToken.js';
 const router = express.Router();
@@ -16,6 +17,7 @@ router.put('/markAsRead/:notificationId', verifyToken, markNotificationAsRead);
 router.put('/markAsReadByFileId', verifyToken, markAsReadByFileId);
 router.get('/isAllRead/:subtaskId', verifyToken, isAllRead);
 router.put('/markAllAsRead', verifyToken, markAllAsRead);
+router.delete('/deleteAllNotifications', verifyToken, deleteAllNotifications);
 router.get('/unreadCount', verifyToken, getUnreadCount);
 router.get('/getAllNotifications', verifyToken, getAllNotifications);
 

@@ -290,3 +290,46 @@ export const getMyProjects = async (req, res) => {
         });
     }
 }
+
+export const updateProjectStatus = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { status } = req.body;
+        
+        // 参数验证
+        if (!projectId || isNaN(parseInt(projectId))) {
+            return res.status(400).json({
+                success: false,
+                message: '项目ID必须是有效的数字'
+            });
+        }
+        
+        if (!status || !status.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '状态不能为空'
+            });
+        }
+        
+        // 状态值验证
+        const validStatuses = ['in_progress', 'completed', 'overdue'];
+        if (!validStatuses.includes(status.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: '状态值无效，必须是：in_progress、completed、overdue 之一'
+            });
+        }
+        
+        const result = await ProjectManagerService.updateProjectStatus(parseInt(projectId), status.trim());
+        res.json({
+            success: true,
+            message: '更新项目状态成功',
+            data: result
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+}

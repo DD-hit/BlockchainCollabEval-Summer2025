@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { projectAPI } from "../../utils/api"
+import { validateProjectTime } from "../../utils/timeValidation"
 import "./Project.css"
 
 export default function ProjectCreate({ user }) {
@@ -19,7 +20,17 @@ export default function ProjectCreate({ user }) {
   const validate = () => {
     const e = {}
     if (!name.trim()) e.name = "项目名称必填"
-    if (startDate && endDate && startDate > endDate) e.time = "开始时间不能晚于结束时间"
+    
+    // 使用时间验证工具函数
+    const projectData = {
+      startTime: startDate ? `${startDate} 00:00:00` : null,
+      endTime: endDate ? `${endDate} 23:59:59` : null
+    }
+    const timeValidation = validateProjectTime(projectData)
+    if (!timeValidation.isValid) {
+      e.time = timeValidation.errors.join(', ')
+    }
+    
     setErrors(e)
     return Object.keys(e).length === 0
   }

@@ -97,12 +97,28 @@
 }
 
 .project-status {
-  background: #e6fffa;
-  color: #00a693;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
+}
+
+/* 进行中状态 */
+.project-status[data-status="进行中"] {
+  background: #e6fffa;
+  color: #00a693;
+}
+
+/* 已完成状态 */
+.project-status[data-status="已完成"] {
+  background: #f0fff4;
+  color: #10b981;
+}
+
+/* 已逾期状态 */
+.project-status[data-status="已逾期"] {
+  background: #fef2f2;
+  color: #ef4444;
 }
 
 .project-description {

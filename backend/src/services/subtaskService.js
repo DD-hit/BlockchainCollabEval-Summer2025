@@ -4,9 +4,28 @@ import { MilestoneService } from './milestoneService.js';
 export class SubtaskService {
     static async createSubtask(milestoneId, title, status, description, assignedTo, startTime, endTime, priority) {
         // 验证里程碑是否存在
-        const milestoneExists = await pool.execute('SELECT * FROM milestones WHERE milestoneId = ?', [milestoneId]);
-        if (milestoneExists[0].length === 0) {
+        const [milestoneResult] = await pool.execute('SELECT * FROM milestones WHERE milestoneId = ?', [milestoneId]);
+        if (milestoneResult.length === 0) {
             throw new Error('里程碑不存在');
+        }
+        
+        const milestone = milestoneResult[0];
+        
+        // 验证子任务时间是否在里程碑时间范围内
+        if (startTime && milestone.startTime) {
+            const subtaskStart = new Date(startTime);
+            const milestoneStart = new Date(milestone.startTime);
+            if (subtaskStart < milestoneStart) {
+                throw new Error('子任务开始时间不能早于里程碑开始时间');
+            }
+        }
+        
+        if (endTime && milestone.endTime) {
+            const subtaskEnd = new Date(endTime);
+            const milestoneEnd = new Date(milestone.endTime);
+            if (subtaskEnd > milestoneEnd) {
+                throw new Error('子任务结束时间不能晚于里程碑结束时间');
+            }
         }
         
         // 如果指定了分配用户，验证用户是否存在
@@ -29,26 +48,61 @@ export class SubtaskService {
             priority || 2 // 默认中等优先级
         ];
         
-
-        
         const [result] = await pool.execute(
             'INSERT INTO subtasks (milestoneId, title, status, description, assignedTo, startTime, endTime, priority) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
             params
         );
         return result.insertId;
     }
+    
     static async getSubtaskList(milestoneId) {
         const [queryResult] = await pool.execute('SELECT * FROM subtasks WHERE milestoneId = ?', [milestoneId]);
         return queryResult;
     }
+    
     static async getSubtaskDetail(subtaskId) {
         const [queryResult] = await pool.execute('SELECT * FROM subtasks WHERE subtaskId = ?', [subtaskId]);
         return queryResult[0];
     }
+    
     static async updateSubtask(subtaskId, title, status, description, assignedTo, startTime, endTime, priority) {
+        // 获取子任务信息以获取里程碑ID
+        const [subtaskResult] = await pool.execute('SELECT milestoneId FROM subtasks WHERE subtaskId = ?', [subtaskId]);
+        if (subtaskResult.length === 0) {
+            throw new Error('子任务不存在');
+        }
+        
+        const milestoneId = subtaskResult[0].milestoneId;
+        
+        // 获取里程碑信息
+        const [milestoneResult] = await pool.execute('SELECT * FROM milestones WHERE milestoneId = ?', [milestoneId]);
+        if (milestoneResult.length === 0) {
+            throw new Error('里程碑不存在');
+        }
+        
+        const milestone = milestoneResult[0];
+        
+        // 验证子任务时间是否在里程碑时间范围内
+        if (startTime && milestone.startTime) {
+            const subtaskStart = new Date(startTime);
+            const milestoneStart = new Date(milestone.startTime);
+            if (subtaskStart < milestoneStart) {
+                throw new Error('子任务开始时间不能早于里程碑开始时间');
+            }
+        }
+        
+        if (endTime && milestone.endTime) {
+            const subtaskEnd = new Date(endTime);
+            const milestoneEnd = new Date(milestone.endTime);
+            if (subtaskEnd > milestoneEnd) {
+                throw new Error('子任务结束时间不能晚于里程碑结束时间');
+            }
+        }
+        
         const [result] = await pool.execute('UPDATE subtasks SET title = ?, status = ?, description = ?, assignedTo = ?, startTime = ?, endTime = ?, priority = ? WHERE subtaskId = ?', [title, status, description || '', assignedTo, startTime, endTime, priority, subtaskId]);
         return result;
     }
+    
     static async deleteSubtask(subtaskId) {
         const [result] = await pool.execute('DELETE FROM subtasks WHERE subtaskId = ?', [subtaskId]);
         return result;
@@ -92,7 +146,6 @@ export class SubtaskService {
             ORDER BY s.priority DESC, s.endTime ASC
         `, [username]);
         
-
         return queryResult;
     }
 }

@@ -5,7 +5,8 @@ import {
     getProjectDetail, 
     updateProject, 
     deleteProject,
-    getMyProjectList 
+    getMyProjectList,
+    updateProjectStatus
 } from '../controllers/projectManagerController.js';
 import { verifyToken } from '../middleware/verifyToken.js';
 
@@ -16,6 +17,7 @@ router.get('/getProjectList', verifyToken, getProjectList);
 router.get('/getMyProjects', verifyToken, getMyProjectList);
 router.get('/getProjectDetail/:projectId', verifyToken, getProjectDetail);
 router.put('/updateProject/:projectId', verifyToken, updateProject);
+router.put('/updateProjectStatus/:projectId', verifyToken, updateProjectStatus);
 router.delete('/deleteProject/:projectId', verifyToken, deleteProject);
 
 

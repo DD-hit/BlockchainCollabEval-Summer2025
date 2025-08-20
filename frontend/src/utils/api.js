@@ -65,7 +65,7 @@ export const accountAPI = {
   register: (payload) => api.post("/api/accounts/createAccount", payload),
   getBalance: () => handleApi(api.get("/api/accounts/getBalance")),
   updateProfile: (payload) => handleApi(api.put("/api/accounts/updateProfile", payload)),
-  logout: () => handleApi(api.post("/api/accounts/logout")),
+  logout: (username) => handleApi(api.post("/api/accounts/logout", { username })),
 }
 
 // 项目管理API
@@ -74,6 +74,7 @@ export const projectAPI = {
   create: (payload) => handleApi(api.post("/api/projectManager/createProject", payload)),
   detail: (projectId) => handleApi(api.get(`/api/projectManager/getProjectDetail/${projectId}`)), 
   update: (projectId, payload) => handleApi(api.put(`/api/projectManager/updateProject/${projectId}`, payload)),
+  updateStatus: (projectId, status) => handleApi(api.put(`/api/projectManager/updateProjectStatus/${projectId}`, { status })),
   delete: (projectId) => handleApi(api.delete(`/api/projectManager/deleteProject/${projectId}`)),
   myProjects: () => handleApi(api.get("/api/projectManager/getMyProjects"))
 }
@@ -150,6 +151,7 @@ export const notificationAPI = {
   markAsRead: (notificationId) => handleApi(api.put(`/api/notifications/markAsRead/${notificationId}`)),
   markAsReadByFileId: (fileId) => handleApi(api.put("/api/notifications/markAsReadByFileId", { fileId })),
   markAllAsRead: () => handleApi(api.put("/api/notifications/markAllAsRead")),
+  deleteAllNotifications: () => handleApi(api.delete("/api/notifications/deleteAllNotifications")),
   getUnreadCount: () => handleApi(api.get("/api/notifications/unreadCount")),
   getAllNotifications: () => handleApi(api.get("/api/notifications/getAllNotifications")),
 }

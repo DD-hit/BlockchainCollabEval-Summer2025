@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import api from "../../utils/api"
 import MemberSelector from "../Common/MemberSelector"
-import { projectMemberAPI } from "../../utils/api"
+import { projectMemberAPI, milestoneAPI, subtaskAPI } from "../../utils/api"
+import { validateSubtaskTime, validateTimeRange, validateTimeHierarchy } from "../../utils/timeValidation"
+import { calculateSubtaskStatus, getStatusColor, getStatusText } from "../../utils/overdueUtils"
 import "./SubtaskManagement.css"
 
 const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskChange }) => {
@@ -13,6 +14,7 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingSubtask, setEditingSubtask] = useState(null)
   const [projectMembers, setProjectMembers] = useState([])
+  const [milestoneInfo, setMilestoneInfo] = useState(null)
 
   const [newSubtask, setNewSubtask] = useState({
     title: "",
@@ -47,22 +49,47 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
 
   useEffect(() => {
     loadSubtasks()
+    loadMilestoneInfo()
     if (projectId) {
       loadProjectMembers()
     }
+    
+    // 添加定时器，每分钟检查一次逾期状态
+    const intervalId = setInterval(() => {
+      loadSubtasks()
+    }, 60000); // 每分钟刷新一次
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [milestoneId, projectId])
 
   const loadSubtasks = async () => {
     try {
-      const response = await api.get(`/api/subtasks/getSubtaskList/${milestoneId}`)
-      if (response.data.success) {
-        setSubtasks(response.data.data || [])
+      const response = await subtaskAPI.list(milestoneId)
+      if (response.ok) {
+        setSubtasks(response.data || [])
+      } else {
+        console.error("加载子任务列表失败:", response.error)
       }
     } catch (error) {
       console.error("加载子任务列表失败:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadMilestoneInfo = async () => {
+    try {
+      const response = await milestoneAPI.detail(milestoneId)
+      if (response.ok) {
+        setMilestoneInfo(response.data)
+      } else {
+        console.error("加载里程碑信息失败:", response.error)
+      }
+    } catch (error) {
+      console.error("加载里程碑信息失败:", error)
     }
   }
 
@@ -84,6 +111,33 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
       return
     }
 
+    // 时间验证
+    if (!newSubtask.startTime || !newSubtask.endTime) {
+      alert("开始时间和结束时间不能为空")
+      return
+    }
+
+    const timeRangeValidation = validateTimeRange(newSubtask.startTime, newSubtask.endTime)
+    if (!timeRangeValidation.isValid) {
+      alert(`时间验证失败: ${timeRangeValidation.errors.join(', ')}`)
+      return
+    }
+
+    // 里程碑时间验证
+    if (!milestoneInfo) {
+      alert("无法获取里程碑信息，请刷新页面重试")
+      return
+    }
+
+    const subtaskValidation = validateSubtaskTime(milestoneInfo, {
+      startTime: newSubtask.startTime,
+      endTime: newSubtask.endTime
+    })
+    if (!subtaskValidation.isValid) {
+      alert(`子任务时间验证失败: ${subtaskValidation.errors.join(', ')}`)
+      return
+    }
+
     try {
       const subtaskData = {
         milestoneId: Number.parseInt(milestoneId),
@@ -96,8 +150,8 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
         priority: convertPriorityToNumber(newSubtask.priority),
       }
 
-      const response = await api.post("/api/subtasks/createSubtask", subtaskData)
-      if (response.data.success) {
+      const response = await subtaskAPI.create(subtaskData)
+      if (response.ok) {
         setNewSubtask({
           title: "",
           description: "",
@@ -133,6 +187,33 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
       return
     }
 
+    // 时间验证
+    if (!editingSubtask.startTime || !editingSubtask.endTime) {
+      alert("开始时间和结束时间不能为空")
+      return
+    }
+
+    const timeRangeValidation = validateTimeRange(editingSubtask.startTime, editingSubtask.endTime)
+    if (!timeRangeValidation.isValid) {
+      alert(`时间验证失败: ${timeRangeValidation.errors.join(', ')}`)
+      return
+    }
+
+    // 里程碑时间验证
+    if (!milestoneInfo) {
+      alert("无法获取里程碑信息，请刷新页面重试")
+      return
+    }
+
+    const subtaskValidation = validateSubtaskTime(milestoneInfo, {
+      startTime: editingSubtask.startTime,
+      endTime: editingSubtask.endTime
+    })
+    if (!subtaskValidation.isValid) {
+      alert(`子任务时间验证失败: ${subtaskValidation.errors.join(', ')}`)
+      return
+    }
+
     try {
       const subtaskData = {
         title: editingSubtask.title.trim(),
@@ -144,8 +225,8 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
         priority: convertPriorityToNumber(editingSubtask.priority),
       }
 
-      const response = await api.put(`/api/subtasks/updateSubtask/${editingSubtask.subtaskId || editingSubtask.id}`, subtaskData)
-      if (response.data.success) {
+      const response = await subtaskAPI.update(editingSubtask.subtaskId || editingSubtask.id, subtaskData)
+      if (response.ok) {
         setEditingSubtask(null)
         alert("子任务更新成功")
         // 重新加载子任务列表
@@ -158,6 +239,13 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
         window.dispatchEvent(new CustomEvent('subtaskStatusChanged', {
           detail: { action: 'update', subtaskId: editingSubtask.subtaskId || editingSubtask.id, milestoneId }
         }));
+        
+        // 强制刷新项目状态
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('subtaskStatusChanged', {
+            detail: { action: 'force_refresh' }
+          }));
+        }, 100);
       }
     } catch (error) {
       console.error("更新子任务失败:", error)
@@ -169,8 +257,8 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
     if (!window.confirm("确定要删除这个子任务吗？")) return
 
     try {
-      const response = await api.delete(`/api/subtasks/deleteSubtask/${subtaskId}`)
-      if (response.data.success) {
+      const response = await subtaskAPI.delete(subtaskId)
+      if (response.ok) {
         alert("子任务删除成功")
         // 重新加载子任务列表
         await loadSubtasks()
@@ -207,8 +295,8 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
         priority: convertPriorityToNumber(subtask.priority) || 2,
       }
 
-      const response = await api.put(`/api/subtasks/updateSubtask/${subtask.subtaskId || subtask.id}`, subtaskData)
-      if (response.data.success) {
+      const response = await subtaskAPI.update(subtask.subtaskId || subtask.id, subtaskData)
+      if (response.ok) {
         // 重新加载子任务列表
         await loadSubtasks()
         // 通知父组件数据发生变化
@@ -236,14 +324,9 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
     return texts[priority] || "中"
   }
   
-  const getStatusColor = (status) => {
-    const colors = { in_progress: "#00d4ff", completed: "#10b981" }
-    return colors[status] || colors.in_progress
-  }
-  
-  const getStatusText = (status) => {
-    const texts = { in_progress: "进行中", completed: "已完成" }
-    return texts[status] || "进行中"
+  // 获取实际状态（只考虑子任务自身的逾期情况）
+  const getActualStatus = (subtask) => {
+    return calculateSubtaskStatus(subtask)
   }
   
   const formatDate = (datetimeStr) => (datetimeStr ? new Date(datetimeStr).toLocaleDateString() : "未设置")
@@ -251,8 +334,9 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
 
   const stats = {
     total: subtasks.length,
-    inProgress: subtasks.filter((s) => s.status === "in_progress").length,
-    completed: subtasks.filter((s) => s.status === "completed").length,
+    inProgress: subtasks.filter((s) => getActualStatus(s) === "in_progress").length,
+    completed: subtasks.filter((s) => getActualStatus(s) === "completed").length,
+    overdue: subtasks.filter((s) => getActualStatus(s) === "overdue").length,
   }
 
   if (loading) return <div className="loading">加载子任务列表...</div>
@@ -285,6 +369,10 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
         <div className="stat-card">
           <div className="stat-number">{stats.completed}</div>
           <div className="stat-label">已完成</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-number">{stats.overdue}</div>
+          <div className="stat-label">已逾期</div>
         </div>
       </div>
 
@@ -330,9 +418,9 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
                   <div className="subtask-badges">
                     <span 
                       className="status-badge" 
-                      style={{ background: getStatusColor(subtask.status) }}
+                      style={{ background: getStatusColor(getActualStatus(subtask)) }}
                     >
-                      {getStatusText(subtask.status)}
+                      {getStatusText(getActualStatus(subtask))}
                     </span>
                     <span 
                       className="priority-badge" 
@@ -576,6 +664,7 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
                 >
                   <option value="in_progress">进行中</option>
                   <option value="completed">已完成</option>
+                  <option value="overdue">已逾期</option>
                 </select>
               </div>
 
