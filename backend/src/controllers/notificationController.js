@@ -94,3 +94,84 @@ export const isAllRead = async (req, res) => {
         });
     }
 };
+
+// 标记所有通知为已读
+export const markAllAsRead = async (req, res) => {
+    try {
+        const { username } = req.user;
+        
+        // 参数验证
+        if (!username || !username.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名不能为空'
+            });
+        }
+        
+        const result = await NotificationService.markAllAsRead(username.trim());
+        res.json({ 
+            success: true, 
+            message: '所有通知已标记为已读',
+            data: result
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false,
+            message: error.message 
+        });
+    }
+};
+
+// 获取未读通知数量
+export const getUnreadCount = async (req, res) => {
+    try {
+        const { username } = req.user;
+        
+        // 参数验证
+        if (!username || !username.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名不能为空'
+            });
+        }
+        
+        const count = await NotificationService.getUnreadCount(username.trim());
+        res.json({ 
+            success: true, 
+            message: '获取未读通知数量成功',
+            data: { unreadCount: count }
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false,
+            message: error.message 
+        });
+    }
+};
+
+// 获取所有通知（包括已读和未读）
+export const getAllNotifications = async (req, res) => {
+    try {
+        const { username } = req.user;
+        
+        // 参数验证
+        if (!username || !username.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: '用户名不能为空'
+            });
+        }
+        
+        const notifications = await NotificationService.getAllNotifications(username.trim());
+        res.json({ 
+            success: true, 
+            message: '获取所有通知成功',
+            data: notifications
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false,
+            message: error.message 
+        });
+    }
+};

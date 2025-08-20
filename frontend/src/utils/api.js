@@ -149,7 +149,9 @@ export const notificationAPI = {
   list: (username) => handleApi(api.get(`/api/notifications/getNotificationList/${username}`)),
   markAsRead: (notificationId) => handleApi(api.put(`/api/notifications/markAsRead/${notificationId}`)),
   markAsReadByFileId: (fileId) => handleApi(api.put("/api/notifications/markAsReadByFileId", { fileId })),
-  markAllAsRead: () => handleApi(api.put("/api/notifications/read-all")),
+  markAllAsRead: () => handleApi(api.put("/api/notifications/markAllAsRead")),
+  getUnreadCount: () => handleApi(api.get("/api/notifications/unreadCount")),
+  getAllNotifications: () => handleApi(api.get("/api/notifications/getAllNotifications")),
 }
 
 // 评分管理API

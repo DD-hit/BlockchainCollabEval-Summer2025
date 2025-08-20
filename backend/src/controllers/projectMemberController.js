@@ -27,7 +27,7 @@ export const addProjectMember = async (req, res) => {
         }
         
         // 角色验证
-        const validRoles = ['项目负责人', '前端开发', '后端开发', 'UI设计师', '产品经理', '测试工程师', '运维工程师', '数据分析师'];
+        const validRoles = ['项目负责人', '技术负责人', '前端开发', '后端开发', '全栈开发', 'UI/UX设计师', '产品经理', '测试工程师', '运维工程师', '数据分析师', '文档编写'];
         if (!validRoles.includes(role.trim())) {
             return res.status(400).json({
                 success: false,
@@ -137,7 +137,7 @@ export const updateProjectMember = async (req, res) => {
         }
         
         // 角色验证
-        const validRoles = ['项目负责人', '前端开发', '后端开发', 'UI设计师', '产品经理', '测试工程师', '运维工程师', '数据分析师'];
+        const validRoles = ['项目负责人', '技术负责人', '前端开发', '后端开发', '全栈开发', 'UI/UX设计师', '产品经理', '测试工程师', '运维工程师', '数据分析师', '文档编写'];
         if (!validRoles.includes(role.trim())) {
             return res.status(400).json({
                 success: false,

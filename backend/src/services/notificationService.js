@@ -70,6 +70,45 @@ export class NotificationService {
         return result[0].count === 0;
     }
 
+    // 标记用户所有通知为已读
+    static async markAllAsRead(username) {
+        try {
+            const [result] = await pool.execute(
+                `UPDATE notifications SET isRead = 1 WHERE receiver = ?`,
+                [username]
+            );
+            return result;
+        } catch (error) {
+            throw new Error(`标记所有通知为已读失败: ${error.message}`);
+        }
+    }
+
+    // 获取用户未读通知数量
+    static async getUnreadCount(username) {
+        try {
+            const [result] = await pool.execute(
+                `SELECT COUNT(*) as count FROM notifications WHERE receiver = ? AND isRead = 0`,
+                [username]
+            );
+            return result[0].count;
+        } catch (error) {
+            throw new Error(`获取未读通知数量失败: ${error.message}`);
+        }
+    }
+
+    // 获取用户所有通知（包括已读和未读）
+    static async getAllNotifications(username) {
+        try {
+            const [result] = await pool.execute(
+                `SELECT * FROM notifications WHERE receiver = ? ORDER BY createdTime DESC`,
+                [username]
+            );
+            return result;
+        } catch (error) {
+            throw new Error(`获取所有通知失败: ${error.message}`);
+        }
+    }
+
     static async addSubtaskStatusNotification(sender, receiver, subtaskId, title, status, milestoneId) {
         try {
             const content = {

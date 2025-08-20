@@ -22,29 +22,27 @@ function validatePasswordStrength(password) {
     // 包含数字
     if (/\d/.test(password)) {
         score += 1;
-    } else {
-        feedback.push('密码需要包含数字');
     }
 
     // 包含小写字母
     if (/[a-z]/.test(password)) {
         score += 1;
     } else {
-        feedback.push('密码需要包含小写字母');
+        feedback.push('密码必须包含小写字母');
     }
 
     // 包含大写字母
     if (/[A-Z]/.test(password)) {
         score += 1;
     } else {
-        feedback.push('密码需要包含大写字母');
+        feedback.push('密码必须包含大写字母');
     }
 
     // 包含特殊字符
     if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
         score += 1;
     } else {
-        feedback.push('密码需要包含特殊字符');
+        feedback.push('密码必须包含特殊字符');
     }
 
     // 不能包含常见弱密码
@@ -54,8 +52,12 @@ function validatePasswordStrength(password) {
         score = 0;
     }
 
-    // 要求至少3分才能通过
-    const isValid = score >= 3;
+    // 必须包含大小写字母和特殊字符才能通过
+    const hasLowercase = /[a-z]/.test(password);
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    const isValid = hasLowercase && hasUppercase && hasSpecialChar && password.length >= 8;
     const message = isValid ? '密码强度符合要求' : feedback.join(', ');
 
     return { isValid, score, message, feedback };

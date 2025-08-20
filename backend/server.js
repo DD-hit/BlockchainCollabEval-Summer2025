@@ -208,8 +208,8 @@ const startServer = async () => {
                                 timestamp: Date.now()
                             }));
 
-                            // 发送未读通知
-                            sendUnreadNotifications(message.username);
+                            // 注释掉发送未读通知，避免与HTTP API重复
+                            // sendUnreadNotifications(message.username);
                             break;
 
                         case 'ping':
