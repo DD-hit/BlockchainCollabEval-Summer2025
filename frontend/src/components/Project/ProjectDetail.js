@@ -36,8 +36,8 @@ export default function ProjectDetail() {
       setEdit({
         name: data.projectName || data.name,
         description: data.description || "",
-        startTime: data.startTime ? new Date(data.startTime).toISOString().slice(0, 16) : "",
-        endTime: data.endTime ? new Date(data.endTime).toISOString().slice(0, 16) : "",
+        startTime: data.startTime ? new Date(data.startTime).toISOString().slice(0, 10) : "",
+        endTime: data.endTime ? new Date(data.endTime).toISOString().slice(0, 10) : "",
         ownerId: data.projectOwner
       })
       setEditOpen(true)
@@ -50,16 +50,16 @@ export default function ProjectDetail() {
       const res = await projectAPI.update(projectIdNum, {
         projectName: edit.name,
         description: edit.description,
-        startTime: edit.startTime || null,
-        endTime: edit.endTime || null
+        startTime: edit.startTime ? `${edit.startTime} 00:00:00` : null,
+        endTime: edit.endTime ? `${edit.endTime} 23:59:59` : null
       })
       if (res.ok) {
         setData({ 
           ...data, 
           projectName: edit.name, 
           description: edit.description,
-          startTime: edit.startTime,
-          endTime: edit.endTime
+          startTime: edit.startTime ? `${edit.startTime} 00:00:00` : null,
+          endTime: edit.endTime ? `${edit.endTime} 23:59:59` : null
         })
         setEditOpen(false)
         alert('项目更新成功')
@@ -264,14 +264,14 @@ export default function ProjectDetail() {
               <div className="timeline-icon">🕒</div>
               <div className="timeline-content">
                 <span className="timeline-label">开始时间</span>
-                <span className="timeline-value">{data.startTime ? new Date(data.startTime).toLocaleString() : "未设置"}</span>
+                <span className="timeline-value">{data.startTime ? new Date(data.startTime).toLocaleDateString() : "未设置"}</span>
               </div>
             </div>
             <div className="timeline-item">
               <div className="timeline-icon">🎯</div>
               <div className="timeline-content">
                 <span className="timeline-label">结束时间</span>
-                <span className="timeline-value">{data.endTime ? new Date(data.endTime).toLocaleString() : "未设置"}</span>
+                <span className="timeline-value">{data.endTime ? new Date(data.endTime).toLocaleDateString() : "未设置"}</span>
               </div>
             </div>
           </div>
@@ -383,7 +383,7 @@ export default function ProjectDetail() {
               <div className="form-group">
                 <label>开始时间</label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   value={edit.startTime}
                   onChange={(e) => setEdit({...edit, startTime: e.target.value})}
                 />
@@ -391,7 +391,7 @@ export default function ProjectDetail() {
               <div className="form-group">
                 <label>结束时间</label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   value={edit.endTime}
                   onChange={(e) => setEdit({...edit, endTime: e.target.value})}
                 />
