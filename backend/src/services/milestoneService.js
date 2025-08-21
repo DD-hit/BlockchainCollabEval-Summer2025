@@ -14,7 +14,12 @@ export class MilestoneService {
         if (startTime && project.startTime) {
             const milestoneStart = new Date(startTime);
             const projectStart = new Date(project.startTime);
-            if (milestoneStart < projectStart) {
+            
+            // 使用日期比较而不是时间比较，避免时区问题
+            const milestoneStartDate = new Date(milestoneStart.getFullYear(), milestoneStart.getMonth(), milestoneStart.getDate());
+            const projectStartDate = new Date(projectStart.getFullYear(), projectStart.getMonth(), projectStart.getDate());
+            
+            if (milestoneStartDate < projectStartDate) {
                 throw new Error('里程碑开始时间不能早于项目开始时间');
             }
         }
@@ -22,14 +27,19 @@ export class MilestoneService {
         if (endTime && project.endTime) {
             const milestoneEnd = new Date(endTime);
             const projectEnd = new Date(project.endTime);
-            if (milestoneEnd > projectEnd) {
+            
+            // 使用日期比较而不是时间比较，避免时区问题
+            const milestoneEndDate = new Date(milestoneEnd.getFullYear(), milestoneEnd.getMonth(), milestoneEnd.getDate());
+            const projectEndDate = new Date(projectEnd.getFullYear(), projectEnd.getMonth(), projectEnd.getDate());
+            
+            if (milestoneEndDate > projectEndDate) {
                 throw new Error('里程碑结束时间不能晚于项目结束时间');
             }
         }
         
-        // 处理时间格式
-        const formattedStartTime = startTime ? new Date(startTime).toISOString().slice(0, 19).replace('T', ' ') : null;
-        const formattedEndTime = endTime ? new Date(endTime).toISOString().slice(0, 19).replace('T', ' ') : null;
+        // 处理时间格式 - 避免时区偏移
+        const formattedStartTime = startTime ? startTime : null;
+        const formattedEndTime = endTime ? endTime : null;
         
         const [result] = await pool.execute('INSERT INTO milestones (title, description, projectId, status, startTime, endTime) VALUES ( ?, ?, ?, ?, ?, ?)', [title, description, projectId, 'in_progress', formattedStartTime, formattedEndTime]);
         return {
@@ -77,7 +87,12 @@ export class MilestoneService {
         if (startTime && project.startTime) {
             const milestoneStart = new Date(startTime);
             const projectStart = new Date(project.startTime);
-            if (milestoneStart < projectStart) {
+            
+            // 使用日期比较而不是时间比较，避免时区问题
+            const milestoneStartDate = new Date(milestoneStart.getFullYear(), milestoneStart.getMonth(), milestoneStart.getDate());
+            const projectStartDate = new Date(projectStart.getFullYear(), projectStart.getMonth(), projectStart.getDate());
+            
+            if (milestoneStartDate < projectStartDate) {
                 throw new Error('里程碑开始时间不能早于项目开始时间');
             }
         }
@@ -85,14 +100,19 @@ export class MilestoneService {
         if (endTime && project.endTime) {
             const milestoneEnd = new Date(endTime);
             const projectEnd = new Date(project.endTime);
-            if (milestoneEnd > projectEnd) {
+            
+            // 使用日期比较而不是时间比较，避免时区问题
+            const milestoneEndDate = new Date(milestoneEnd.getFullYear(), milestoneEnd.getMonth(), milestoneEnd.getDate());
+            const projectEndDate = new Date(projectEnd.getFullYear(), projectEnd.getMonth(), projectEnd.getDate());
+            
+            if (milestoneEndDate > projectEndDate) {
                 throw new Error('里程碑结束时间不能晚于项目结束时间');
             }
         }
         
-        // 处理时间格式
-        const formattedStartTime = startTime ? new Date(startTime).toISOString().slice(0, 19).replace('T', ' ') : null;
-        const formattedEndTime = endTime ? new Date(endTime).toISOString().slice(0, 19).replace('T', ' ') : null;
+        // 处理时间格式 - 避免时区偏移
+        const formattedStartTime = startTime ? startTime : null;
+        const formattedEndTime = endTime ? endTime : null;
         
         const [result] = await pool.execute('UPDATE milestones SET title = ?, description = ?, startTime = ?, endTime = ? WHERE milestoneId = ?', [title, description, formattedStartTime, formattedEndTime, milestoneId]);
         return result;

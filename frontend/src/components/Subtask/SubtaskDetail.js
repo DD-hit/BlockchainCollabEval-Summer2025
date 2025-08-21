@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom"
 import api, { fileAPI } from "../../utils/api"
 import ScoreModal from "../Score/ScoreModal"
 import { calculateSubtaskStatus, getStatusColor, getStatusText } from "../../utils/overdueUtils"
+import { formatDateToLocalString } from "../../utils/timeUtils"
 import "./SubtaskDetail.css"
 
 const SubtaskDetail = () => {
@@ -190,8 +191,8 @@ const SubtaskDetail = () => {
         status: "completed",
         description: subtask.description || null,
         assignedTo: subtask.assignedTo || null,
-        startTime: subtask.startTime ? new Date(subtask.startTime).toISOString().slice(0, 19).replace('T', ' ') : null,
-        endTime: subtask.endTime ? new Date(subtask.endTime).toISOString().slice(0, 19).replace('T', ' ') : null,
+        startTime: subtask.startTime ? formatDateToLocalString(new Date(subtask.startTime).toISOString().split('T')[0]) : null,
+        endTime: subtask.endTime ? formatDateToLocalString(new Date(subtask.endTime).toISOString().split('T')[0]) : null,
         priority: subtask.priority || 2,
       }
 

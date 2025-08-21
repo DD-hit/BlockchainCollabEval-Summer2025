@@ -15,7 +15,12 @@ export class SubtaskService {
         if (startTime && milestone.startTime) {
             const subtaskStart = new Date(startTime);
             const milestoneStart = new Date(milestone.startTime);
-            if (subtaskStart < milestoneStart) {
+            
+            // 使用日期比较而不是时间比较，避免时区问题
+            const subtaskStartDate = new Date(subtaskStart.getFullYear(), subtaskStart.getMonth(), subtaskStart.getDate());
+            const milestoneStartDate = new Date(milestoneStart.getFullYear(), milestoneStart.getMonth(), milestoneStart.getDate());
+            
+            if (subtaskStartDate < milestoneStartDate) {
                 throw new Error('子任务开始时间不能早于里程碑开始时间');
             }
         }
@@ -23,7 +28,12 @@ export class SubtaskService {
         if (endTime && milestone.endTime) {
             const subtaskEnd = new Date(endTime);
             const milestoneEnd = new Date(milestone.endTime);
-            if (subtaskEnd > milestoneEnd) {
+            
+            // 使用日期比较而不是时间比较，避免时区问题
+            const subtaskEndDate = new Date(subtaskEnd.getFullYear(), subtaskEnd.getMonth(), subtaskEnd.getDate());
+            const milestoneEndDate = new Date(milestoneEnd.getFullYear(), milestoneEnd.getMonth(), milestoneEnd.getDate());
+            
+            if (subtaskEndDate > milestoneEndDate) {
                 throw new Error('子任务结束时间不能晚于里程碑结束时间');
             }
         }
@@ -86,7 +96,12 @@ export class SubtaskService {
         if (startTime && milestone.startTime) {
             const subtaskStart = new Date(startTime);
             const milestoneStart = new Date(milestone.startTime);
-            if (subtaskStart < milestoneStart) {
+            
+            // 使用日期比较而不是时间比较，避免时区问题
+            const subtaskStartDate = new Date(subtaskStart.getFullYear(), subtaskStart.getMonth(), subtaskStart.getDate());
+            const milestoneStartDate = new Date(milestoneStart.getFullYear(), milestoneStart.getMonth(), milestoneStart.getDate());
+            
+            if (subtaskStartDate < milestoneStartDate) {
                 throw new Error('子任务开始时间不能早于里程碑开始时间');
             }
         }
@@ -94,7 +109,12 @@ export class SubtaskService {
         if (endTime && milestone.endTime) {
             const subtaskEnd = new Date(endTime);
             const milestoneEnd = new Date(milestone.endTime);
-            if (subtaskEnd > milestoneEnd) {
+            
+            // 使用日期比较而不是时间比较，避免时区问题
+            const subtaskEndDate = new Date(subtaskEnd.getFullYear(), subtaskEnd.getMonth(), subtaskEnd.getDate());
+            const milestoneEndDate = new Date(milestoneEnd.getFullYear(), milestoneEnd.getMonth(), milestoneEnd.getDate());
+            
+            if (subtaskEndDate > milestoneEndDate) {
                 throw new Error('子任务结束时间不能晚于里程碑结束时间');
             }
         }

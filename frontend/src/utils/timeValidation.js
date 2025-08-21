@@ -13,7 +13,12 @@ export function validateMilestoneTime(project, milestone) {
   if (project.startTime && milestone.startTime) {
     const projectStart = new Date(project.startTime)
     const milestoneStart = new Date(milestone.startTime)
-    if (milestoneStart < projectStart) {
+    
+    // 使用日期比较而不是时间比较，避免时区问题
+    const projectStartDate = new Date(projectStart.getFullYear(), projectStart.getMonth(), projectStart.getDate())
+    const milestoneStartDate = new Date(milestoneStart.getFullYear(), milestoneStart.getMonth(), milestoneStart.getDate())
+    
+    if (milestoneStartDate < projectStartDate) {
       errors.push('里程碑开始时间不能早于项目开始时间')
     }
   } else if (project.startTime && !milestone.startTime) {
@@ -25,7 +30,12 @@ export function validateMilestoneTime(project, milestone) {
   if (project.endTime && milestone.endTime) {
     const projectEnd = new Date(project.endTime)
     const milestoneEnd = new Date(milestone.endTime)
-    if (milestoneEnd > projectEnd) {
+    
+    // 使用日期比较而不是时间比较，避免时区问题
+    const projectEndDate = new Date(projectEnd.getFullYear(), projectEnd.getMonth(), projectEnd.getDate())
+    const milestoneEndDate = new Date(milestoneEnd.getFullYear(), milestoneEnd.getMonth(), milestoneEnd.getDate())
+    
+    if (milestoneEndDate > projectEndDate) {
       errors.push('里程碑结束时间不能晚于项目结束时间')
     }
   } else if (project.endTime && !milestone.endTime) {
@@ -37,7 +47,12 @@ export function validateMilestoneTime(project, milestone) {
   if (milestone.startTime && milestone.endTime) {
     const milestoneStart = new Date(milestone.startTime)
     const milestoneEnd = new Date(milestone.endTime)
-    if (milestoneStart >= milestoneEnd) {
+    
+    // 使用日期比较而不是时间比较，避免时区问题
+    const milestoneStartDate = new Date(milestoneStart.getFullYear(), milestoneStart.getMonth(), milestoneStart.getDate())
+    const milestoneEndDate = new Date(milestoneEnd.getFullYear(), milestoneEnd.getMonth(), milestoneEnd.getDate())
+    
+    if (milestoneStartDate > milestoneEndDate) {
       errors.push('里程碑开始时间必须早于结束时间')
     }
   }
@@ -61,7 +76,12 @@ export function validateSubtaskTime(milestone, subtask) {
   if (milestone.startTime && subtask.startTime) {
     const milestoneStart = new Date(milestone.startTime)
     const subtaskStart = new Date(subtask.startTime)
-    if (subtaskStart < milestoneStart) {
+    
+    // 使用日期比较而不是时间比较，避免时区问题
+    const milestoneStartDate = new Date(milestoneStart.getFullYear(), milestoneStart.getMonth(), milestoneStart.getDate())
+    const subtaskStartDate = new Date(subtaskStart.getFullYear(), subtaskStart.getMonth(), subtaskStart.getDate())
+    
+    if (subtaskStartDate < milestoneStartDate) {
       errors.push('子任务开始时间不能早于里程碑开始时间')
     }
   } else if (milestone.startTime && !subtask.startTime) {
@@ -73,7 +93,12 @@ export function validateSubtaskTime(milestone, subtask) {
   if (milestone.endTime && subtask.endTime) {
     const milestoneEnd = new Date(milestone.endTime)
     const subtaskEnd = new Date(subtask.endTime)
-    if (subtaskEnd > milestoneEnd) {
+    
+    // 使用日期比较而不是时间比较，避免时区问题
+    const milestoneEndDate = new Date(milestoneEnd.getFullYear(), milestoneEnd.getMonth(), milestoneEnd.getDate())
+    const subtaskEndDate = new Date(subtaskEnd.getFullYear(), subtaskEnd.getMonth(), subtaskEnd.getDate())
+    
+    if (subtaskEndDate > milestoneEndDate) {
       errors.push('子任务结束时间不能晚于里程碑结束时间')
     }
   } else if (milestone.endTime && !subtask.endTime) {
@@ -85,7 +110,12 @@ export function validateSubtaskTime(milestone, subtask) {
   if (subtask.startTime && subtask.endTime) {
     const subtaskStart = new Date(subtask.startTime)
     const subtaskEnd = new Date(subtask.endTime)
-    if (subtaskStart >= subtaskEnd) {
+    
+    // 使用日期比较而不是时间比较，避免时区问题
+    const subtaskStartDate = new Date(subtaskStart.getFullYear(), subtaskStart.getMonth(), subtaskStart.getDate())
+    const subtaskEndDate = new Date(subtaskEnd.getFullYear(), subtaskEnd.getMonth(), subtaskEnd.getDate())
+    
+    if (subtaskStartDate > subtaskEndDate) {
       errors.push('子任务开始时间必须早于结束时间')
     }
   }
@@ -108,7 +138,12 @@ export function validateProjectTime(project) {
   if (project.startTime && project.endTime) {
     const projectStart = new Date(project.startTime)
     const projectEnd = new Date(project.endTime)
-    if (projectStart >= projectEnd) {
+    
+    // 使用日期比较而不是时间比较，避免时区问题
+    const projectStartDate = new Date(projectStart.getFullYear(), projectStart.getMonth(), projectStart.getDate())
+    const projectEndDate = new Date(projectEnd.getFullYear(), projectEnd.getMonth(), projectEnd.getDate())
+    
+    if (projectStartDate > projectEndDate) {
       errors.push('项目开始时间必须早于结束时间')
     }
   }
@@ -142,7 +177,12 @@ export function validateTimeRange(startTime, endTime) {
   if (startTime && endTime) {
     const start = new Date(startTime)
     const end = new Date(endTime)
-    if (start >= end) {
+    
+    // 使用日期比较而不是时间比较，避免时区问题
+    const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+    const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+    
+    if (startDate > endDate) {
       errors.push('开始时间必须早于结束时间')
     }
   }

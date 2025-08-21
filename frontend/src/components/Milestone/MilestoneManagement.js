@@ -6,27 +6,15 @@ import MemberSelector from "../Common/MemberSelector"
 import { milestoneAPI, subtaskAPI, projectAPI } from "../../utils/api"
 import { validateMilestoneTime, validateTimeRange, validateTimeHierarchy } from "../../utils/timeValidation"
 import { calculateMilestoneStatus, getStatusColor, getStatusText } from "../../utils/overdueUtils"
+import { formatDateToLocalString, formatDateTimeForInput, formatDateForDisplay } from "../../utils/timeUtils"
 import "./MilestoneManagement.css"
 
 function toDateTime(dateStr) {
   if (!dateStr) return null
-  return `${dateStr} 00:00:00`
+  return formatDateToLocalString(dateStr)
 }
 
-function formatDate(dateString) {
-  if (!dateString) return "-"
-  try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return "Invalid Date"
-    return date.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    })
-  } catch (error) {
-    return "Invalid Date"
-  }
-}
+const formatDate = formatDateForDisplay
 
 
 
@@ -289,8 +277,8 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
     setForm({
       title: milestone.title || "",
       description: milestone.description || "",
-      startDate: milestone.startTime ? milestone.startTime.split(' ')[0] : "",
-      endDate: milestone.endTime ? milestone.endTime.split(' ')[0] : "",
+      startDate: formatDateTimeForInput(milestone.startTime),
+      endDate: formatDateTimeForInput(milestone.endTime),
     })
     setShowEditModal(true)
   }

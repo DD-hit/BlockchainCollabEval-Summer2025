@@ -6,6 +6,7 @@ import MemberSelector from "../Common/MemberSelector"
 import { projectMemberAPI, milestoneAPI, subtaskAPI } from "../../utils/api"
 import { validateSubtaskTime, validateTimeRange, validateTimeHierarchy } from "../../utils/timeValidation"
 import { calculateSubtaskStatus, getStatusColor, getStatusText } from "../../utils/overdueUtils"
+import { formatDateToLocalString, formatDateTimeForInput, formatDateForDisplay } from "../../utils/timeUtils"
 import "./SubtaskManagement.css"
 
 const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskChange }) => {
@@ -145,8 +146,8 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
         status: newSubtask.status || "in_progress",
         description: newSubtask.description.trim() || null,
         assignedTo: newSubtask.assignee || null,
-        startTime: newSubtask.startTime ? new Date(newSubtask.startTime).toISOString().slice(0, 19).replace('T', ' ') : null,
-        endTime: newSubtask.endTime ? new Date(newSubtask.endTime).toISOString().slice(0, 19).replace('T', ' ') : null,
+        startTime: formatDateToLocalString(newSubtask.startTime),
+        endTime: formatDateToLocalString(newSubtask.endTime),
         priority: convertPriorityToNumber(newSubtask.priority),
       }
 
@@ -220,8 +221,8 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
         status: editingSubtask.status || "in_progress",
         description: editingSubtask.description?.trim() || null,
         assignedTo: editingSubtask.assignee || null,
-        startTime: editingSubtask.startTime ? new Date(editingSubtask.startTime).toISOString().slice(0, 19).replace('T', ' ') : null,
-        endTime: editingSubtask.endTime ? new Date(editingSubtask.endTime).toISOString().slice(0, 19).replace('T', ' ') : null,
+        startTime: formatDateToLocalString(editingSubtask.startTime),
+        endTime: formatDateToLocalString(editingSubtask.endTime),
         priority: convertPriorityToNumber(editingSubtask.priority),
       }
 
@@ -290,8 +291,8 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
         status: newStatus,
         description: subtask.description || null,
         assignedTo: subtask.assignedTo || null,
-        startTime: subtask.startTime ? new Date(subtask.startTime).toISOString().slice(0, 19).replace('T', ' ') : null,
-        endTime: subtask.endTime ? new Date(subtask.endTime).toISOString().slice(0, 19).replace('T', ' ') : null,
+        startTime: subtask.startTime ? formatDateToLocalString(new Date(subtask.startTime).toISOString().split('T')[0]) : null,
+        endTime: subtask.endTime ? formatDateToLocalString(new Date(subtask.endTime).toISOString().split('T')[0]) : null,
         priority: convertPriorityToNumber(subtask.priority) || 2,
       }
 
@@ -329,8 +330,8 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
     return calculateSubtaskStatus(subtask)
   }
   
-  const formatDate = (datetimeStr) => (datetimeStr ? new Date(datetimeStr).toLocaleDateString() : "未设置")
-  const formatDateForInput = (datetimeStr) => (datetimeStr ? new Date(datetimeStr).toISOString().split("T")[0] : "")
+  const formatDate = formatDateForDisplay
+  const formatDateForInput = formatDateTimeForInput
 
   const stats = {
     total: subtasks.length,
