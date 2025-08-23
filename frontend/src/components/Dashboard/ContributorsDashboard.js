@@ -482,7 +482,7 @@ const ContributorsDashboard = ({ contributors = [], commits = [] }) => {
                     <div className="contributor-info">
                       <h3 className="contributor-name">{contributor.login}</h3>
                       <div className="contributor-stats">
-                        <span>{stats[selectedMetric] || 0} {getMetricUnit()}{getMetricLabel()}</span>
+                        <span className="stat-main">{stats[selectedMetric] || 0} {getMetricUnit()}{getMetricLabel()}</span>
                         {selectedMetric === 'additions' && (
                           <span className="additions">+{formatNumber(stats.additions || 0)}</span>
                         )}
@@ -497,9 +497,7 @@ const ContributorsDashboard = ({ contributors = [], commits = [] }) => {
                         )}
                       </div>
                     </div>
-                    <div className="contributor-options">
-                      <button className="options-btn">⋯</button>
-                    </div>
+                    {/* 操作按钮已移除，避免布局受影响 */}
                   </div>
                   
                   <div className="contributor-chart">

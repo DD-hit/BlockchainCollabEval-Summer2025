@@ -223,7 +223,7 @@
   border-radius: 8px;
   padding: 16px;
   transition: all 0.2s ease;
-  min-height: 140px;
+  min-height: 180px; /* 为迷你图与统计预留统一高度，避免折行导致下方柱状图上移 */
 }
 
 .contributor-card:hover {
@@ -235,7 +235,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 8px; /* 缩小头部与图表间距，保证对齐 */
 }
 
 .contributor-rank {
@@ -268,6 +268,7 @@
   gap: 12px;
   font-size: 14px;
   color: #586069;
+  flex-wrap: wrap; /* 文本过长时换行，避免把迷你图顶下去 */
 }
 
 .additions {
@@ -298,7 +299,7 @@
 }
 
 .contributor-chart {
-  height: 80px;
+  height: 90px; /* 固定迷你图高度，确保各卡片柱状图对齐 */
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -311,7 +312,7 @@
   width: 100%;
   height: 100%;
   justify-content: flex-end;
-  margin-bottom: 15px;
+  margin-bottom: 0; /* 去掉额外底部间距，避免错位 */
 }
 
 .mini-y-axis {
