@@ -12,6 +12,7 @@ import Dashboard from "./components/Dashboard/Dashboard"
 import ProjectList from "./components/Project/ProjectList"
 import ProjectDetail from "./components/Project/ProjectDetail"
 import ProjectCreate from "./components/Project/ProjectCreate"
+import RepoDetail from "./components/Project/RepoDetail"
 import MilestoneDetail from "./components/Milestone/MilestoneDetail"
 import SubtaskDetail from "./components/Subtask/SubtaskDetail"
 import Profile from "./components/Profile/Profile"
@@ -27,6 +28,9 @@ function App() {
 
   // 心跳包定时器引用
   const heartbeatRef = useRef(null)
+  // 重连控制
+  const reconnectAttemptsRef = useRef(0)
+  const reconnectTimerRef = useRef(null)
 
   // 开始发送心跳包
   const startHeartbeat = (ws) => {
@@ -46,10 +50,25 @@ function App() {
     }
   }
 
+  // 安排自动重连（指数退避，最大 30s）
+  const scheduleReconnect = () => {
+    // 无登录态不重连
+    if (!sessionStorage.getItem('token')) return
+    // 已经在重连定时中
+    if (reconnectTimerRef.current) return
+    const attempt = reconnectAttemptsRef.current || 0
+    const delay = Math.min(30000, 1000 * Math.pow(2, attempt)) // 1s,2s,4s,...,<=30s
+    reconnectTimerRef.current = setTimeout(() => {
+      reconnectTimerRef.current = null
+      reconnectAttemptsRef.current = Math.min(attempt + 1, 6)
+      connectWebSocket()
+    }, delay)
+  }
+
   // 建立WebSocket连接
   const connectWebSocket = () => {
     if (wsRef.current) {
-      
+      // 已连接或正在连接
       return
     }
 
@@ -61,7 +80,12 @@ function App() {
     wsRef.current = ws
 
     ws.onopen = () => {
-      
+      // 连接成功，重置重连计数
+      reconnectAttemptsRef.current = 0
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current)
+        reconnectTimerRef.current = null
+      }
       const username = sessionStorage.getItem("username")
       ws.send(
         JSON.stringify({
@@ -114,10 +138,13 @@ function App() {
       wsRef.current = null
       stopHeartbeat()
       // addNotification({ type: "system", title: "连接断开", message: "实时通知已断开" }, false)
+      scheduleReconnect()
     }
 
     ws.onerror = (error) => {
       console.error("❌ WebSocket连接错误:", error)
+      // 发生错误时，尝试重连
+      try { ws.close() } catch (e) {}
     }
   }
 
@@ -133,6 +160,23 @@ function App() {
     }
     setLoading(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 网络恢复或标签页回到前台时尝试重连
+  useEffect(() => {
+    const onOnline = () => scheduleReconnect()
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && !wsRef.current) {
+        scheduleReconnect()
+      }
+    }
+    window.addEventListener('online', onOnline)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      document.removeEventListener('visibilitychange', onVisibility)
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current)
+    }
   }, [])
 
 
@@ -294,6 +338,20 @@ function App() {
             user ? (
               <MainLayout user={user} onLogout={handleLogout}>
                 <TransactionList user={user} />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        {/* GitHub仓库详情页 */}
+        <Route
+          path="/repo/:owner/:repo"
+          element={
+            user ? (
+              <MainLayout user={user} onLogout={handleLogout}>
+                <RepoDetail />
               </MainLayout>
             ) : (
               <Navigate to="/login" />

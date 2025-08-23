@@ -16,6 +16,46 @@
   width: 80px;
 }
 
+/* 收缩态：优化图标展示与高亮效果，避免强烈发光 */
+.sidebar.collapsed .nav-item {
+  margin: 8px 12px;
+}
+
+.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 12px;
+  gap: 0;
+  background: transparent;
+  transform: none;
+}
+
+.sidebar.collapsed .nav-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: none;
+}
+
+.sidebar.collapsed .nav-link.active {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
+
+.sidebar.collapsed .nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  border-radius: 2px;
+  background: #00d4ff;
+}
+
+.sidebar.collapsed .nav-icon {
+  width: 36px;
+  font-size: 20px;
+}
+
 .sidebar-header {
   padding: 24px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);

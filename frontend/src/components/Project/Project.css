@@ -192,10 +192,7 @@
   font-weight: 500;
 }
 
-.error-message::before {
-  content: '⚠️';
-  font-size: 0.8rem;
-}
+
 
 .time-section {
   display: grid;

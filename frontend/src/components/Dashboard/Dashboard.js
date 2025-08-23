@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api, { projectAPI, subtaskAPI } from '../../utils/api';
 import './Dashboard.css';
 
 const Dashboard = ({ user }) => {
+  const location = useLocation();
   const [stats, setStats] = useState({
     totalProjects: 0,
     totalTasks: 0,
@@ -12,10 +13,66 @@ const Dashboard = ({ user }) => {
   });
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [githubMessage, setGithubMessage] = useState(null);
+  const [githubStatus, setGithubStatus] = useState({ connected: false, message: '检查中...' });
 
   useEffect(() => {
     loadDashboardData();
+    checkGitHubStatus();
+    checkGitHubConnectionStatus();
   }, []);
+
+  const checkGitHubStatus = () => {
+    const params = new URLSearchParams(location.search);
+    const success = params.get('success');
+    const message = params.get('message');
+    const error = params.get('error');
+    
+    if (success === 'true' && message) {
+      setGithubMessage({ type: 'success', message });
+      // 清除URL参数
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // 刷新GitHub连接状态
+      checkGitHubConnectionStatus();
+    } else if (error) {
+      setGithubMessage({ type: 'error', message: error });
+      // 清除URL参数
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  };
+
+  const checkGitHubConnectionStatus = async () => {
+    try {
+      const response = await api.get('/api/auth/status');
+      setGithubStatus(response.data);
+    } catch (error) {
+      setGithubStatus({ connected: false, message: '检查连接状态失败' });
+    }
+  };
+
+  const handleConnectGitHub = async () => {
+    try {
+      const response = await api.get('/api/auth/url');
+      if (response.data && response.data.authUrl) {
+        window.location.href = response.data.authUrl;
+      } else {
+        setGithubMessage({ type: 'error', message: '获取GitHub授权URL失败' });
+      }
+    } catch (error) {
+      console.error('GitHub连接错误:', error);
+      
+      // GitHub连接失败时只显示错误信息，不跳转到登录页面
+      if (error.response?.status === 401) {
+        setGithubMessage({ type: 'error', message: '登录已过期，请重新登录' });
+      } else if (error.response?.status === 500) {
+        setGithubMessage({ type: 'error', message: '服务器错误，请稍后重试' });
+      } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+        setGithubMessage({ type: 'error', message: '网络连接失败，请检查网络设置' });
+      } else {
+        setGithubMessage({ type: 'error', message: '连接GitHub失败，请重试' });
+      }
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -112,9 +169,47 @@ const Dashboard = ({ user }) => {
 
   return (
     <div className="dashboard">
+      {/* GitHub认证消息 */}
+      {githubMessage && (
+        <div className={`github-message ${githubMessage.type}`}>
+          <div className="github-message-content">
+            <span className="github-icon">
+              {githubMessage.type === 'success' ? '✅' : '❌'}
+            </span>
+            <span className="github-text">{githubMessage.message}</span>
+            <button 
+              className="github-close-btn"
+              onClick={() => setGithubMessage(null)}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="dashboard-header">
-        <h1>欢迎回来，{user.username}！</h1>
-        <p>这里是您的工作概览</p>
+        <div className="header-content">
+          <div>
+            <h1>欢迎回来，{user.username}！</h1>
+            <p>这里是您的工作概览</p>
+          </div>
+                     <div className="github-connection-section">
+             <div className={`github-status ${githubStatus.connected ? 'connected' : 'disconnected'}`}>
+               <span className="status-icon">
+                 {githubStatus.connected ? '✓' : '✕'}
+               </span>
+               <span className="status-text">
+                 {githubStatus.connected ? 'GitHub 已连接' : 'GitHub 未连接'}
+               </span>
+             </div>
+             <button 
+               className={`connect-github-btn ${githubStatus.connected ? 'connected' : ''}`}
+               onClick={handleConnectGitHub}
+             >
+               {githubStatus.connected ? '🔄 重新连接' : '🔗 连接GitHub'}
+             </button>
+           </div>
+        </div>
       </div>
 
       <div className="dashboard-grid">

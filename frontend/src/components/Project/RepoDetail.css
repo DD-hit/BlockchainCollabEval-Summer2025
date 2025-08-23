@@ -1,0 +1,580 @@
+.repo-detail {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.repo-detail-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  font-size: 18px;
+  color: #64748b;
+}
+
+.repo-detail-error {
+  text-align: center;
+  padding: 40px 20px;
+  color: #dc2626;
+}
+
+.repo-detail-error h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+}
+
+.repo-detail-error button {
+  background: #0366d6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+/* 仓库头部 */
+.repo-header {
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+}
+
+.repo-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 20px;
+  position: relative;
+}
+
+.repo-breadcrumb {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #586069;
+  flex: 1;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #0366d6;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.8;
+}
+
+.back-btn:hover {
+  background: #f6f8fa;
+  opacity: 1;
+}
+
+.separator {
+  margin: 0 6px;
+  color: #d1d5da;
+  font-size: 14px;
+}
+
+.owner {
+  color: #0366d6;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.owner:hover {
+  text-decoration: underline;
+}
+
+.repo-name {
+  color: #24292e;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.repo-description {
+  color: #586069;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  margin-top: 12px;
+}
+
+/* 标签页导航 */
+.repo-tabs {
+  display: flex;
+  border-bottom: 1px solid #e1e4e8; 
+  margin-top: 12px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #586069;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: #24292e;
+  background: #f6f8fa;
+}
+
+.tab-btn.active {
+  color: #0366d6;
+  border-bottom-color: #0366d6;
+  background: #f1f8ff;
+}
+
+/* 标签页内容 */
+.tab-content {
+  min-height: 400px;
+}
+
+/* 代码标签页 */
+.code-tab {
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+}
+
+.file-browser {
+  background: #fff;
+  border-radius: 6px;
+  margin: 1px;
+}
+
+.file-path {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e1e4e8;
+  background: #fafbfc;
+  border-radius: 6px 6px 0 0;
+  font-size: 14px;
+  color: #586069;
+}
+
+.path-segment {
+  color: #0366d6;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.path-segment:hover {
+  color: #0256cc;
+  text-decoration: underline;
+}
+
+.path-separator {
+  margin: 0 4px;
+  color: #d1d5da;
+}
+
+.file-list {
+  padding: 8px 0;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 14px;
+}
+
+.file-item:hover {
+  background: #f6f8fa;
+}
+
+.file-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.file-name {
+  flex: 1;
+  color: #24292e;
+}
+
+.file-size {
+  color: #586069;
+  font-size: 12px;
+}
+
+.file-loading {
+  padding: 20px;
+  text-align: center;
+  color: #586069;
+  font-size: 14px;
+}
+
+.file-empty {
+  padding: 20px;
+  text-align: center;
+  color: #586069;
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* Issues标签页 */
+.issues-tab {
+  padding: 20px 0;
+}
+
+.issues-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.issues-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #24292e;
+}
+
+
+
+.issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.issue-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.issue-item:hover {
+  border-color: #0366d6;
+  background-color: #f6f8fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.issue-icon {
+  margin-right: 12px;
+  font-size: 16px;
+  margin-top: 2px;
+}
+
+.issue-content {
+  flex: 1;
+}
+
+.issue-title {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #24292e;
+  cursor: pointer;
+}
+
+.issue-title:hover {
+  color: #0366d6;
+}
+
+.issue-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #586069;
+}
+
+.issues-empty,
+.milestones-empty,
+.contributors-empty,
+.commits-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #586069;
+  font-size: 14px;
+  font-style: italic;
+  background: #f6f8fa;
+  border-radius: 6px;
+  border: 1px dashed #d1d5da;
+}
+
+/* 里程碑标签页 */
+.milestones-tab {
+  padding: 20px 0;
+}
+
+.milestones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.milestones-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #24292e;
+}
+
+
+
+.milestones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.milestone-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.milestone-item:hover {
+  border-color: #0366d6;
+  background-color: #f6f8fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.milestone-icon {
+  margin-right: 12px;
+  font-size: 16px;
+  margin-top: 2px;
+  opacity: 0.8;
+  transform: scale(0.7);
+  transform-origin: left center;
+}
+
+.milestone-content {
+  flex: 1;
+}
+
+.milestone-title {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #24292e;
+  cursor: pointer;
+}
+
+.milestone-title:hover {
+  color: #0366d6;
+}
+
+.milestone-description {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #586069;
+  line-height: 1.4;
+}
+
+.milestone-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #586069;
+}
+
+/* 贡献者标签页 */
+.contributors-tab {
+  padding: 20px 0;
+}
+
+.contributors-tab h3 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  color: #24292e;
+}
+
+.contributors-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.contributor-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.contributor-item:hover {
+  border-color: #0366d6;
+  background-color: #f6f8fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.contributor-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.contributor-info {
+  flex: 1;
+}
+
+.contributor-name {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #24292e;
+  cursor: pointer;
+}
+
+.contributor-name:hover {
+  color: #0366d6;
+}
+
+.contributor-contributions {
+  font-size: 12px;
+  color: #586069;
+}
+
+/* 提交记录标签页 */
+.commits-tab {
+  padding: 20px 0;
+}
+
+.commits-tab h3 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  color: #24292e;
+}
+
+.commits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.commit-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.commit-item:hover {
+  border-color: #0366d6;
+  background-color: #f6f8fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.commit-icon {
+  margin-right: 12px;
+  font-size: 16px;
+  margin-top: 2px;
+}
+
+.commit-content {
+  flex: 1;
+}
+
+.commit-message {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #24292e;
+  cursor: pointer;
+}
+
+.commit-message:hover {
+  color: #0366d6;
+}
+
+.commit-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #586069;
+}
+
+.commit-sha {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  background: #f6f8fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .repo-detail {
+    padding: 16px;
+  }
+  
+  .repo-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+
+  
+  .repo-breadcrumb {
+    padding-right: 0;
+  }
+  
+  .repo-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .tab-btn {
+    white-space: nowrap;
+  }
+  
+  .contributors-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .issues-header,
+  .milestones-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .repo-breadcrumb {
+    font-size: 12px;
+  }
+  
+  .repo-name {
+    font-size: 14px;
+  }
+  
+  .owner {
+    font-size: 12px;
+  }
+  
+
+}

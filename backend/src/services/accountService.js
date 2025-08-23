@@ -277,3 +277,74 @@ export class AccountService {
     }
 
 }
+
+/**
+ * 更新用户的GitHub token
+ * @param {string} username - 用户名
+ * @param {string} encryptedToken - 加密后的GitHub token
+ */
+export const updateUserGitHubToken = async (username, encryptedToken) => {
+    try {
+        const query = 'UPDATE user SET github_token = ? WHERE username = ?';
+        const [result] = await pool.execute(query, [encryptedToken, username]);
+        
+        if (result.affectedRows === 0) {
+            throw new Error('用户不存在');
+        }
+        
+        console.log(`用户 ${username} 的GitHub token已更新`);
+        return true;
+    } catch (error) {
+        console.error('更新GitHub token失败:', error);
+        throw error;
+    }
+};
+
+/**
+ * 获取用户的GitHub token
+ * @param {string} username - 用户名
+ * @returns {string|null} - 解密后的GitHub token或null
+ */
+export const getUserGitHubToken = async (username) => {
+    try {
+        const query = 'SELECT github_token FROM user WHERE username = ?';
+        const [rows] = await pool.execute(query, [username]);
+        
+        if (rows.length === 0) {
+            return null;
+        }
+        
+        const encryptedToken = rows[0].github_token;
+        if (!encryptedToken) {
+            return null;
+        }
+        
+        // 解密token
+        const { decryptToken } = await import('../utils/encryption.js');
+        return decryptToken(encryptedToken);
+    } catch (error) {
+        console.error('获取GitHub token失败:', error);
+        throw error;
+    }
+};
+
+/**
+ * 删除用户的GitHub token
+ * @param {string} username - 用户名
+ */
+export const removeUserGitHubToken = async (username) => {
+    try {
+        const query = 'UPDATE user SET github_token = NULL WHERE username = ?';
+        const [result] = await pool.execute(query, [username]);
+        
+        if (result.affectedRows === 0) {
+            throw new Error('用户不存在');
+        }
+        
+        console.log(`用户 ${username} 的GitHub token已删除`);
+        return true;
+    } catch (error) {
+        console.error('删除GitHub token失败:', error);
+        throw error;
+    }
+};

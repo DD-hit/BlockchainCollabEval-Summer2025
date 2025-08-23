@@ -9,13 +9,16 @@
     "dev:full": "node server.js"
   },
   "dependencies": {
+    "@octokit/rest": "^22.0.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "express": "^4.18.2",
+    "express-session": "^1.18.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "mysql2": "^3.6.0",
+    "octokit": "^5.0.3",
     "web3": "^4.0.3",
     "ws": "^8.18.3"
   },

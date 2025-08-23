@@ -1,0 +1,411 @@
+.github-repos {
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  /* 移除外层阴影与边框 */
+}
+
+.repos-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  /* 去掉底部分割线 */
+}
+
+.repos-header h2 {
+  margin: 0;
+  color: #24292e;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.refresh-btn {
+  background: #0366d6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #0256cc;
+}
+
+.refresh-btn:disabled {
+  background: #6a737d;
+  cursor: not-allowed;
+}
+
+.repos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.repo-card {
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fff;
+  height: 160px; /* 固定卡片高度 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 去除 hover 时的蓝色边框和阴影效果 */
+.repo-card,
+.repo-card:hover,
+.repo-card:focus {
+  box-shadow: none !important;
+  outline: none;
+  transform: none;
+  border-color: #e1e4e8;
+}
+
+/* 统一移除容器内元素的焦点高亮（蓝色外阴影）*/
+.github-repos *:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 进一步确保卡片及子元素不出现任何阴影/滤镜 */
+.github-repos .repo-card,
+.github-repos .repo-card * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  outline: none;
+}
+
+.github-repos .load-more-btn,
+.github-repos .retry-btn,
+.github-repos .load-more-btn:hover,
+.github-repos .retry-btn:hover,
+.github-repos .load-more-btn:focus,
+.github-repos .retry-btn:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.repo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  height: 24px; /* 固定头部高度 */
+  min-height: 24px;
+}
+
+.repo-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0366d6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.repo-card:hover .repo-name {
+  color: #0256cc;
+}
+
+.repo-icon {
+  font-size: 14px;
+}
+
+.repo-visibility {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.repo-visibility.private {
+  background: #f6f8fa;
+  color: #586069;
+}
+
+.repo-visibility.public {
+  background: #f6f8fa;
+  color: #586069;
+}
+
+.repo-description {
+  color: #586069;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 8px 0;
+  height: 40px; /* 固定描述高度 */
+  min-height: 40px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.repo-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  height: 20px; /* 固定元数据高度 */
+  min-height: 20px;
+  flex-shrink: 0;
+}
+
+.repo-language {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #586069;
+}
+
+.language-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.repo-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: #586069;
+}
+
+.stat-icon {
+  font-size: 10px;
+  color: #586069;
+}
+
+.repo-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto; /* 推到底部 */
+  padding-top: 12px;
+  /* 去掉底部分割线 */
+  font-size: 12px;
+  color: #586069;
+  height: 20px; /* 固定底部高度 */
+  min-height: 20px;
+  flex-shrink: 0;
+}
+
+.repo-updated {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.repo-license {
+  white-space: nowrap;
+}
+
+.load-more-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.load-more-btn {
+  background: #0366d6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: #0256cc;
+}
+
+.load-more-btn:disabled {
+  background: #6a737d;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+.no-repos {
+  text-align: center;
+  padding: 40px 20px;
+  color: #586069;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-repos::before {
+  content: '📚';
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-repos p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #586069;
+}
+
+.no-repos p:first-of-type {
+  font-size: 16px;
+  font-weight: 600;
+  color: #24292e;
+  margin-bottom: 8px;
+}
+
+.github-repos-error {
+  padding: 40px 20px;
+  text-align: center;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-message {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 40px 32px;
+  color: #495057;
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.error-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.error-message h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #212529;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.error-message h3 span:first-child {
+  font-size: 36px;
+}
+
+.error-message p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #495057;
+}
+
+.error-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.retry-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  min-width: 120px;
+}
+
+.retry-btn:hover {
+  background: #0056b3;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .github-repos-error {
+    padding: 40px 16px;
+  }
+  
+  .error-message {
+    padding: 30px 20px;
+    border-radius: 12px;
+  }
+  
+  .error-message h3 {
+    font-size: 20px;
+  }
+  
+  .error-message p {
+    font-size: 14px;
+  }
+  
+  .retry-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .repos-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .repo-card {
+    padding: 12px;
+  }
+  
+  .repo-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .repo-stats {
+    margin-top: 8px;
+  }
+  
+  .repo-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

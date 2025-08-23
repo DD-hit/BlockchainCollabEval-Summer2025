@@ -58,6 +58,39 @@
   box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
 }
 
+/* 标签页导航样式 */
+.tab-navigation {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e1e4e8;
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #586069;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  border-radius: 6px 6px 0 0;
+}
+
+.tab-btn:hover {
+  background: #f6f8fa;
+  color: #24292e;
+}
+
+.tab-btn.active {
+  color: #0366d6;
+  border-bottom-color: #0366d6;
+  background: #f1f8ff;
+}
+
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));

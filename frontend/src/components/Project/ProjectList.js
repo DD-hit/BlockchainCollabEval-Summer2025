@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { projectAPI, milestoneAPI, subtaskAPI } from '../../utils/api';
 import { calculateProjectStatus, getStatusColor, getStatusText, convertStatusToEnglish } from '../../utils/overdueUtils';
+import GitHubRepos from './GitHubRepos';
 import './ProjectList.css';
 
 const ProjectList = ({ user }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('projects'); // 'projects' 或 'github'
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -170,10 +172,22 @@ const ProjectList = ({ user }) => {
     return <div className="loading">加载项目列表...</div>;
   }
 
+  const handleRepoSelect = (repo) => {
+    // 可以在这里处理仓库选择，比如创建新项目时关联GitHub仓库
+    console.log('选择的仓库:', repo);
+    // 可以跳转到创建项目页面并传递仓库信息
+    navigate('/project/create', { 
+      state: { 
+        githubRepo: repo,
+        message: `已选择GitHub仓库: ${repo.name}`
+      }
+    });
+  };
+
   return (
     <div className="project-list">
       <div className="project-list-header">
-        <h1>我的项目</h1>
+        <h1>项目管理</h1>
         <div className="header-actions">
           <button 
             className="refresh-btn"
@@ -191,62 +205,88 @@ const ProjectList = ({ user }) => {
         </div>
       </div>
 
-      <div className="projects-grid">
-        {projects.map(project => (
-          <div key={project.projectId} className="project-card-wrapper">
-            <Link 
-              to={`/project/${project.projectId}`} 
-              className="project-link"
-            >
-              <div className="project-card">
-                <div className="project-header">
-                  <h3>{project.projectName}</h3>
-                  <span 
-                    className="project-status" 
-                    data-status={project.actualStatus || project.status || '进行中'}
-                    style={{ 
-                      background: getStatusColor(project.actualStatus || project.status || '进行中'),
-                      color: 'white',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '12px'
-                    }}
-                  >
-                    {getStatusText(project.actualStatus || project.status || '进行中')}
-                  </span>
-                </div>
-                <p className="project-description">{project.description || '暂无描述'}</p>
-                <div className="project-meta">
-                  <span>负责人: {project.projectOwner}</span>
-                </div>
-              </div>
-            </Link>
-            
-            {/* 删除按钮 - 只有项目所有者才能看到 */}
-            {user && user.username === project.projectOwner && (
-              <button
-                className="delete-project-btn"
-                onClick={(e) => handleDeleteProject(project.projectId, project.projectName, e)}
-                title="删除项目"
-              >
-                🗑️
-              </button>
-            )}
-          </div>
-        ))}
+      {/* 标签页导航 */}
+      <div className="tab-navigation">
+        <button 
+          className={`tab-btn ${activeTab === 'projects' ? 'active' : ''}`}
+          onClick={() => setActiveTab('projects')}
+        >
+          📋 我的项目
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'github' ? 'active' : ''}`}
+          onClick={() => setActiveTab('github')}
+        >
+          📚 GitHub 仓库
+        </button>
       </div>
 
-      {projects.length === 0 && !loading && (
-        <div className="no-projects">
-          <h3>还没有项目</h3>
-          <p>创建您的第一个项目开始协作吧！</p>
-          <button 
-            className="create-first-project-btn"
-            onClick={() => navigate('/project/create')}
-          >
-            创建项目
-          </button>
-        </div>
+      {/* 项目列表标签页 */}
+      {activeTab === 'projects' && (
+        <>
+          <div className="projects-grid">
+            {projects.map(project => (
+              <div key={project.projectId} className="project-card-wrapper">
+                <Link 
+                  to={`/project/${project.projectId}`} 
+                  className="project-link"
+                >
+                  <div className="project-card">
+                    <div className="project-header">
+                      <h3>{project.projectName}</h3>
+                      <span 
+                        className="project-status" 
+                        data-status={project.actualStatus || project.status || '进行中'}
+                        style={{ 
+                          background: getStatusColor(project.actualStatus || project.status || '进行中'),
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px'
+                        }}
+                      >
+                        {getStatusText(project.actualStatus || project.status || '进行中')}
+                      </span>
+                    </div>
+                    <p className="project-description">{project.description || '暂无描述'}</p>
+                    <div className="project-meta">
+                      <span>负责人: {project.projectOwner}</span>
+                    </div>
+                  </div>
+                </Link>
+                
+                {/* 删除按钮 - 只有项目所有者才能看到 */}
+                {user && user.username === project.projectOwner && (
+                  <button
+                    className="delete-project-btn"
+                    onClick={(e) => handleDeleteProject(project.projectId, project.projectName, e)}
+                    title="删除项目"
+                  >
+                    🗑️
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {projects.length === 0 && !loading && (
+            <div className="no-projects">
+              <h3>还没有项目</h3>
+              <p>创建您的第一个项目开始协作吧！</p>
+              <button 
+                className="create-first-project-btn"
+                onClick={() => navigate('/project/create')}
+              >
+                创建项目
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* GitHub仓库标签页 */}
+      {activeTab === 'github' && (
+        <GitHubRepos onRepoSelect={handleRepoSelect} />
       )}
     </div>
   );

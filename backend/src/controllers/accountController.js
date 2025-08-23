@@ -22,10 +22,25 @@ export const loginAccount = async (req, res) => {
         }
         
         const result = await AccountService.loginAccount(username.trim(), password);
+        
+        // 设置session
+        req.session.user = username.trim();
+        
+        // 生成GitHub授权URL
+        const clientId = 'Ov23liUjilm3zxwbD1zH';
+        const state = Math.random().toString(36).substring(2, 15);
+        // 将用户名编码到state中
+        const stateData = { state, username: username.trim() };
+        const encodedState = Buffer.from(JSON.stringify(stateData)).toString('base64');
+        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=http://localhost:5000/api/auth/callback&state=${encodedState}`;
+        
         res.json({
             success: true,
             message: '登录成功',
-            data: result
+            data: {
+                ...result,
+                githubAuthUrl: githubAuthUrl
+            }
         });
     } catch (error) {
         res.status(401).json({
@@ -156,6 +171,15 @@ export const logout = async (req, res) => {
         }
         
         const result = await AccountService.logout(username);
+        
+        // 清理GitHub token
+        try {
+            const { removeUserGitHubToken } = await import('../services/accountService.js');
+            await removeUserGitHubToken(username);
+            console.log(`用户 ${username} 登出，已清理GitHub token`);
+        } catch (error) {
+            console.error(`清理用户 ${username} 的GitHub token失败:`, error);
+        }
         
         res.json({
             success: true,

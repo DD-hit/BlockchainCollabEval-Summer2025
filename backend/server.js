@@ -14,8 +14,12 @@ import notificationRoutes from './src/routes/notificationRoutes.js';
 import scoreRoutes from './src/routes/scoreRoutes.js';
 import commentRoutes from './src/routes/commentRoutes.js';
 import transactionRoutes from './src/routes/transactionRoutes.js';
+import githubRoutes from './src/routes/githubRoutes.js';
 import { testConnection } from './config/database.js';
 import { AccountService } from './src/services/accountService.js';
+import { encryptToken } from './src/utils/encryption.js';
+import { updateUserGitHubToken } from './src/services/accountService.js';
+import jwt from 'jsonwebtoken';
 
 // 获取当前文件的目录路径
 const __filename = fileURLToPath(import.meta.url);
@@ -24,14 +28,31 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000; // 改为5000端口
 
+const clientId = 'Ov23liUjilm3zxwbD1zH'
+const clientSecret = '59370b92957fa5290b22ef3046418eb4d8c57f0b'
+
 // CORS配置 - 允许前端开发环境访问
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://120.55.189.119:5000'],
+  origin: ['http://localhost:3000', 'http://120.55.189.119:5000','http://127.0.0.1:5500','http://localhost:5500'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// 添加session中间件
+import session from 'express-session';
+app.use(session({
+    secret: 'your-secret-key',
+    resave: true,
+    saveUninitialized: true,
+    cookie: { 
+        secure: false, // 开发环境设为false
+        maxAge: 24 * 60 * 60 * 1000, // 24小时
+        httpOnly: true,
+        sameSite: 'lax'
+    }
+}));
 
 // 设置请求超时时间（60秒）
 app.use((req, res, next) => {
@@ -60,6 +81,175 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/score', scoreRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/github', githubRoutes);
+// GitHub OAuth 路由
+app.get('/api/auth/url', (req, res) => {
+    const state = Math.random().toString(36).substring(2, 15)
+    let username = req.session?.user;
+    // 当session不存在时，尝试从Authorization的JWT中解析用户名
+    if (!username) {
+        try {
+            const authHeader = req.headers.authorization || '';
+            const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+            if (token) {
+                const decoded = jwt.verify(token, '123456789');
+                username = decoded?.username;
+                if (username) {
+                    req.session.user = username; // 补充设置session，后续流程可用
+                }
+            }
+        } catch (e) {
+        }
+    }
+    
+    if (!username) {
+        return res.status(401).json({ error: '请先登录系统' });
+    }
+    
+    // 将用户名编码到state中
+    const stateData = { state, username };
+    const encodedState = Buffer.from(JSON.stringify(stateData)).toString('base64');
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=http://localhost:5000/api/auth/callback&state=${encodedState}`;
+    
+
+    res.json({ authUrl })
+ })
+
+ // 检查GitHub连接状态
+ app.get('/api/auth/status', async (req, res) => {
+     let username = req.session?.user;
+     // 当session不存在时，尝试从Authorization的JWT中解析用户名
+     if (!username) {
+         try {
+             const authHeader = req.headers.authorization || '';
+             const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+             if (token) {
+                 const decoded = jwt.verify(token, '123456789');
+                 username = decoded?.username;
+             }
+         } catch (e) {
+         }
+     }
+     
+     if (!username) {
+         return res.status(401).json({ error: '请先登录系统' });
+     }
+     
+     try {
+         const { getUserGitHubToken } = await import('./src/services/accountService.js');
+         const token = await getUserGitHubToken(username);
+         
+         if (token) {
+             res.json({ connected: true, message: 'GitHub已连接' });
+         } else {
+             res.json({ connected: false, message: 'GitHub未连接' });
+         }
+     } catch (error) {
+         console.error('检查GitHub连接状态失败:', error);
+         res.json({ connected: false, message: '检查连接状态失败' });
+     }
+ })
+
+app.get('/api/auth/callback', async (req, res) => {
+    const code = req.query.code
+    const state = req.query.state
+    
+
+    
+    if(!code){
+        return res.json({ error: '缺少code' })
+    }
+    
+    try {
+        // 重试机制函数
+        const fetchWithRetry = async (url, options, maxRetries = 3) => {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45秒超时
+                    
+                    const response = await fetch(url, {
+                        ...options,
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    return response;
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    // 等待2秒后重试
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            }
+        };
+        
+        const tokenResponse = await fetchWithRetry('https://github.com/login/oauth/access_token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'User-Agent': 'BlockchainCollabEval/1.0'
+            },
+            body: JSON.stringify({
+                client_id: clientId,
+                client_secret: clientSecret,
+                code: code,
+                redirect_uri: 'http://localhost:5000/api/auth/callback'
+            })
+        });
+        
+        if (!tokenResponse.ok) {
+            throw new Error(`GitHub API响应错误: ${tokenResponse.status} ${tokenResponse.statusText}`);
+        }
+        
+        const data = await tokenResponse.json()
+        
+        if (data.access_token) {
+            // 从state参数中获取用户信息
+            let currentUser = null;
+            
+            try {
+                const stateData = JSON.parse(Buffer.from(req.query.state, 'base64').toString());
+                currentUser = stateData.username;
+            } catch (error) {
+                currentUser = req.session?.user;
+            }
+            
+            if (!currentUser) {
+                return res.redirect('http://localhost:3000/login?error=请先登录系统');
+            }
+            
+            try {
+                // 加密token并存储到数据库
+                const encryptedToken = await encryptToken(data.access_token);
+                await updateUserGitHubToken(currentUser, encryptedToken);
+                
+                res.redirect('http://localhost:3000/dashboard?success=true&message=GitHub连接成功');
+            } catch (error) {
+                console.error('存储token失败:', error);
+                res.redirect('http://localhost:3000/dashboard?error=Token存储失败');
+            }
+        } else {
+            res.redirect('http://localhost:3000/dashboard?error=GitHub授权失败');
+        }
+    } catch (error) {
+        console.error('GitHub OAuth错误:', error);
+        
+        // 提供更详细的错误信息
+        if (error.message && (error.message.includes('timeout') || error.message.includes('abort') || error.message.includes('ConnectTimeoutError'))) {
+            res.redirect('http://localhost:3000/dashboard?error=网络连接超时，请检查网络连接后重试');
+        } else if (error.message && error.message.includes('GitHub API响应错误')) {
+            res.redirect('http://localhost:3000/dashboard?error=GitHub服务暂时不可用，请稍后重试');
+        } else if (error.message && error.message.includes('fetch failed')) {
+            res.redirect('http://localhost:3000/dashboard?error=网络连接失败，请检查网络设置后重试');
+        } else {
+            res.redirect('http://localhost:3000/dashboard?error=GitHub连接失败，请稍后重试');
+        }
+    }
+})
+
+// GitHub API 路由
+app.use('/api/github', githubRoutes);
 
 // 3. React路由兜底（处理单页应用路由，必须在API路由之后）
 app.get('*', (req, res) => {
@@ -160,30 +350,27 @@ const startServer = async () => {
             }
         };
 
-                 // 心跳检测机制 - 每30秒检查一次所有连接
-         const heartbeatInterval = setInterval(() => {
-             const now = Date.now();
-             const timeout = 60000; // 60秒超时（2个心跳周期）
- 
-             // 检查所有用户的心跳
-             userHeartbeats.forEach((lastHeartbeat, username) => {
-                 const timeSinceLastHeartbeat = now - lastHeartbeat;
-                 
-                 if (timeSinceLastHeartbeat > timeout) {
-                     // 更新用户状态为离线
-                     AccountService.updateUserStatus(username, 0)
-                         .then(() => {
-                             userHeartbeats.delete(username); // 移除用户记录
-                             userConnections.delete(username); // 移除连接记录
-                         })
-                         .catch((error) => {
-                             console.error('心跳超时更新用户状态失败:', error);
-                             userHeartbeats.delete(username); // 移除用户记录
-                             userConnections.delete(username); // 移除连接记录
-                         });
-                 }
-             });
-         }, 30000); // 每30秒检查一次
+                          // 心跳检测机制 - 每10秒检查一次所有连接
+        const HEARTBEAT_TIMEOUT_MS = parseInt(process.env.HEARTBEAT_TIMEOUT_MS || '120000', 10); // 默认2分钟
+        const heartbeatInterval = setInterval(() => {
+            const now = Date.now();
+            const timeout = HEARTBEAT_TIMEOUT_MS;
+
+            // 检查所有用户的心跳
+            userHeartbeats.forEach((lastHeartbeat, username) => {
+                const timeSinceLastHeartbeat = now - lastHeartbeat;
+
+                if (timeSinceLastHeartbeat > timeout) {
+                    // 仅将用户状态置为离线，不清理GitHub token，避免误判导致断连
+                    AccountService.updateUserStatus(username, 0)
+                        .catch((error) => console.error('心跳超时更新用户状态失败:', error))
+                        .finally(() => {
+                            userHeartbeats.delete(username);
+                            userConnections.delete(username);
+                        });
+                }
+            });
+        }, 10000); // 每10秒检查一次
 
         wss.on('connection', (ws) => {
 

@@ -25,13 +25,23 @@ const Login = ({ onLogin }) => {
       });
 
       if (response.data.success) {
-        const { token, username, address } = response.data.data;
+        const { token, username, address, githubAuthUrl } = response.data.data;
         
         sessionStorage.setItem('token', token);
         sessionStorage.setItem('username', username);
         if (address) sessionStorage.setItem('address', address);
         
-
+        // 处理GitHub认证
+        if (githubAuthUrl) {
+          // 询问用户是否要连接GitHub
+          const shouldConnectGitHub = window.confirm('登录成功！是否要连接GitHub账户？');
+          if (shouldConnectGitHub) {
+            // 跳转到GitHub授权页面
+            window.location.href = githubAuthUrl;
+            return; // 不调用onLogin，因为页面会跳转
+          }
+        }
+        
         onLogin({ username, address, token });
       } else {
         setError(response.data.message || '登录失败');

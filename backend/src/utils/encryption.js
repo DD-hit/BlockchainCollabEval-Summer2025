@@ -1,7 +1,12 @@
 import bcrypt from 'bcrypt';
 import CryptoJS from 'crypto-js';
+import crypto from 'crypto';
 
 const SALT_ROUNDS = 12; // bcrypt 盐轮数
+
+// 加密密钥 - 在生产环境中应该从环境变量获取
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-secret-encryption-key-32-chars-long';
+const ALGORITHM = 'aes-256-cbc';
 
 export class EncryptionService {
     
@@ -77,3 +82,43 @@ export class EncryptionService {
 
 
 }
+
+/**
+ * 加密token
+ * @param {string} token - 要加密的token
+ * @returns {string} - 加密后的token
+ */
+export const encryptToken = (token) => {
+    try {
+        const iv = crypto.randomBytes(16);
+        // 使用createCipheriv替代已弃用的createCipher
+        const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32)), iv);
+        let encrypted = cipher.update(token, 'utf8', 'hex');
+        encrypted += cipher.final('hex');
+        return iv.toString('hex') + ':' + encrypted;
+    } catch (error) {
+        console.error('Token加密失败:', error);
+        throw new Error('Token加密失败');
+    }
+};
+
+/**
+ * 解密token
+ * @param {string} encryptedToken - 加密的token
+ * @returns {string} - 解密后的token
+ */
+export const decryptToken = (encryptedToken) => {
+    try {
+        const parts = encryptedToken.split(':');
+        const iv = Buffer.from(parts[0], 'hex');
+        const encrypted = parts[1];
+        // 使用createDecipheriv替代已弃用的createDecipher
+        const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32)), iv);
+        let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return decrypted;
+    } catch (error) {
+        console.error('Token解密失败:', error);
+        throw new Error('Token解密失败');
+    }
+};

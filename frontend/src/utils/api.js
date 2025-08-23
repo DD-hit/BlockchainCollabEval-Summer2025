@@ -9,6 +9,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 60000,
+  withCredentials: true, // 允许发送cookies
 })
 
 // 请求拦截器 - 自动添加token
@@ -31,7 +32,14 @@ api.interceptors.response.use(
     return response
   },
   (error) => {
-    if (error.response?.status === 401) {
+    // 只在特定情况下自动跳转到登录页面
+    // 排除GitHub相关的API调用，让具体的组件来处理这些错误
+    const url = error && error.config && error.config.url ? error.config.url : ''
+    if (error && error.response && error.response.status === 401 &&
+        !url.includes('/api/auth/url') &&
+        !url.includes('/api/auth/status') &&
+        !url.includes('/api/github/') &&
+        !url.includes('/github/')) {
       sessionStorage.removeItem('token')
       sessionStorage.removeItem('username')
       sessionStorage.removeItem('address')
@@ -176,6 +184,40 @@ export const commentAPI = {
   create: (payload) => handleApi(api.post("/api/comments/create", payload)),
   listBySubtask: (subtaskId) => handleApi(api.get(`/api/comments/subtask/${subtaskId}`)),
   delete: (commentId) => handleApi(api.delete(`/api/comments/${commentId}`)),
+}
+
+// GitHub API - 使用专门的错误处理，避免触发自动登出
+const githubApiCall = async (apiCall) => {
+  try {
+    const response = await apiCall
+    return response
+  } catch (error) {
+    // GitHub API错误不触发自动登出，直接抛出错误让组件处理
+    throw error
+  }
+}
+
+export const githubAPI = {
+  getAuthUrl: () => api.get("/api/auth/url"),
+  getUserInfo: () => githubApiCall(api.get("/api/github/user")),
+  getUserRepos: (page = 1, per_page = 30) =>
+    githubApiCall(api.get(`/api/github/repos?page=${page}&per_page=${per_page}`)),
+  getRepoInfo: (owner, repo) =>
+    githubApiCall(api.get(`/api/github/repos/${owner}/${repo}`)),
+  getRepoStats: (owner, repo) =>
+    githubApiCall(api.get(`/api/github/repos/${owner}/${repo}/stats`)),
+  getRepoMilestones: (owner, repo, state = 'all') =>
+    githubApiCall(api.get(`/api/github/repos/${owner}/${repo}/milestones?state=${state}`)),
+  getRepoIssues: (owner, repo, state = 'all', page = 1) =>
+    githubApiCall(api.get(`/api/github/repos/${owner}/${repo}/issues?state=${state}&page=${page}`)),
+  getRepoContributors: (owner, repo) =>
+    githubApiCall(api.get(`/api/github/repos/${owner}/${repo}/contributors`)),
+  getRepoCommits: (owner, repo, page = 1) =>
+    githubApiCall(api.get(`/api/github/repos/${owner}/${repo}/commits?page=${page}`)),
+  getRepoPullRequests: (owner, repo, state = 'all', page = 1) =>
+    githubApiCall(api.get(`/api/github/repos/${owner}/${repo}/pulls?state=${state}&page=${page}`)),
+  getContributionScore: (owner, repo, username) =>
+    githubApiCall(api.get(`/api/github/repos/${owner}/${repo}/contribution/${username}`)),
 }
 
 export default api
