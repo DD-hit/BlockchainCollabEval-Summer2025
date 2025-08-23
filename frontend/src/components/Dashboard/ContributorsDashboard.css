@@ -64,11 +64,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.overall-chart-section h2 {
-  margin: 0 0 16px 0;
-  font-size: 20px;
-  color: #24292e;
-}
+.overall-chart-section h2 { display: none; }
 
 .chart-info {
   margin-bottom: 20px;
@@ -81,20 +77,11 @@
   flex-direction: column;
   gap: 8px;
   position: relative;
-  padding-bottom: 50px;
+  padding-bottom: 36px; /* 让横轴标题更靠近图形 */
 }
 
-.y-axis-title {
-  position: absolute;
-  left: -10px;
-  bottom: 0;
-  transform: rotate(-90deg);
-  transform-origin: bottom left;
-  font-size: 12px;
-  color: #586069;
-  white-space: nowrap;
-  z-index: 3;
-}
+/* 纵轴标题靠近轴线并与数值错开，避免被截断 */
+.y-axis-title { display: none; }
 
 .main-chart {
   height: 200px;
@@ -105,21 +92,16 @@
   justify-content: flex-end;
 }
 
-.x-axis-title {
-  text-align: center;
-  font-size: 12px;
-  color: #586069;
-  margin-top: 8px;
-  align-self: flex-end;
-}
+/* 横轴标题紧贴横轴网格底部，视觉更清晰 */
+.x-axis-title { display: none; }
 
 .y-axis {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
-  min-width: 40px;
-  padding-right: 8px;
+  min-width: 44px; /* 给纵轴标题与数值留空间 */
+  padding-right: 10px;
   border-right: 1px solid #e1e4e8;
   align-items: flex-end;
   flex-direction: column-reverse;
@@ -209,10 +191,10 @@
   font-size: 12px;
   color: #586069;
   text-align: center;
-  align-self: flex-end;
+  align-self: center;
   width: 100%;
   position: absolute;
-  bottom: -25px;
+  bottom: -18px; /* 更靠近横轴 */
   left: 0;
   right: 0;
 }
@@ -469,16 +451,19 @@
   }
   
   .y-axis-title {
-    left: -20px;
+    left: 0;
+    top: 2px;
     font-size: 11px;
   }
   
   .x-axis-title {
     font-size: 11px;
+    margin-top: 2px;
   }
   
   .bar-label {
     font-size: 10px;
+    bottom: -14px;
   }
   
   .contributor-chart {

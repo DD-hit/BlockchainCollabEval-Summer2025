@@ -397,7 +397,7 @@ const ContributorsDashboard = ({ contributors = [], commits = [] }) => {
       </div>
 
       <div className="overall-chart-section">
-        <h2>随着时间的推移而{getMetricLabel()}</h2>
+        {/* 标题移除按需显示：可在此处加面包屑或留白 */}
         <div className="chart-info">
           {weeklyData.length > 0 && (
             <span>
@@ -411,9 +411,6 @@ const ContributorsDashboard = ({ contributors = [], commits = [] }) => {
         </div>
         
         <div className="chart-wrapper">
-          <div className="y-axis-title">
-            {getMetricLabel()}
-          </div>
           <div className="main-chart">
             {/* Y轴标签 */}
             <div className="y-axis">
@@ -456,15 +453,12 @@ const ContributorsDashboard = ({ contributors = [], commits = [] }) => {
             </div>
           </div>
           
-          {/* X轴标题 */}
-          <div className="x-axis-title">
-            时间
-          </div>
+          {/* 横纵轴标题已移除 */}
         </div>
       </div>
 
       <div className="contributors-leaderboard">
-        <h2>贡献者排行榜</h2>
+        <h2>成员贡献</h2>
         <div className="contributors-grid">
           {contributors
             .sort((a, b) => {

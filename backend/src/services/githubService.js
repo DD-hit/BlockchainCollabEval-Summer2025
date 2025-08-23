@@ -105,7 +105,12 @@ class GitHubService {
                 sort: 'updated',
                 direction: 'desc'
             });
-            return { success: true, issues };
+            // GitHub 的 PR 也是 Issue 的一种（有 pull_request 字段）。
+            // 这里返回“纯 Issue”，需要剔除带 pull_request 字段的条目。
+            const pureIssues = Array.isArray(issues)
+                ? issues.filter((it) => !(it && it.pull_request))
+                : [];
+            return { success: true, issues: pureIssues };
         } catch (error) {
             console.error('获取Issues失败:', error);
             return { 

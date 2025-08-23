@@ -18,6 +18,9 @@ const RepoDetail = () => {
   const [commits, setCommits] = useState([]);
   const [currentPath, setCurrentPath] = useState('');
   const [filesLoading, setFilesLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const REFRESH_INTERVAL_MS = 60000;
 
   useEffect(() => {
     loadRepoInfo();
@@ -39,6 +42,15 @@ const RepoDetail = () => {
       loadFiles();
     }
   }, [currentPath]);
+
+  // 自动刷新：当位于“贡献者”标签页时，每60秒刷新一次数据
+  useEffect(() => {
+    if (activeTab !== 'contributors' || !repoInfo) return;
+    const intervalId = setInterval(() => {
+      Promise.all([loadContributors(), loadCommits()]).catch(() => {});
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [activeTab, repoInfo, owner, repo]);
 
   const loadRepoInfo = async () => {
     try {
@@ -188,6 +200,15 @@ const RepoDetail = () => {
     } catch (error) {
       console.error('加载提交记录失败:', error);
       setCommits([]);
+    }
+  };
+
+  const refreshContribAndCommits = async () => {
+    try {
+      setRefreshing(true);
+      await Promise.all([loadContributors(), loadCommits()]);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -468,6 +489,15 @@ const RepoDetail = () => {
 
         {activeTab === 'contributors' && (
           <div className="contributors-tab">
+            <div className="contributors-toolbar">
+              <button 
+                className={`refresh-btn ${refreshing ? 'is-loading' : ''}`}
+                onClick={refreshContribAndCommits} 
+                disabled={refreshing}
+              >
+                {refreshing ? '刷新中…' : '刷新'}
+              </button>
+            </div>
             <ContributorsDashboard 
               contributors={contributors}
               commits={commits}

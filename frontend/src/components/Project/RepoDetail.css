@@ -399,6 +399,42 @@
   padding: 20px 0;
 }
 
+.contributors-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.refresh-btn {
+  background: #0366d6;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  height: 32px;
+  line-height: 20px;
+  min-width: 72px;
+}
+
+.refresh-btn:hover {
+  background: #0256cc;
+}
+
+.refresh-btn:disabled,
+.refresh-btn.is-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 防止受全局 .loading 影响 */
+.contributors-tab .loading,
+.contributors-toolbar .loading {
+  height: auto;
+}
+
 .contributors-tab h3 {
   margin: 0 0 20px 0;
   font-size: 20px;
