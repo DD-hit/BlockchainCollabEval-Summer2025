@@ -30,12 +30,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000; // 改为5000端口
 
-const clientId = 'Ov23liUjilm3zxwbD1zH'
-const clientSecret = '59370b92957fa5290b22ef3046418eb4d8c57f0b'
+// GitHub OAuth 配置（优先读取环境变量，未设置时使用默认值）
+const clientId = process.env.GITHUB_CLIENT_ID || 'Ov23lijDYlWd2i55uOKv'
+const clientSecret = process.env.GITHUB_CLIENT_SECRET || '81cbc88f841232fb466f0d9074126a91aa63ef75'
 
 // CORS配置 - 允许前端开发环境访问
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://120.55.189.119:5000','http://127.0.0.1:5500','http://localhost:5500'],
+  origin: ['http://localhost:3000', 'http://120.55.189.119', 'http://120.55.189.119:5000','http://127.0.0.1:5500','http://localhost:5500'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -87,6 +88,28 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/github', githubRoutes);
 app.use('/api/contrib', contribRoutes);
 app.use('/api/github-contrib', githubContribRoutes);
+// 辅助：根据请求推断 API/前端的对外 Base URL（兼容反代与本地开发）
+const getScheme = (req) => (req.headers['x-forwarded-proto'] || req.protocol || 'http');
+const getHost = (req) => (req.headers['x-forwarded-host'] || req.headers['host']);
+const getApiBaseUrl = (req) => {
+    const scheme = getScheme(req);
+    const host = getHost(req);
+    return `${scheme}://${host}`;
+};
+const getFrontendBaseUrl = (req) => {
+    if (process.env.FRONTEND_BASE_URL) return process.env.FRONTEND_BASE_URL;
+    const scheme = getScheme(req);
+    const host = getHost(req) || '';
+    // 本地开发：API 通常是 localhost:5000，前端在 3000
+    if (/localhost:5000|127\.0\.0\.1:5000/.test(host)) {
+        return 'http://localhost:3000';
+    }
+    // 生产：与 API 相同域名（80/443 由反代处理）
+    // 去掉端口号（如果 Host 携带端口）
+    const hostname = host.split(':')[0];
+    return `${scheme}://${hostname}`;
+};
+
 // GitHub OAuth 路由
 app.get('/api/auth/url', (req, res) => {
     const state = Math.random().toString(36).substring(2, 15)
@@ -114,7 +137,10 @@ app.get('/api/auth/url', (req, res) => {
     // 将用户名编码到state中
     const stateData = { state, username };
     const encodedState = Buffer.from(JSON.stringify(stateData)).toString('base64');
-    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=http://localhost:5000/api/auth/callback&state=${encodedState}`;
+    const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const host = req.headers['x-forwarded-host'] || req.headers['host'];
+    const apiBase = `${scheme}://${host}`;
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(apiBase + '/api/auth/callback')}&state=${encodedState}`;
     
 
     res.json({ authUrl })
@@ -199,7 +225,7 @@ app.get('/api/auth/callback', async (req, res) => {
                 client_id: clientId,
                 client_secret: clientSecret,
                 code: code,
-                redirect_uri: 'http://localhost:5000/api/auth/callback'
+                redirect_uri: `${(req.headers['x-forwarded-proto'] || req.protocol || 'http')}://${(req.headers['x-forwarded-host'] || req.headers['host'])}/api/auth/callback`
             })
         });
         
@@ -221,7 +247,10 @@ app.get('/api/auth/callback', async (req, res) => {
             }
             
             if (!currentUser) {
-                return res.redirect('http://localhost:3000/login?error=请先登录系统');
+                const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+                const host = req.headers['x-forwarded-host'] || req.headers['host'];
+                const feBase = /localhost:5000|127\.0\.0\.1:5000/.test(host || '') ? 'http://localhost:3000' : `${scheme}://${(host || '').split(':')[0]}`;
+                return res.redirect(`${feBase}/login?error=请先登录系统`);
             }
             
             try {
@@ -242,26 +271,46 @@ app.get('/api/auth/callback', async (req, res) => {
                     console.error('获取GitHub身份失败（忽略，不影响绑定）:', e?.message || e);
                 }
                 
-                res.redirect('http://localhost:3000/dashboard?success=true&message=GitHub连接成功');
+                {
+                    const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+                    const host = req.headers['x-forwarded-host'] || req.headers['host'];
+                    const feBase = /localhost:5000|127\.0\.0\.1:5000/.test(host || '') ? 'http://localhost:3000' : `${scheme}://${(host || '').split(':')[0]}`;
+                    res.redirect(`${feBase}/dashboard?success=true&message=GitHub连接成功`);
+                }
             } catch (error) {
                 console.error('存储token失败:', error);
-                res.redirect('http://localhost:3000/dashboard?error=Token存储失败');
+                {
+                    const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+                    const host = req.headers['x-forwarded-host'] || req.headers['host'];
+                    const feBase = /localhost:5000|127\.0\.0\.1:5000/.test(host || '') ? 'http://localhost:3000' : `${scheme}://${(host || '').split(':')[0]}`;
+                    res.redirect(`${feBase}/dashboard?error=Token存储失败`);
+                }
             }
         } else {
-            res.redirect('http://localhost:3000/dashboard?error=GitHub授权失败');
+            {
+                const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+                const host = req.headers['x-forwarded-host'] || req.headers['host'];
+                const feBase = /localhost:5000|127\.0\.0\.1:5000/.test(host || '') ? 'http://localhost:3000' : `${scheme}://${(host || '').split(':')[0]}`;
+                res.redirect(`${feBase}/dashboard?error=GitHub授权失败`);
+            }
         }
     } catch (error) {
         console.error('GitHub OAuth错误:', error);
         
         // 提供更详细的错误信息
-        if (error.message && (error.message.includes('timeout') || error.message.includes('abort') || error.message.includes('ConnectTimeoutError'))) {
-            res.redirect('http://localhost:3000/dashboard?error=网络连接超时，请检查网络连接后重试');
-        } else if (error.message && error.message.includes('GitHub API响应错误')) {
-            res.redirect('http://localhost:3000/dashboard?error=GitHub服务暂时不可用，请稍后重试');
-        } else if (error.message && error.message.includes('fetch failed')) {
-            res.redirect('http://localhost:3000/dashboard?error=网络连接失败，请检查网络设置后重试');
-        } else {
-            res.redirect('http://localhost:3000/dashboard?error=GitHub连接失败，请稍后重试');
+        {
+            const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+            const host = req.headers['x-forwarded-host'] || req.headers['host'];
+            const feBase = /localhost:5000|127\.0\.0\.1:5000/.test(host || '') ? 'http://localhost:3000' : `${scheme}://${(host || '').split(':')[0]}`;
+            if (error.message && (error.message.includes('timeout') || error.message.includes('abort') || error.message.includes('ConnectTimeoutError'))) {
+                res.redirect(`${feBase}/dashboard?error=网络连接超时，请检查网络连接后重试`);
+            } else if (error.message && error.message.includes('GitHub API响应错误')) {
+                res.redirect(`${feBase}/dashboard?error=GitHub服务暂时不可用，请稍后重试`);
+            } else if (error.message && error.message.includes('fetch failed')) {
+                res.redirect(`${feBase}/dashboard?error=网络连接失败，请检查网络设置后重试`);
+            } else {
+                res.redirect(`${feBase}/dashboard?error=GitHub连接失败，请稍后重试`);
+            }
         }
     }
 })

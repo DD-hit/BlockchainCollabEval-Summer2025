@@ -71,13 +71,16 @@ export const loginAccount = async (req, res) => {
         // 设置session
         req.session.user = username.trim();
         
-        // 生成GitHub授权URL
-        const clientId = 'Ov23liUjilm3zxwbD1zH';
+        // 生成GitHub授权URL（兼容本地与服务器环境）
+        const clientId = process.env.GITHUB_CLIENT_ID || 'Ov23lijDYlWd2i55uOKv';
         const state = Math.random().toString(36).substring(2, 15);
         // 将用户名编码到state中
         const stateData = { state, username: username.trim() };
         const encodedState = Buffer.from(JSON.stringify(stateData)).toString('base64');
-        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=http://localhost:5000/api/auth/callback&state=${encodedState}`;
+        const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+        const host = req.headers['x-forwarded-host'] || req.headers['host'];
+        const base = `${scheme}://${host}`;
+        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(base + '/api/auth/callback')}&state=${encodedState}`;
         
         res.json({
             success: true,
