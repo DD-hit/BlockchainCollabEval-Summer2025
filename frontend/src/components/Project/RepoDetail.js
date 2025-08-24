@@ -27,8 +27,15 @@ const RepoDetail = () => {
   const [filesLoading, setFilesLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const REFRESH_INTERVAL_MS = 60000;
+  // 凭证输入模态框（地址 + 密码，密码为密文）
+  const [credOpen, setCredOpen] = useState(false);
+  const [credMode, setCredMode] = useState('start'); // 'start' | 'finalize'
+  const [credAddress, setCredAddress] = useState('');
+  const [credPassword, setCredPassword] = useState('');
+  const [credSubmitting, setCredSubmitting] = useState(false);
 
+  const REFRESH_INTERVAL_MS = 60000;
+  
   useEffect(() => {
     loadRepoInfo();
   }, [owner, repo]);
@@ -219,11 +226,10 @@ const RepoDetail = () => {
         console.log('Contributors数据:', response.data);
         setContributors(response.data || []);
       } else {
-        console.error('Contributors API错误状态:', response.status);
         setContributors([]);
       }
     } catch (error) {
-      console.error('加载贡献者失败:', error);
+      console.error('加载Contributors失败:', error);
       setContributors([]);
     }
   };
@@ -273,12 +279,10 @@ const RepoDetail = () => {
   // —— 贡献度：仓库主人触发计算 ——
   const isRepoAdmin = !!repoInfo?.permissions?.admin;
 
-  const handleStartContrib = async () => {
+  const handleStartContrib = async (adminAddress, adminPassword) => {
     try {
       if (!isRepoAdmin) return;
       const repoId = `${owner}/${repo}`;
-      const adminAddress = sessionStorage.getItem('address') || window.prompt('输入管理员地址');
-      const adminPassword = window.prompt('输入登录密码用于解密私钥');
       if (!adminAddress || !adminPassword) return;
       const res = await githubContribAPI.start({ repoId, adminAddress, adminPassword });
       if (!res.ok) {
@@ -306,11 +310,9 @@ const RepoDetail = () => {
     else alert(res.error?.message || '查询失败');
   };
 
-  const handleFinalize = async () => {
+  const handleFinalize = async (adminAddress, adminPassword) => {
     try {
       if (!contractAddress) return;
-      const adminAddress = sessionStorage.getItem('address') || window.prompt('输入管理员地址');
-      const adminPassword = window.prompt('输入登录密码用于解密私钥');
       if (!adminAddress || !adminPassword) return;
       const res = await githubContribAPI.finalize(contractAddress, { adminAddress, adminPassword, users: roundUsers });
       if (!res.ok) {
@@ -321,6 +323,31 @@ const RepoDetail = () => {
       setScores(res.data.scores || []);
     } catch (e) {
       alert(e?.message || '获取结果失败');
+    }
+  };
+
+  const openCredModal = (mode) => {
+    setCredMode(mode);
+    setCredAddress(sessionStorage.getItem('address') || '');
+    setCredPassword('');
+    setCredOpen(true);
+  };
+
+  const submitCred = async () => {
+    if (!credAddress || !credPassword) {
+      alert('请输入地址与密码');
+      return;
+    }
+    try {
+      setCredSubmitting(true);
+      if (credMode === 'start') {
+        await handleStartContrib(credAddress, credPassword);
+      } else {
+        await handleFinalize(credAddress, credPassword);
+      }
+      setCredOpen(false);
+    } finally {
+      setCredSubmitting(false);
     }
   };
 
@@ -611,7 +638,7 @@ const RepoDetail = () => {
               </button>
               {isRepoAdmin && (
                 <>
-                  <button className="refresh-btn" onClick={handleStartContrib}>计算贡献度（部署合约）</button>
+                  <button className="refresh-btn" onClick={() => openCredModal('start')}>计算贡献度（部署合约）</button>
                   {/* 需求：不显示灰色按钮，排行榜常驻，这两按钮移除 */}
                 </>
               )}
@@ -745,6 +772,71 @@ const RepoDetail = () => {
           </div>
         )}
       </div>
+
+      {/* 凭证输入模态框 */}
+      {credOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setCredOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '90%',
+              maxWidth: 400,
+              background: '#fff',
+              borderRadius: 8,
+              padding: 20,
+              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+              textAlign: 'center'
+            }}
+          >
+            <h2>{credMode === 'start' ? '部署合约' : '最终评分'}</h2>
+            <div style={{ marginBottom: 15 }}>
+              <label>管理员地址:</label>
+              <input
+                type="text"
+                value={credAddress}
+                onChange={(e) => setCredAddress(e.target.value)}
+                style={{ width: '100%', padding: '8px', marginTop: 5 }}
+              />
+            </div>
+            <div style={{ marginBottom: 15 }}>
+              <label>管理员密码 (密文):</label>
+              <input
+                type="password"
+                value={credPassword}
+                onChange={(e) => setCredPassword(e.target.value)}
+                style={{ width: '100%', padding: '8px', marginTop: 5 }}
+              />
+            </div>
+            <button
+              onClick={submitCred}
+              disabled={credSubmitting}
+              style={{
+                background: credSubmitting ? 'gray' : '#007bff',
+                color: '#fff',
+                padding: '10px 20px',
+                borderRadius: 5,
+                border: 'none',
+                cursor: credSubmitting ? 'not-allowed' : 'pointer',
+                fontSize: '16px'
+              }}
+            >
+              {credSubmitting ? '提交中...' : credMode === 'start' ? '部署合约' : '最终评分'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
