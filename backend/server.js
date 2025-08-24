@@ -436,6 +436,15 @@ const startServer = async () => {
                     AccountService.updateUserStatus(username, 0)
                         .catch((error) => console.error('心跳超时更新用户状态失败:', error))
                         .finally(() => {
+                            // 清空该用户的 GitHub token（保留 login/id/avatar）
+                            (async () => {
+                                try {
+                                    const { clearUserGitHubTokenOnly } = await import('./src/services/accountService.js');
+                                    await clearUserGitHubTokenOnly(username);
+                                } catch (e) {
+                                    console.error('心跳超时清理GitHub token失败:', e);
+                                }
+                            })();
                             userHeartbeats.delete(username);
                             userConnections.delete(username);
                         });
