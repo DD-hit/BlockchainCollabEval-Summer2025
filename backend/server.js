@@ -22,6 +22,9 @@ import { AccountService } from './src/services/accountService.js';
 import { encryptToken } from './src/utils/encryption.js';
 import { updateUserGitHubToken, updateUserGitHubIdentity } from './src/services/accountService.js';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+// 让 dotenv 始终从 backend 目录读取 .env（避免从仓库根目录启动时找不到）
+dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '.env') });
 
 // 获取当前文件的目录路径
 const __filename = fileURLToPath(import.meta.url);
@@ -140,7 +143,8 @@ app.get('/api/auth/url', (req, res) => {
     const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
     const host = req.headers['x-forwarded-host'] || req.headers['host'];
     const apiBase = `${scheme}://${host}`;
-    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(apiBase + '/api/auth/callback')}&state=${encodedState}`;
+    const scope = encodeURIComponent('repo read:org');
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(apiBase + '/api/auth/callback')}&state=${encodedState}&scope=${scope}`;
     
 
     res.json({ authUrl })

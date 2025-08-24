@@ -80,7 +80,8 @@ export const loginAccount = async (req, res) => {
         const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
         const host = req.headers['x-forwarded-host'] || req.headers['host'];
         const base = `${scheme}://${host}`;
-        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(base + '/api/auth/callback')}&state=${encodedState}`;
+        const scope = encodeURIComponent('repo read:org');
+        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(base + '/api/auth/callback')}&state=${encodedState}&scope=${scope}`;
         
         res.json({
             success: true,
