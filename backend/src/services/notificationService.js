@@ -61,7 +61,7 @@ export class NotificationService {
                 await pool.execute(
                     `INSERT INTO notifications (sender, receiver, type, subtaskId, fileId, content, isRead, createdTime)
                      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-                    [sender || 'system', receiver, 'github_contrib_round', 0, null, JSON.stringify(content), false]
+                    [sender || 'system', receiver, 'github_contrib_round', null, null, JSON.stringify(content), false]
                 );
                 affected++;
             }

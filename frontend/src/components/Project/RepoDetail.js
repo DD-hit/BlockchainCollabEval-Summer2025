@@ -33,6 +33,9 @@ const RepoDetail = () => {
   const [credAddress, setCredAddress] = useState('');
   const [credPassword, setCredPassword] = useState('');
   const [credSubmitting, setCredSubmitting] = useState(false);
+  // GitHub互评评分面板
+  const [peerOpen, setPeerOpen] = useState(false);
+  const [peerScores, setPeerScores] = useState({}); // {login: {base: number}}
 
   const REFRESH_INTERVAL_MS = 60000;
   
@@ -642,6 +645,8 @@ const RepoDetail = () => {
                   {/* 需求：不显示灰色按钮，排行榜常驻，这两按钮移除 */}
                 </>
               )}
+              {/* 独立的 GitHub 互评分按钮（与文件评分无关）*/}
+              <button className="refresh-btn" onClick={() => setPeerOpen(true)}>参与GitHub互评</button>
             </div>
             <ContributorsDashboard 
               contributors={contributors}
@@ -834,6 +839,64 @@ const RepoDetail = () => {
             >
               {credSubmitting ? '提交中...' : credMode === 'start' ? '部署合约' : '最终评分'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* GitHub 互评评分面板（独立于文件评分） */}
+      {peerOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setPeerOpen(false)}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '92%', maxWidth: 720, maxHeight: '80vh', overflow: 'auto', background: '#fff', borderRadius: 8, padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0 }}>GitHub互评</h2>
+              <button className="refresh-btn" onClick={() => setPeerOpen(false)}>关闭</button>
+            </div>
+            <p style={{ color: '#666', marginTop: 8 }}>本面板用于“GitHub贡献互评”，与文件评分独立。请为每位成员给出本轮的互评分（0-100）。</p>
+            <div>
+              {contributors.map((c) => (
+                <div key={c.login} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                  <img src={c.avatar_url} alt={c.login} style={{ width: 28, height: 28, borderRadius: '50%' }} />
+                  <div style={{ flex: 1 }}>{c.login}</div>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={peerScores[c.login]?.base ?? ''}
+                    onChange={(e) => setPeerScores((prev) => ({ ...prev, [c.login]: { base: Number(e.target.value) } }))}
+                    placeholder="0-100"
+                    style={{ width: 90, padding: 6 }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12, gap: 8 }}>
+              <button className="refresh-btn" onClick={() => setPeerScores({})}>清空</button>
+              <button
+                className="refresh-btn"
+                onClick={async () => {
+                  try {
+                    if (!contractAddress) {
+                      alert('尚未部署合约，无法提交互评');
+                      return;
+                    }
+                    // 互评评分结构简单上报，后端将按需要校验与合并
+                    const payload = { scores: peerScores };
+                    const res = await githubContribAPI.vote(contractAddress, payload);
+                    if (res.ok) {
+                      alert('提交成功');
+                      setPeerOpen(false);
+                    } else {
+                      alert(res.error?.message || '提交失败');
+                    }
+                  } catch (e) {
+                    alert(e?.message || '提交失败');
+                  }
+                }}
+              >提交互评</button>
+            </div>
           </div>
         </div>
       )}

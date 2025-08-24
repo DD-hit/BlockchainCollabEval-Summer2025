@@ -357,15 +357,59 @@ export const submitPeerVotesOnchain = async (req, res) => {
         const { contractAddress } = req.params;
         const voterAddress = req.body?.address;
         const password = req.body?.password;
-        const votes = Array.isArray(req.body?.votes) ? req.body.votes : [];
+        const votesBody = Array.isArray(req.body?.votes) ? req.body.votes : [];
+        const scoresBody = req.body?.scores && typeof req.body.scores === 'object' ? req.body.scores : null; // { login: { base: number } }
 
         if (!contractAddress || !password) {
             return res.status(400).json({ success: false, message: '缺少参数' });
         }
-        if (votes.length === 0) return res.status(400).json({ success: false, message: '缺少投票明细' });
+        if (!votesBody.length && !scoresBody) return res.status(400).json({ success: false, message: '缺少投票明细' });
 
-        const to = votes.map(v => v.targetAddress);
-        const pts = votes.map(v => Number(v.points));
+        let to = [];
+        let pts = [];
+
+        if (votesBody.length) {
+            to = votesBody.map(v => v.targetAddress);
+            pts = votesBody.map(v => Number(v.points));
+        } else if (scoresBody) {
+            // 将 {login: {base}} 转换为 {address, points}
+            // 先解析该合约对应的 roundId，以限定参与者范围
+            let rid = null;
+            const [ridRows] = await pool.execute(
+                `SELECT JSON_UNQUOTE(JSON_EXTRACT(details, '$.roundId')) AS rid
+                 FROM transactions WHERE type='contrib_round' AND contractAddress = ?
+                 ORDER BY id DESC LIMIT 1`,
+                [contractAddress]
+            );
+            if (ridRows.length > 0) {
+                const rv = ridRows[0].rid; rid = rv ? Number(rv) : null;
+            }
+            for (const rawLogin of Object.keys(scoresBody)) {
+                const login = String(rawLogin || '').toLowerCase();
+                const base = Number(scoresBody[rawLogin]?.base || 0);
+                if (!isFinite(base)) continue;
+                let addr = null;
+                if (rid) {
+                    const [rows] = await pool.execute(
+                        `SELECT u.address FROM contrib_base_scores b JOIN user u ON u.github_login = b.github_login
+                         WHERE b.round_id = ? AND LOWER(b.github_login) = ? LIMIT 1`,
+                        [rid, login]
+                    );
+                    if (rows && rows.length > 0) addr = rows[0].address;
+                }
+                if (!addr) {
+                    const [rows2] = await pool.execute(
+                        `SELECT address FROM user WHERE LOWER(github_login) = ? LIMIT 1`, [login]
+                    );
+                    if (rows2 && rows2.length > 0) addr = rows2[0].address;
+                }
+                if (addr) {
+                    to.push(addr);
+                    pts.push(Math.max(0, Math.min(100, Math.round(base))));
+                }
+            }
+            if (to.length === 0) return res.status(400).json({ success: false, message: '未找到有效的投票目标地址' });
+        }
 
         // 解密当前用户私钥
         const username = req.user?.username;
