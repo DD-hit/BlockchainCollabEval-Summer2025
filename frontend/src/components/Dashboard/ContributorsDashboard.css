@@ -1,3 +1,40 @@
+.contrib-leaderboard {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+.contrib-leaderboard h2 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+}
+.contrib-leaderboard .table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.contrib-leaderboard .table th,
+.contrib-leaderboard .table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+}
+.contrib-leaderboard .table thead th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+.contributors-toolbar .refresh-btn {
+  margin-right: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #10b981;
+  color: #fff;
+  cursor: pointer;
+}
+.contributors-toolbar .refresh-btn.is-loading {
+  opacity: 0.6;
+  cursor: default;
+}
 .contributors-dashboard {
   padding: 20px;
   background-color: #f6f8fa;

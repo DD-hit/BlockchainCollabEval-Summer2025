@@ -11,7 +11,7 @@
  Target Server Version : 80043 (8.0.43)
  File Encoding         : 65001
 
- Date: 22/08/2025 18:45:48
+ Date: 24/08/2025 12:21:10
 */
 
 SET NAMES utf8mb4;
@@ -28,7 +28,84 @@ CREATE TABLE `comments`  (
   `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '评论内容',
   `time` timestamp(6) NULL DEFAULT NULL COMMENT '评论时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for contrib_base_scores
+-- ----------------------------
+DROP TABLE IF EXISTS `contrib_base_scores`;
+CREATE TABLE `contrib_base_scores`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `round_id` bigint NOT NULL,
+  `username` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '本地账号（未绑定可为NULL）',
+  `github_login` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'GitHub 登录名',
+  `address` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `code_score` decimal(6, 2) NULL DEFAULT 0.00 COMMENT '0~100',
+  `pr_score` decimal(6, 2) NULL DEFAULT 0.00 COMMENT '0~100',
+  `review_score` decimal(6, 2) NULL DEFAULT 0.00 COMMENT '0~100',
+  `issue_score` decimal(6, 2) NULL DEFAULT 0.00 COMMENT '0~100',
+  `base_score` decimal(6, 2) NULL DEFAULT 0.00 COMMENT '0~100，已按权重合成并乘100',
+  `raw_json` json NULL COMMENT '用于解释的原始统计（行数/提交数/PR/Review/Issue等）',
+  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `unq_round_user`(`round_id` ASC, `github_login` ASC) USING BTREE,
+  INDEX `idx_round`(`round_id` ASC) USING BTREE,
+  INDEX `idx_user`(`username` ASC) USING BTREE,
+  INDEX `idx_base_github_login`(`github_login` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for contrib_final_scores
+-- ----------------------------
+DROP TABLE IF EXISTS `contrib_final_scores`;
+CREATE TABLE `contrib_final_scores`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `round_id` bigint NOT NULL,
+  `username` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `base_score` decimal(6, 2) NULL DEFAULT 0.00 COMMENT '0~100',
+  `peer_score` decimal(6, 2) NULL DEFAULT 0.00 COMMENT '0~100',
+  `final_score` decimal(6, 2) NULL DEFAULT 0.00 COMMENT 'Final=0.6*Base+0.4*Peer',
+  `rank` int NULL DEFAULT NULL,
+  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `unq_round_user`(`round_id` ASC, `username` ASC) USING BTREE,
+  INDEX `idx_round`(`round_id` ASC) USING BTREE,
+  INDEX `idx_user`(`username` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for contrib_peer_votes
+-- ----------------------------
+DROP TABLE IF EXISTS `contrib_peer_votes`;
+CREATE TABLE `contrib_peer_votes`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `round_id` bigint NOT NULL,
+  `reviewer` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `target` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `score` smallint NOT NULL COMMENT '0~100（或预算换算后的分数）',
+  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `unq_round_reviewer_target`(`round_id` ASC, `reviewer` ASC, `target` ASC) USING BTREE,
+  INDEX `idx_round`(`round_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for contrib_rounds
+-- ----------------------------
+DROP TABLE IF EXISTS `contrib_rounds`;
+CREATE TABLE `contrib_rounds`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `repoId` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'GitHub 仓库标识 owner/repo 或其哈希',
+  `initiator` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '发起人（本地用户名或GitHub login）',
+  `start_ts_ms` bigint NOT NULL COMMENT '起点毫秒时间戳 (startTs)',
+  `end_ts_ms` bigint NOT NULL COMMENT '终点毫秒时间戳 (endTs)',
+  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending' COMMENT 'pending/open/finalized/cancelled',
+  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `unq_repo_end`(`repoId` ASC, `end_ts_ms` ASC) USING BTREE,
+  INDEX `idx_repo_status`(`repoId` ASC, `status` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for files
@@ -48,7 +125,7 @@ CREATE TABLE `files`  (
   `originalName` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '原始文件名',
   `description` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '文件说明',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for milestones
@@ -63,7 +140,7 @@ CREATE TABLE `milestones`  (
   `startTime` timestamp(6) NOT NULL COMMENT '开始时间',
   `endTime` timestamp(6) NOT NULL COMMENT '结束时间',
   PRIMARY KEY (`milestoneId` DESC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 23 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 23 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for notifications
@@ -80,7 +157,7 @@ CREATE TABLE `notifications`  (
   `fileId` int NULL DEFAULT NULL,
   `content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
   PRIMARY KEY (`id` DESC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for project_members
@@ -93,7 +170,7 @@ CREATE TABLE `project_members`  (
   `role` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '组长/成员',
   `contributionPoint` double NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for projects
@@ -125,7 +202,7 @@ CREATE TABLE `subtasks`  (
   `description` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '任务描述',
   `priority` int NOT NULL COMMENT '优先级',
   PRIMARY KEY (`subtaskId`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 17 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 17 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for transactions
@@ -165,7 +242,11 @@ CREATE TABLE `user`  (
   `status` int NULL DEFAULT 0 COMMENT '在线为1/离线为0',
   `privateKey` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '私钥',
   `github_token` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
-  PRIMARY KEY (`username`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+  `github_login` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'GitHub 登录名',
+  `github_id` bigint NULL DEFAULT NULL COMMENT 'GitHub 用户ID',
+  `github_avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'GitHub 头像URL',
+  PRIMARY KEY (`username`) USING BTREE,
+  INDEX `idx_user_github_login`(`github_login` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -138,6 +138,79 @@
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 3px rgba(0, 212, 255, 0.1);
 }
 
+/* GitHub 绑定区域美化 */
+.github-binding {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.github-label {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.github-bound {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+}
+
+.github-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.github-login {
+  color: #0f172a;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.github-login:hover {
+  text-decoration: underline;
+}
+
+.github-unbind {
+  border: none;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.github-unbind:hover {
+  background: #fecaca;
+}
+
+.github-bind-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+}
+
+.github-bind-btn:hover {
+  transform: translateY(-1px);
+}
+
 .edit-btn {
   background: linear-gradient(135deg, #00d4ff 0%, #5b73ff 100%);
   color: white;

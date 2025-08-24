@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { projectAPI, milestoneAPI, subtaskAPI } from '../../utils/api';
 import { calculateProjectStatus, getStatusColor, getStatusText, convertStatusToEnglish } from '../../utils/overdueUtils';
@@ -11,6 +11,7 @@ const ProjectList = ({ user }) => {
   const [activeTab, setActiveTab] = useState('projects'); // 'projects' 或 'github'
   const navigate = useNavigate();
   const location = useLocation();
+  const showedCreateSuccessRef = useRef(false);
 
   // 获取当前用户信息
   const currentUser = user || {
@@ -29,8 +30,9 @@ const ProjectList = ({ user }) => {
     
     // 如果从创建页面跳转过来，显示成功消息
     if (location.state?.shouldRefresh) {
-      if (location.state.message) {
-        setTimeout(() => alert(location.state.message), 100);
+      if (location.state.message && !showedCreateSuccessRef.current) {
+        showedCreateSuccessRef.current = true;
+        setTimeout(() => alert(location.state.message), 50);
       }
       // 清除状态
       navigate('/projects', { replace: true });

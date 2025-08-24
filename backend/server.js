@@ -15,10 +15,12 @@ import scoreRoutes from './src/routes/scoreRoutes.js';
 import commentRoutes from './src/routes/commentRoutes.js';
 import transactionRoutes from './src/routes/transactionRoutes.js';
 import githubRoutes from './src/routes/githubRoutes.js';
+import githubContribRoutes from './src/routes/githubContribRoutes.js';
+import contribRoutes from './src/routes/contribRoutes.js';
 import { testConnection } from './config/database.js';
 import { AccountService } from './src/services/accountService.js';
 import { encryptToken } from './src/utils/encryption.js';
-import { updateUserGitHubToken } from './src/services/accountService.js';
+import { updateUserGitHubToken, updateUserGitHubIdentity } from './src/services/accountService.js';
 import jwt from 'jsonwebtoken';
 
 // 获取当前文件的目录路径
@@ -54,10 +56,11 @@ app.use(session({
     }
 }));
 
-// 设置请求超时时间（60秒）
+// 设置请求超时时间（默认5分钟，合约部署/多笔交易可能较慢）
 app.use((req, res, next) => {
-    req.setTimeout(60000);
-    res.setTimeout(60000);
+    const TIMEOUT_MS = parseInt(process.env.HTTP_TIMEOUT_MS || '300000', 10); // 5分钟
+    req.setTimeout(TIMEOUT_MS);
+    res.setTimeout(TIMEOUT_MS);
     next();
 });
 
@@ -82,6 +85,8 @@ app.use('/api/score', scoreRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/github', githubRoutes);
+app.use('/api/contrib', contribRoutes);
+app.use('/api/github-contrib', githubContribRoutes);
 // GitHub OAuth 路由
 app.get('/api/auth/url', (req, res) => {
     const state = Math.random().toString(36).substring(2, 15)
@@ -223,6 +228,19 @@ app.get('/api/auth/callback', async (req, res) => {
                 // 加密token并存储到数据库
                 const encryptedToken = await encryptToken(data.access_token);
                 await updateUserGitHubToken(currentUser, encryptedToken);
+                // 获取GitHub身份信息并保存
+                try {
+                    const { Octokit } = await import('octokit');
+                    const ok = new Octokit({ auth: data.access_token });
+                    const { data: ghUser } = await ok.rest.users.getAuthenticated();
+                    await updateUserGitHubIdentity(currentUser, {
+                        login: ghUser?.login || null,
+                        id: ghUser?.id || null,
+                        avatar: ghUser?.avatar_url || null
+                    });
+                } catch (e) {
+                    console.error('获取GitHub身份失败（忽略，不影响绑定）:', e?.message || e);
+                }
                 
                 res.redirect('http://localhost:3000/dashboard?success=true&message=GitHub连接成功');
             } catch (error) {

@@ -1,5 +1,50 @@
 // controllers/accountController.js - 项目的"接待员"
 import { AccountService } from '../services/accountService.js';
+import { pool } from '../../config/database.js';
+
+// 新增：获取当前用户的 GitHub 绑定信息
+export const getGithubBinding = async (req, res) => {
+    try {
+        const username = req.user?.username;
+        if (!username) {
+            return res.status(401).json({ success: false, message: '未登录' });
+        }
+        const [rows] = await pool.execute('SELECT github_login, github_id, github_avatar, github_token FROM user WHERE username = ?', [username]);
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: '用户不存在' });
+        }
+        const row = rows[0];
+        const bound = !!row.github_token && !!row.github_login;
+        res.json({
+            success: true,
+            data: {
+                bound,
+                github_login: row.github_login || null,
+                github_id: row.github_id || null,
+                github_avatar: row.github_avatar || null
+            }
+        });
+    } catch (error) {
+        console.error('获取GitHub绑定信息失败:', error);
+        res.status(500).json({ success: false, message: '获取GitHub绑定信息失败' });
+    }
+};
+
+// 新增：解绑 GitHub（清空 token 与身份）
+export const unbindGithub = async (req, res) => {
+    try {
+        const username = req.user?.username;
+        if (!username) {
+            return res.status(401).json({ success: false, message: '未登录' });
+        }
+        const { removeUserGitHubToken } = await import('../services/accountService.js');
+        await removeUserGitHubToken(username);
+        res.json({ success: true, message: '已解绑 GitHub' });
+    } catch (error) {
+        console.error('解绑GitHub失败:', error);
+        res.status(500).json({ success: false, message: '解绑失败' });
+    }
+};
 
 // 处理登录的请求
 export const loginAccount = async (req, res) => {

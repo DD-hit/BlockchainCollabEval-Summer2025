@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { githubAPI } from '../../utils/api';
+import { githubAPI, githubContribAPI } from '../../utils/api';
 import ContributorsDashboard from '../Dashboard/ContributorsDashboard';
 import './RepoDetail.css';
 
@@ -16,6 +16,13 @@ const RepoDetail = () => {
   const [milestones, setMilestones] = useState([]);
   const [contributors, setContributors] = useState([]);
   const [commits, setCommits] = useState([]);
+  const [contractAddress, setContractAddress] = useState('');
+  const [roundUsers, setRoundUsers] = useState([]);
+  const [progressInfo, setProgressInfo] = useState(null);
+  const [scores, setScores] = useState([]); // 最终贡献度排行榜
+  const [userRounds, setUserRounds] = useState([]);
+  const [roundsOpen, setRoundsOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState('');
   const [currentPath, setCurrentPath] = useState('');
   const [filesLoading, setFilesLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -26,12 +33,35 @@ const RepoDetail = () => {
     loadRepoInfo();
   }, [owner, repo]);
 
+  // 常驻排行榜：页面加载时即尝试拉取汇总排行榜（不依赖 repoInfo）
+  useEffect(() => {
+    const repoId = `${owner}/${repo}`;
+    githubContribAPI.leaderboardByRepo(repoId)
+      .then((res) => {
+        if (res.ok) {
+          setScores(res.data?.scores || []);
+          setContractAddress(res.data?.contractAddress || '');
+        }
+      })
+      .catch(() => {});
+  }, [owner, repo]);
+
   useEffect(() => {
     if (repoInfo) {
       if (activeTab === 'code') {
         loadFiles();
       } else {
         loadTabData();
+        if (activeTab === 'contributors') {
+          // 常驻排行榜：进入“贡献者”标签时自动拉取最新一轮排行榜
+          const repoId = `${owner}/${repo}`;
+          githubContribAPI.leaderboardByRepo(repoId).then((res) => {
+            if (res.ok) {
+              setScores(res.data?.scores || []);
+              setContractAddress(res.data?.contractAddress || '');
+            }
+          }).catch(() => {});
+        }
       }
     }
   }, [activeTab, repoInfo]);
@@ -43,11 +73,24 @@ const RepoDetail = () => {
     }
   }, [currentPath]);
 
-  // 自动刷新：当位于“贡献者”标签页时，每60秒刷新一次数据
+  // 自动刷新：当位于“贡献者”标签页时，每60秒刷新一次数据（含排行榜）
   useEffect(() => {
     if (activeTab !== 'contributors' || !repoInfo) return;
     const intervalId = setInterval(() => {
-      Promise.all([loadContributors(), loadCommits()]).catch(() => {});
+      const repoId = `${owner}/${repo}`;
+      Promise.all([
+        loadContributors(),
+        loadCommits(),
+        (async () => {
+          try {
+            const res = await githubContribAPI.leaderboardByRepo(repoId);
+            if (res.ok) {
+              setScores(res.data?.scores || []);
+              setContractAddress(res.data?.contractAddress || '');
+            }
+          } catch (_) {}
+        })()
+      ]).catch(() => {});
     }, REFRESH_INTERVAL_MS);
     return () => clearInterval(intervalId);
   }, [activeTab, repoInfo, owner, repo]);
@@ -206,9 +249,78 @@ const RepoDetail = () => {
   const refreshContribAndCommits = async () => {
     try {
       setRefreshing(true);
-      await Promise.all([loadContributors(), loadCommits()]);
+      const repoId = `${owner}/${repo}`;
+      await Promise.all([
+        loadContributors(),
+        loadCommits(),
+        (async () => {
+          try {
+            const res = await githubContribAPI.leaderboardByRepo(repoId);
+            if (res.ok) {
+              setScores(res.data?.scores || []);
+              setContractAddress(res.data?.contractAddress || '');
+            }
+          } catch (e) {
+            // 静默失败，避免打断用户刷新
+          }
+        })()
+      ]);
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  // —— 贡献度：仓库主人触发计算 ——
+  const isRepoAdmin = !!repoInfo?.permissions?.admin;
+
+  const handleStartContrib = async () => {
+    try {
+      if (!isRepoAdmin) return;
+      const repoId = `${owner}/${repo}`;
+      const adminAddress = sessionStorage.getItem('address') || window.prompt('输入管理员地址');
+      const adminPassword = window.prompt('输入登录密码用于解密私钥');
+      if (!adminAddress || !adminPassword) return;
+      const res = await githubContribAPI.start({ repoId, adminAddress, adminPassword });
+      if (!res.ok) {
+        alert(res.error?.message || '启动失败');
+        return;
+      }
+      setContractAddress(res.data.contractAddress || '');
+      setRoundUsers(res.data.users || []);
+      if (Array.isArray(res.data.scores) && res.data.scores.length > 0) {
+        setScores(res.data.scores);
+        setProgressInfo({ total: res.data.users?.length || 1, voted: res.data.users?.length || 1, finalized: true });
+        alert('成员不足2人，已直接按基础分计算并显示排行榜');
+      } else {
+        alert('已部署合约并通知成员评分');
+      }
+    } catch (e) {
+      alert(e?.message || '启动失败');
+    }
+  };
+
+  const handleCheckProgress = async () => {
+    if (!contractAddress) return;
+    const res = await githubContribAPI.progress(contractAddress);
+    if (res.ok) setProgressInfo(res.data);
+    else alert(res.error?.message || '查询失败');
+  };
+
+  const handleFinalize = async () => {
+    try {
+      if (!contractAddress) return;
+      const adminAddress = sessionStorage.getItem('address') || window.prompt('输入管理员地址');
+      const adminPassword = window.prompt('输入登录密码用于解密私钥');
+      if (!adminAddress || !adminPassword) return;
+      const res = await githubContribAPI.finalize(contractAddress, { adminAddress, adminPassword, users: roundUsers });
+      if (!res.ok) {
+        alert(res.error?.message || '尚未全部评分或失败');
+        return;
+      }
+      setProgressInfo(res.data.progress);
+      setScores(res.data.scores || []);
+    } catch (e) {
+      alert(e?.message || '获取结果失败');
     }
   };
 
@@ -497,11 +609,112 @@ const RepoDetail = () => {
               >
                 {refreshing ? '刷新中…' : '刷新'}
               </button>
+              {isRepoAdmin && (
+                <>
+                  <button className="refresh-btn" onClick={handleStartContrib}>计算贡献度（部署合约）</button>
+                  {/* 需求：不显示灰色按钮，排行榜常驻，这两按钮移除 */}
+                </>
+              )}
             </div>
             <ContributorsDashboard 
               contributors={contributors}
               commits={commits}
+              contribScores={scores}
+              onShowUserRounds={async (username, address) => {
+                try {
+                  const repoId = `${owner}/${repo}`;
+                  const paramsUsername = username || undefined;
+                  const res = await githubContribAPI.userRounds(repoId, paramsUsername, address);
+                  if (res.ok) {
+                    setUserRounds(res.data || []);
+                    setSelectedUser(paramsUsername || address || '');
+                    setRoundsOpen(true);
+                  } else {
+                    alert(res.error?.message || '获取分数详情失败');
+                  }
+                } catch (e) {
+                  alert(e?.message || '请求失败');
+                }
+              }}
+              onDetailsClick={() => {
+                if (!userRounds || userRounds.length === 0) {
+                  alert('请先在排行榜中点击一个地址以加载详情');
+                  return;
+                }
+                setRoundsOpen(true);
+              }}
             />
+
+            {roundsOpen && (
+              <div
+                onClick={() => setRoundsOpen(false)}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: 'rgba(0,0,0,0.35)',
+                  zIndex: 1000,
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                  paddingTop: '18vh'
+                }}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    width: '90%',
+                    maxWidth: 900,
+                    background: '#fff',
+                    borderRadius: 8,
+                    padding: 16,
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                    maxHeight: '80vh',
+                    overflow: 'auto'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2 style={{ margin: 0 }}>分数详情 {selectedUser ? `（${selectedUser}）` : ''}</h2>
+                    <button className="refresh-btn" onClick={() => setRoundsOpen(false)}>关闭</button>
+                  </div>
+                  <div className="contrib-leaderboard" style={{ marginTop: 12 }}>
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>轮次</th>
+                          <th>开始</th>
+                          <th>结束</th>
+                          <th>基础分</th>
+                          <th>互评分</th>
+                          <th>最终分</th>
+                          <th>Code</th>
+                          <th>PR</th>
+                          <th>Review</th>
+                          <th>Issue</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {userRounds.map((r, idx) => (
+                          <tr key={idx}>
+                            <td>{r.roundId}</td>
+                            <td>{r.start_at ? new Date(r.start_at).toLocaleString() : '-'}</td>
+                            <td>{r.end_at ? new Date(r.end_at).toLocaleString() : '-'}</td>
+                            <td>{Number(r.base_score) || 0}</td>
+                            <td>{Number(r.peer_score) || 0}</td>
+                            <td>{Number(r.final_score) || 0}</td>
+                            <td>{Number(r.code_score) || 0}</td>
+                            <td>{Number(r.pr_score) || 0}</td>
+                            <td>{Number(r.review_score) || 0}</td>
+                            <td>{Number(r.issue_score) || 0}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 排行榜移入 ContributorsDashboard 内部渲染 */}
           </div>
         )}
 

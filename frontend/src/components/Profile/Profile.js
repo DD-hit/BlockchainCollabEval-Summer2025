@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api, { projectAPI, subtaskAPI } from '../../utils/api';
+import api, { projectAPI, subtaskAPI, githubAPI } from '../../utils/api';
 import { accountAPI } from '../../utils/api';
 import './Profile.css';
 
@@ -57,6 +57,7 @@ const validatePasswordStrength = (password) => {
 
 const Profile = ({ user }) => {
   const [userInfo, setUserInfo] = useState(user);
+  const [ghBinding, setGhBinding] = useState({ bound: false });
   const [editing, setEditing] = useState(false);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [privateKeyData, setPrivateKeyData] = useState(null);
@@ -149,6 +150,41 @@ const Profile = ({ user }) => {
     });
   };
 
+  useEffect(() => {
+    const fetchBinding = async () => {
+      const res = await accountAPI.getGithubBinding();
+      if (res.ok) setGhBinding(res.data);
+    };
+    fetchBinding();
+  }, []);
+
+  const handleUnbind = async () => {
+    const ok = window.confirm('确定要解绑 GitHub 吗？');
+    if (!ok) return;
+    const res = await accountAPI.unbindGithub();
+    if (res.ok) {
+      alert('已解绑 GitHub');
+      setGhBinding({ bound: false });
+    } else {
+      alert(res.error?.message || '解绑失败');
+    }
+  };
+
+  const handleConnectGithub = async () => {
+    try {
+      const resp = await githubAPI.getAuthUrl();
+      const authUrl = resp?.data?.authUrl;
+      if (authUrl) {
+        window.location.href = authUrl;
+      } else {
+        alert('获取GitHub授权地址失败');
+      }
+    } catch (e) {
+      console.error('获取GitHub授权地址失败:', e);
+      alert('获取GitHub授权地址失败，请稍后重试');
+    }
+  };
+
   return (
     <div className="profile">
       <div className="profile-header">
@@ -168,6 +204,20 @@ const Profile = ({ user }) => {
               <div className="user-address-container">
                 <span className="address-label">区块链地址:</span>
                 <span className="user-address">{userInfo.address}</span>
+              </div>
+              <div className="github-binding">
+                <span className="github-label">GitHub 绑定：</span>
+                {ghBinding.bound ? (
+                  <div className="github-bound">
+                    {ghBinding.github_avatar && (
+                      <img className="github-avatar" src={ghBinding.github_avatar} alt={ghBinding.github_login} />
+                    )}
+                    <a className="github-login" href={`https://github.com/${ghBinding.github_login}`} target="_blank" rel="noreferrer">@{ghBinding.github_login}</a>
+                    <button className="github-unbind" onClick={handleUnbind}>解绑</button>
+                  </div>
+                ) : (
+                  <button type="button" className="github-bind-btn" onClick={handleConnectGithub}>🐙 绑定 GitHub</button>
+                )}
               </div>
             </div>
           </div>

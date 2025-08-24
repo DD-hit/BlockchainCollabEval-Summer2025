@@ -1,6 +1,6 @@
 // routes/accountRoutes.js - 项目的"交通指挥员"
 import express from 'express';
-import { loginAccount, createAccount, getBalance, updateProfile, logout, getPrivateKey } from '../controllers/accountController.js';
+import { loginAccount, createAccount, getBalance, updateProfile, logout, getPrivateKey, getGithubBinding, unbindGithub } from '../controllers/accountController.js';
 import { verifyToken } from '../middleware/verifyToken.js';
 const router = express.Router();
 
@@ -11,5 +11,7 @@ router.get('/getBalance', verifyToken, getBalance);           // GET /api/accoun
 router.put('/updateProfile', verifyToken, updateProfile);     // PUT /api/accounts/updateProfile (需要token)
 router.post('/logout', logout);     // POST /api/accounts/logout (支持带token和不带token两种方式)
 router.post('/getPrivateKey', verifyToken, getPrivateKey); // 新增获取私钥接口
+router.get('/github/binding', verifyToken, getGithubBinding); // 查询GitHub绑定信息
+router.post('/github/unbind', verifyToken, unbindGithub); // 解绑GitHub
 
 export default router;

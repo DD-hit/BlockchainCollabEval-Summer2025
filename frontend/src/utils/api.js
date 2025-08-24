@@ -74,6 +74,8 @@ export const accountAPI = {
   getBalance: () => handleApi(api.get("/api/accounts/getBalance")),
   updateProfile: (payload) => handleApi(api.put("/api/accounts/updateProfile", payload)),
   logout: (username) => handleApi(api.post("/api/accounts/logout", { username })),
+  getGithubBinding: () => handleApi(api.get("/api/accounts/github/binding")),
+  unbindGithub: () => handleApi(api.post("/api/accounts/github/unbind")),
 }
 
 // 项目管理API
@@ -218,6 +220,17 @@ export const githubAPI = {
     githubApiCall(api.get(`/api/github/repos/${owner}/${repo}/pulls?state=${state}&page=${page}`)),
   getContributionScore: (owner, repo, username) =>
     githubApiCall(api.get(`/api/github/repos/${owner}/${repo}/contribution/${username}`)),
+}
+
+// GitHub 贡献度（新合约）API
+export const githubContribAPI = {
+  start: (payload) => handleApi(api.post('/api/github-contrib/start', payload)),
+  // vote 时仅传 password，后端解密当前用户私钥；可选 address 覆盖
+  vote: (contractAddress, payload) => handleApi(api.post(`/api/github-contrib/${contractAddress}/vote`, payload)),
+  finalize: (contractAddress, payload) => handleApi(api.post(`/api/github-contrib/${contractAddress}/finalize`, payload)),
+  progress: (contractAddress) => handleApi(api.get(`/api/github-contrib/${contractAddress}/progress`)),
+  leaderboardByRepo: (repoId) => handleApi(api.get(`/api/github-contrib/leaderboard/by-repo`, { params: { repoId } })),
+  userRounds: (repoId, username, address) => handleApi(api.get(`/api/github-contrib/user-rounds`, { params: { repoId, username, address } })),
 }
 
 export default api

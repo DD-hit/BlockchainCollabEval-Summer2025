@@ -123,7 +123,7 @@ class GitHubService {
         }
     }
 
-    // 获取仓库的Contributors
+    // 获取仓库的Contributors（并集：提交者 ∪ 协作者 ∪ PR作者 ∪ Issue作者）
     async getRepoContributors(owner, repo) {
         try {
             const { data: contributors } = await this.octokit.rest.repos.listContributors({
@@ -176,7 +176,56 @@ class GitHubService {
                 return { ...c, additions: extra.additions, deletions: extra.deletions, weekly: extra.weeks };
             });
 
-            return { success: true, contributors: enriched };
+            // 追加：协作者、PR作者、Issue作者（去重并补齐）
+            const loginToContributor = new Map(enriched.map((c) => [c.login, c]));
+
+            const safeFetch = async (fn, fallback = []) => {
+                try {
+                    const resp = await fn();
+                    return Array.isArray(resp?.data) ? resp.data : fallback;
+                } catch (e) {
+                    // 权限不足或API限制等错误忽略，尽量返回已有数据
+                    return fallback;
+                }
+            };
+
+            const [collaborators, pulls, issues] = await Promise.all([
+                safeFetch(() => this.octokit.rest.repos.listCollaborators({ owner, repo, per_page: 100 })),
+                safeFetch(() => this.octokit.rest.pulls.list({ owner, repo, state: 'all', per_page: 100 })),
+                safeFetch(() => this.octokit.rest.issues.listForRepo({ owner, repo, state: 'all', per_page: 100 }))
+            ]);
+
+            const candidateUsers = [];
+            if (Array.isArray(collaborators)) {
+                collaborators.forEach((u) => u && candidateUsers.push(u));
+            }
+            if (Array.isArray(pulls)) {
+                pulls.forEach((pr) => pr?.user && candidateUsers.push(pr.user));
+            }
+            if (Array.isArray(issues)) {
+                issues
+                    .filter((it) => !(it && it.pull_request)) // 仅纯 Issue，避免与 PR 重复
+                    .forEach((it) => it?.user && candidateUsers.push(it.user));
+            }
+
+            for (const u of candidateUsers) {
+                const login = u?.login;
+                if (!login || loginToContributor.has(login)) continue;
+                // 为非提交者补齐一个条目，计数为0
+                loginToContributor.set(login, {
+                    login,
+                    id: u.id,
+                    avatar_url: u.avatar_url,
+                    html_url: u.html_url,
+                    contributions: 0,
+                    additions: 0,
+                    deletions: 0,
+                    weekly: []
+                });
+            }
+
+            const merged = Array.from(loginToContributor.values());
+            return { success: true, contributors: merged };
         } catch (error) {
             console.error('获取Contributors失败:', error);
             return { 

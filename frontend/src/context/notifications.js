@@ -84,6 +84,40 @@ export function NotificationsProvider({ children, connectSocket = true }) {
                 type = 'subtask_status';
                 link = `/subtask/${notification.subtaskId}`;
               }
+            } else if (notification.type === 'contrib_round') {
+              // 旧评分合约的评分通知
+              try {
+                const content = JSON.parse(notification.content || '{}')
+                title = '评分邀请（旧）'
+                message = content.message || '请前往旧评分页面打分'
+                type = 'score_legacy'
+                link = '/dashboard' // 旧评分入口
+              } catch {
+                title = '评分邀请（旧）'
+                message = '请前往旧评分页面打分'
+                type = 'score_legacy'
+                link = '/dashboard'
+              }
+            } else if (notification.type === 'github_contrib_round') {
+              // 新 GitHub 贡献互评通知
+              try {
+                const content = JSON.parse(notification.content || '{}')
+                title = 'GitHub 贡献互评邀请'
+                message = content.message || '请在仓库“贡献者”页进行互评打分'
+                type = 'github_contrib_round'
+                // 定位到对应仓库的贡献者页
+                if (content.repoId) {
+                  const [owner, repo] = String(content.repoId).split('/')
+                  link = `/repo/${owner}/${repo}`
+                } else {
+                  link = '/projects'
+                }
+              } catch {
+                title = 'GitHub 贡献互评邀请'
+                message = '请在仓库“贡献者”页进行互评打分'
+                type = 'github_contrib_round'
+                link = '/projects'
+              }
             } else {
               title = '通知';
               message = `您有来自 ${notification.sender} 的通知`;

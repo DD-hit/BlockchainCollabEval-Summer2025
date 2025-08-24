@@ -301,6 +301,27 @@ export const updateUserGitHubToken = async (username, encryptedToken) => {
 };
 
 /**
+ * 更新用户的GitHub身份信息（login/id/avatar）
+ * @param {string} username
+ * @param {{login:string,id:number,avatar:string}} identity
+ */
+export const updateUserGitHubIdentity = async (username, identity) => {
+    try {
+        const query = 'UPDATE user SET github_login = ?, github_id = ?, github_avatar = ? WHERE username = ?';
+        const params = [identity?.login || null, identity?.id || null, identity?.avatar || null, username];
+        const [result] = await pool.execute(query, params);
+        if (result.affectedRows === 0) {
+            throw new Error('用户不存在');
+        }
+        console.log(`用户 ${username} 的GitHub身份已更新: ${identity?.login}`);
+        return true;
+    } catch (error) {
+        console.error('更新GitHub身份失败:', error);
+        throw error;
+    }
+};
+
+/**
  * 获取用户的GitHub token
  * @param {string} username - 用户名
  * @returns {string|null} - 解密后的GitHub token或null
@@ -334,7 +355,7 @@ export const getUserGitHubToken = async (username) => {
  */
 export const removeUserGitHubToken = async (username) => {
     try {
-        const query = 'UPDATE user SET github_token = NULL WHERE username = ?';
+        const query = 'UPDATE user SET github_token = NULL, github_login = NULL, github_id = NULL, github_avatar = NULL WHERE username = ?';
         const [result] = await pool.execute(query, [username]);
         
         if (result.affectedRows === 0) {

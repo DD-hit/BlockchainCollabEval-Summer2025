@@ -12,6 +12,64 @@ export class NotificationService {
         return result;
     }
 
+    // 贡献度：根据 round_id 将通知发送给“已绑定本地账号”的参与者
+    static async addContribRoundNotifications(roundId, sender, message = '请参与本轮贡献度评分') {
+        try {
+            // 参与者集合：从基础分表拿 github_login，映射到 user.username（已绑定者）
+            const [rows] = await pool.execute(
+                `SELECT u.username
+                 FROM contrib_base_scores b
+                 JOIN user u ON u.github_login = b.github_login
+                 WHERE b.round_id = ?`,
+                [roundId]
+            );
+
+            if (!rows || rows.length === 0) return { affected: 0 };
+
+            let affected = 0;
+            for (const r of rows) {
+                const receiver = r.username;
+                await pool.execute(
+                    `INSERT INTO notifications (sender, receiver, type, subtaskId, fileId, content, isRead, createdTime)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+                    [sender || 'system', receiver, 'contrib_round', 0, null, JSON.stringify({ roundId, message }), false]
+                );
+                affected++;
+            }
+            return { affected };
+        } catch (error) {
+            throw new Error(`添加贡献度轮次通知失败: ${error.message}`);
+        }
+    }
+
+    // GitHub贡献（新合约）：发送互评邀请通知，区分于旧评分逻辑
+    static async addGitHubContribRoundNotifications(roundId, repoId, contractAddress, sender, message = '请参与本轮GitHub贡献互评') {
+        try {
+            const [rows] = await pool.execute(
+                `SELECT u.username
+                 FROM contrib_base_scores b
+                 JOIN user u ON u.github_login = b.github_login
+                 WHERE b.round_id = ?`,
+                [roundId]
+            );
+            if (!rows || rows.length === 0) return { affected: 0 };
+
+            let affected = 0;
+            for (const r of rows) {
+                const receiver = r.username;
+                const content = { roundId, repoId, contractAddress, message };
+                await pool.execute(
+                    `INSERT INTO notifications (sender, receiver, type, subtaskId, fileId, content, isRead, createdTime)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+                    [sender || 'system', receiver, 'github_contrib_round', 0, null, JSON.stringify(content), false]
+                );
+                affected++;
+            }
+            return { affected };
+        } catch (error) {
+            throw new Error(`添加GitHub贡献互评通知失败: ${error.message}`);
+        }
+    }
     static async addFileNotification(sender, receiver, subtaskId, fileId) {
         try {
             const [fileInfo] = await pool.execute(

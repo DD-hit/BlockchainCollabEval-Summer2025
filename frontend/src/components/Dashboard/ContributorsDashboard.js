@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './ContributorsDashboard.css';
 
-const ContributorsDashboard = ({ contributors = [], commits = [] }) => {
+const ContributorsDashboard = ({ contributors = [], commits = [], contribScores = [], onShowUserRounds }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState('all');
@@ -355,9 +355,7 @@ const ContributorsDashboard = ({ contributors = [], commits = [] }) => {
     return maxValue > 0 ? maxValue : 1;
   };
 
-  if (contributors.length === 0) {
-    return <div className="contributors-loading">加载贡献者数据...</div>;
-  }
+  // 即使 contributors 为空，也要让排行榜渲染（常驻）。
 
   if (error) {
     return <div className="contributors-error">{error}</div>;
@@ -395,6 +393,47 @@ const ContributorsDashboard = ({ contributors = [], commits = [] }) => {
           </div>
         </div>
       </div>
+
+      {/* 贡献度排行榜（0-100） */}
+      {contribScores && contribScores.length > 0 && (
+        <div className="contrib-leaderboard" style={{ marginTop: 16 }}>
+          <h2>贡献度排行榜</h2>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>用户</th>
+                <th>地址</th>
+                <th>贡献点</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contribScores
+                .slice()
+                .sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0))
+                .map((s, idx) => (
+                  <tr key={s.address || idx}>
+                    <td>{idx + 1}</td>
+                    <td>{s.github_login || s.username || '-'}</td>
+                    <td title={s.address}>
+                      {s.address ? `${s.address.slice(0, 6)}...${s.address.slice(-4)}` : (s.username || '-')}
+                    </td>
+                    <td>{Number.isFinite(s.finalScore) ? Math.round(s.finalScore) : '-'}</td>
+                    <td>
+                      {(s.username || s.address) && (
+                        <button
+                          className="refresh-btn"
+                          onClick={() => onShowUserRounds && onShowUserRounds(s.username || null, s.address || null)}
+                        >贡献详情</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="overall-chart-section">
         {/* 标题移除按需显示：可在此处加面包屑或留白 */}
