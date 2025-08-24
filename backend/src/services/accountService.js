@@ -369,3 +369,21 @@ export const removeUserGitHubToken = async (username) => {
         throw error;
     }
 };
+
+/**
+ * 仅清空 GitHub token（登出/超时时使用），保留 login、id、avatar
+ */
+export const clearUserGitHubTokenOnly = async (username) => {
+    try {
+        const query = 'UPDATE user SET github_token = NULL WHERE username = ?';
+        const [result] = await pool.execute(query, [username]);
+        if (result.affectedRows === 0) {
+            throw new Error('用户不存在');
+        }
+        console.log(`用户 ${username} 的GitHub token已清空（保留login/id/avatar）`);
+        return true;
+    } catch (error) {
+        console.error('清空GitHub token失败:', error);
+        throw error;
+    }
+};
