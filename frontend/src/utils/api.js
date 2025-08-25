@@ -224,10 +224,14 @@ export const githubAPI = {
 
 // GitHub 贡献度（新合约）API
 export const githubContribAPI = {
-  start: (payload) => handleApi(api.post('/api/github-contrib/start', payload)),
+  start: (payload) => handleApi(
+    api.post('/api/github-contrib/start', payload, { timeout: 180000 })
+  ),
   // vote 时仅传 password，后端解密当前用户私钥；可选 address 覆盖
   vote: (contractAddress, payload) => handleApi(api.post(`/api/github-contrib/${contractAddress}/vote`, payload)),
-  finalize: (contractAddress, payload) => handleApi(api.post(`/api/github-contrib/${contractAddress}/finalize`, payload)),
+  finalize: (contractAddress, payload) => handleApi(
+    api.post(`/api/github-contrib/${contractAddress}/finalize`, payload, { timeout: 180000 })
+  ),
   progress: (contractAddress) => handleApi(api.get(`/api/github-contrib/${contractAddress}/progress`)),
   leaderboardByRepo: (repoId) => handleApi(api.get(`/api/github-contrib/leaderboard/by-repo`, { params: { repoId } })),
   userRounds: (repoId, username, address) => handleApi(api.get(`/api/github-contrib/user-rounds`, { params: { repoId, username, address } })),
