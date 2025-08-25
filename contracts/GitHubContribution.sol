@@ -149,14 +149,15 @@ contract GitHubContribution {
         require(baseNormSum > 0, "baseNorm not set");
         require(!hasVoted[msg.sender], "already voted");
         require(to.length == pts.length, "len mismatch");
-        uint256 minTargets = totalRaters >= 3 ? 2 : 1;
+        // 允许至少投 1 个目标（即使总人数>=3），降低投票门槛
+        uint256 minTargets = 1;
         require(to.length >= minTargets, "too few targets");
 
         uint256 sum = 0;
         for (uint256 i = 0; i < to.length; i++) {
             require(isTarget[to[i]], "not target");
-            require(to[i] != msg.sender, "self vote");
-            uint256 singleLimit = totalRaters >= 3 ? 50 : 100;
+            // 允许单目标最高 100 分（即使总人数>=3），由前端预算100约束
+            uint256 singleLimit = 100;
             require(pts[i] <= singleLimit, "single>limit");
 
             // 防重复（O(n^2) 足够小规模使用）
@@ -169,7 +170,7 @@ contract GitHubContribution {
 
         // 计算评审者权重 w_r = BaseNorm_r / ΣBaseNorm（WAD 精度）
         uint256 wrWad = baseNorm[msg.sender] * WAD / baseNormSum;
-        require(wrWad > 0, "weight=0");
+        // 权重为0时本次投票对结果无影响，但不再阻止提交
 
         // 累计 PeerRaw
         for (uint256 k = 0; k < to.length; k++) {
@@ -185,7 +186,7 @@ contract GitHubContribution {
     }
 
     // MinMax 归一化到 [0,100]
-    function finalize() public onlyAdmin {
+    function finalize() public {
         require(!finalized, "already finalized");
         require(votedCount == totalRaters && totalRaters > 0, "not all voted");
         require(targets.length > 0, "no targets");

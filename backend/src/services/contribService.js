@@ -29,11 +29,12 @@ export class ContribService {
             const username = userRows.length > 0 ? userRows[0].username : null;
             const address = userRows.length > 0 ? userRows[0].address : null;
 
-            const codeScore = it.code_score ?? 0;
-            const prScore = it.pr_score ?? 0;
-            const reviewScore = it.review_score ?? 0;
-            const issueScore = it.issue_score ?? 0;
-            const baseScore = it.base_score ?? 0;
+            // 兼容两种字段命名：controller 侧可能传 code/pr/review/issue/base
+            const codeScore = (it.code_score ?? it.code) ?? 0;
+            const prScore = (it.pr_score ?? it.pr) ?? 0;
+            const reviewScore = (it.review_score ?? it.review) ?? 0;
+            const issueScore = (it.issue_score ?? it.issue) ?? 0;
+            const baseScore = (it.base_score ?? it.base) ?? 0;
             const rawJson = JSON.stringify(it.raw_json || {});
 
             await pool.execute(

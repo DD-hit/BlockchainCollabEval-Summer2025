@@ -71,6 +71,16 @@ const RepoDetail = () => {
               setContractAddress(res.data?.contractAddress || '');
             }
           }).catch(() => {});
+
+          // 如果通过通知进入并携带 peer=1，则自动打开互评面板
+          try {
+            const sp = new URLSearchParams(window.location.search);
+            if (sp.get('peer') === '1') {
+              const c = sp.get('contract');
+              if (c) setContractAddress(c);
+              setPeerOpen(true);
+            }
+          } catch (_) {}
         }
       }
     }
@@ -640,13 +650,8 @@ const RepoDetail = () => {
                 {refreshing ? '刷新中…' : '刷新'}
               </button>
               {isRepoAdmin && (
-                <>
-                  <button className="refresh-btn" onClick={() => openCredModal('start')}>计算贡献度（部署合约）</button>
-                  {/* 需求：不显示灰色按钮，排行榜常驻，这两按钮移除 */}
-                </>
+                <button className="refresh-btn" onClick={() => openCredModal('start')}>计算贡献度（部署合约）</button>
               )}
-              {/* 独立的 GitHub 互评分按钮（与文件评分无关）*/}
-              <button className="refresh-btn" onClick={() => setPeerOpen(true)}>参与GitHub互评</button>
             </div>
             <ContributorsDashboard 
               contributors={contributors}

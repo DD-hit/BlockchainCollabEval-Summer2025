@@ -65,6 +65,7 @@ export function NotificationsProvider({ children, connectSocket = true }) {
           // 转换后端数据格式为前端格式
           const notifications = result.data.map(notification => {
             let title, message, type, link;
+            let extraMeta = {};
             
             if (notification.type === 'file') {
               title = '文件上传通知';
@@ -112,6 +113,12 @@ export function NotificationsProvider({ children, connectSocket = true }) {
                 } else {
                   link = '/projects'
                 }
+                // 附带合约地址/轮次等元数据，方便前端打开正确的互评面板
+                extraMeta = {
+                  contractAddress: content.contractAddress || null,
+                  roundId: content.roundId || null,
+                  repoId: content.repoId || null,
+                }
               } catch {
                 title = 'GitHub 贡献互评邀请'
                 message = '请在仓库“贡献者”页进行互评打分'
@@ -137,7 +144,8 @@ export function NotificationsProvider({ children, connectSocket = true }) {
                 type,
                 subtaskId: notification.subtaskId,
                 fileId: notification.fileId,
-                notificationId: notification.id
+                notificationId: notification.id,
+                ...extraMeta
               }
             };
           });
@@ -159,6 +167,29 @@ export function NotificationsProvider({ children, connectSocket = true }) {
   useEffect(() => {
     loadNotifications();
   }, []);
+
+  // 当页面重新获得焦点或从后台切回时，自动刷新一次
+  useEffect(() => {
+    const onFocus = () => loadNotifications();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') loadNotifications();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
+  // 兜底轮询：WebSocket 不可用时也能定期获取新通知
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      // 避免与正在进行的加载冲突
+      if (!loading) loadNotifications();
+    }, 30000); // 30s 轮询
+    return () => clearInterval(intervalId);
+  }, [loading]);
 
   const addNotification = (notification, showToast = false) => {
 

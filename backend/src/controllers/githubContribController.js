@@ -70,7 +70,8 @@ export const startContributionRound = async (req, res) => {
             'SELECT id, end_ts_ms FROM contrib_rounds WHERE repoId = ? ORDER BY end_ts_ms DESC LIMIT 1',
             [repoId]
         );
-        const start_ts_ms = lastRows.length > 0 ? Number(lastRows[0].end_ts_ms) : 0;
+        // 若无上一轮：以仓库创建时间为起点，若获取失败则使用“项目创建时间”或回退到 now-30d
+        let start_ts_ms = lastRows.length > 0 ? Number(lastRows[0].end_ts_ms) : 0;
         const end_ts_ms = nowMs;
 
         // 1.1) 新建轮次（自增ID）
@@ -91,22 +92,39 @@ export const startContributionRound = async (req, res) => {
             GitHubService.initialize(token);
 
             const [owner, repo] = repoId.split('/');
+            if (start_ts_ms === 0) {
+                try {
+                    const info = await GitHubService.getRepoInfo(owner, repo);
+                    const created = info?.data?.created_at || info?.created_at;
+                    const createdMs = created ? new Date(created).getTime() : NaN;
+                    if (!isNaN(createdMs)) {
+                        start_ts_ms = createdMs;
+                    } else {
+                        start_ts_ms = nowMs - 30 * 24 * 3600 * 1000; // 默认近30天
+                    }
+                } catch (_) {
+                    start_ts_ms = nowMs - 30 * 24 * 3600 * 1000;
+                }
+            }
             const startMs = start_ts_ms; const endMs = end_ts_ms;
             const inRangeMs = (iso) => { const t = new Date(iso).getTime(); return t >= startMs && t <= endMs; };
 
             // 参与者
             const contribResp = await GitHubService.getRepoContributors(owner, repo);
             const contributors = Array.isArray(contribResp?.contributors) ? contribResp.contributors : [];
-            const logins = contributors.map(c => c.login);
+            const logins = contributors.map(c => String(c.login || '').toLowerCase()).filter(Boolean);
+            const loginSet = new Set(logins);
 
             // 收集 commits（带 stats）
             const commitsResp = await GitHubService.getRepoCommits(owner, repo, 1);
             const commits = Array.isArray(commitsResp?.commits) ? commitsResp.commits : commitsResp?.commitsWithStats || commitsResp || [];
             const codeRaw = new Map(); // login -> ln(1+|add+del|) + commitCount
             for (const c of commits || []) {
-                const authorLogin = c.author?.login || c.commit?.author?.name;
+                // 仅按 GitHub login 计数；不再用 name 兜底，避免与 login 不一致导致的错配
+                const authorLoginRaw = c.author?.login || c.commit?.author?.login || '';
+                const authorLogin = String(authorLoginRaw || '').toLowerCase();
                 const dateIso = c.commit?.author?.date;
-                if (!authorLogin || !dateIso || !inRangeMs(dateIso)) continue;
+                if (!authorLogin || !loginSet.has(authorLogin) || !dateIso || !inRangeMs(dateIso)) continue;
                 const adds = c.stats?.additions || 0;
                 const dels = c.stats?.deletions || 0;
                 const sum = (adds + dels);
@@ -130,8 +148,8 @@ export const startContributionRound = async (req, res) => {
             const codeP95 = p95(arrCode);
             const codeScore = new Map();
             for (const [login, val] of codeMetric.entries()) {
-                const clipped = Math.min(val, codeP95);
-                const norm = Math.max(0, Math.min(1, clipped / codeP95));
+                const clipped = Math.min(val, codeP95 || 1);
+                const norm = Math.max(0, Math.min(1, clipped / Math.max(1, codeP95)));
                 codeScore.set(login, Math.round(norm * 100));
             }
 
@@ -140,7 +158,7 @@ export const startContributionRound = async (req, res) => {
             const prs = Array.isArray(prsResp?.pullRequests) ? prsResp.pullRequests : [];
             const prRaw = new Map();
             for (const pr of prs) {
-                const login = pr.user?.login; if (!login) continue;
+                const login = pr.user?.login ? String(pr.user.login).toLowerCase() : null; if (!login) continue;
                 const created = pr.created_at && inRangeMs(pr.created_at) ? 1 : 0;
                 const merged = pr.merged_at && inRangeMs(pr.merged_at) ? 1 : 0;
                 prRaw.set(login, (prRaw.get(login) || 0) + created + 2*merged);
@@ -162,7 +180,7 @@ export const startContributionRound = async (req, res) => {
                         const resp = await GitHubService.octokit.rest.pulls.listReviews({ owner, repo, pull_number: pr.number, per_page: 100 });
                         const reviews = Array.isArray(resp?.data) ? resp.data : [];
                         for (const rv of reviews) {
-                            const who = rv.user?.login; const at = rv.submitted_at || rv.submittedAt || rv.submitted_at;
+                            const who = rv.user?.login ? String(rv.user.login).toLowerCase() : null; const at = rv.submitted_at || rv.submittedAt || rv.submitted_at;
                             if (!who || !at || !inRangeMs(at)) continue;
                             reviewRaw.set(who, (reviewRaw.get(who) || 0) + 1);
                         }
@@ -188,10 +206,10 @@ export const startContributionRound = async (req, res) => {
                 const list = [];
                 if (Array.isArray(iss.assignees)) {
                     for (const a of iss.assignees) {
-                        if (a && a.login) list.push(a.login);
+                        if (a && a.login) list.push(String(a.login).toLowerCase());
                     }
                 }
-                if (iss.assignee && iss.assignee.login) list.push(iss.assignee.login);
+                if (iss.assignee && iss.assignee.login) list.push(String(iss.assignee.login).toLowerCase());
                 const uniqueLogins = Array.from(new Set(list));
                 if (uniqueLogins.length === 0) continue;
 
@@ -354,6 +372,8 @@ export const startContributionRound = async (req, res) => {
 
 export const submitPeerVotesOnchain = async (req, res) => {
     try {
+        // console.log('submitPeerVotesOnchain called with:', { contractAddress: req.params.contractAddress, body: req.body });
+        
         const { contractAddress } = req.params;
         const voterAddress = req.body?.address;
         const password = req.body?.password;
@@ -365,6 +385,20 @@ export const submitPeerVotesOnchain = async (req, res) => {
         }
         if (!votesBody.length && !scoresBody) return res.status(400).json({ success: false, message: '缺少投票明细' });
 
+        // 解析本轮 roundId（供落库使用）
+        let parsedRoundId = null;
+        try {
+            const [ridRows1] = await pool.execute(
+                `SELECT JSON_UNQUOTE(JSON_EXTRACT(details, '$.roundId')) AS rid
+                 FROM transactions WHERE type='contrib_round' AND contractAddress = ?
+                 ORDER BY id DESC LIMIT 1`,
+                [contractAddress]
+            );
+            if (ridRows1.length > 0) {
+                const rv = ridRows1[0].rid; parsedRoundId = rv ? Number(rv) : null;
+            }
+        } catch (_) {}
+
         let to = [];
         let pts = [];
 
@@ -372,28 +406,17 @@ export const submitPeerVotesOnchain = async (req, res) => {
             to = votesBody.map(v => v.targetAddress);
             pts = votesBody.map(v => Number(v.points));
         } else if (scoresBody) {
-            // 将 {login: {base}} 转换为 {address, points}
-            // 先解析该合约对应的 roundId，以限定参与者范围
-            let rid = null;
-            const [ridRows] = await pool.execute(
-                `SELECT JSON_UNQUOTE(JSON_EXTRACT(details, '$.roundId')) AS rid
-                 FROM transactions WHERE type='contrib_round' AND contractAddress = ?
-                 ORDER BY id DESC LIMIT 1`,
-                [contractAddress]
-            );
-            if (ridRows.length > 0) {
-                const rv = ridRows[0].rid; rid = rv ? Number(rv) : null;
-            }
+            // 将 {login: {base}} 转换为 {address, points}（限定在本轮参与者范围内）
             for (const rawLogin of Object.keys(scoresBody)) {
                 const login = String(rawLogin || '').toLowerCase();
                 const base = Number(scoresBody[rawLogin]?.base || 0);
                 if (!isFinite(base)) continue;
                 let addr = null;
-                if (rid) {
+                if (parsedRoundId) {
                     const [rows] = await pool.execute(
                         `SELECT u.address FROM contrib_base_scores b JOIN user u ON u.github_login = b.github_login
                          WHERE b.round_id = ? AND LOWER(b.github_login) = ? LIMIT 1`,
-                        [rid, login]
+                        [parsedRoundId, login]
                     );
                     if (rows && rows.length > 0) addr = rows[0].address;
                 }
@@ -412,16 +435,74 @@ export const submitPeerVotesOnchain = async (req, res) => {
         }
 
         // 解密当前用户私钥
+        // console.log('Decrypting private key for user:', req.user?.username);
         const username = req.user?.username;
         if (!username) return res.status(401).json({ success: false, message: '未登录' });
+        
         const keyInfo = await AccountService.getPrivateKey(username, password);
+        // console.log('Key info result:', { hasPrivateKey: !!keyInfo?.privateKey, address: keyInfo?.address });
+        
         const privateKey = keyInfo?.privateKey;
         const address = voterAddress || keyInfo?.address;
         if (!privateKey) return res.status(403).json({ success: false, message: '密码错误，无法解密私钥' });
 
+        // 允许自评：不再过滤与投票者相同的地址
+
+        // console.log('Calling submitVotes with:', { contractAddress, address, to, pts });
+        
         const receipt = await GitHubContribOnchainService.submitVotes(contractAddress, address, privateKey, to, pts);
+
+        // 写入互评明细到 DB（可重入，使用 upsert）
+        try {
+            if (parsedRoundId) {
+                const placeholders = to.map(() => '?').join(',');
+                let addrToUser = new Map();
+                if (to.length > 0) {
+                    const [urows] = await pool.execute(
+                        `SELECT username, address FROM user WHERE address IN (${placeholders})`,
+                        to
+                    );
+                    urows.forEach(r => addrToUser.set(String(r.address).toLowerCase(), r.username));
+                }
+                for (let i = 0; i < to.length; i++) {
+                    const tAddr = String(to[i] || '').toLowerCase();
+                    const tUser = addrToUser.get(tAddr) || tAddr;
+                    await pool.execute(
+                        `INSERT INTO contrib_peer_votes (round_id, reviewer, target, score) VALUES (?, ?, ?, ?)
+                         ON DUPLICATE KEY UPDATE score = VALUES(score)`,
+                        [parsedRoundId, username, tUser, Number(pts[i]) || 0]
+                    );
+                }
+            }
+        } catch (_) {}
+        // 自动 finalize：若所有人已投完则由当前提交者触发
+        try {
+            const progress = await GitHubContribOnchainService.getProgress(contractAddress);
+            if (progress && progress.total > 0 && progress.total === progress.voted && !progress.finalized) {
+                const caller = address;
+                await GitHubContribOnchainService.finalize(contractAddress, caller, privateKey);
+
+                // 拉取并写入最终分
+                if (parsedRoundId) {
+                    try {
+                        const [rows] = await pool.execute(
+                            `SELECT u.address FROM contrib_base_scores b JOIN user u ON u.github_login = b.github_login
+                             WHERE b.round_id = ?`,
+                            [parsedRoundId]
+                        );
+                        const addrs = (rows || []).map(r => r.address).filter(Boolean);
+                        if (addrs.length > 0) {
+                            const finalScores = await GitHubContribOnchainService.getFinalScores(contractAddress, addrs);
+                            await saveFinalScores(parsedRoundId, finalScores);
+                        }
+                    } catch (_) {}
+                }
+            }
+        } catch (_) {}
+
         res.json({ success: true, message: '投票已提交', data: { tx: receipt?.transactionHash } });
     } catch (error) {
+        console.error('submitPeerVotesOnchain error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -483,6 +564,59 @@ export const getProgress = async (req, res) => {
         const { contractAddress } = req.params;
         const p = await GitHubContribOnchainService.getProgress(contractAddress);
         res.json({ success: true, data: p });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 检查当前用户是否在评分名单 + 返回合约进度
+export const checkEligibilityAndProgress = async (req, res) => {
+    try {
+        const { contractAddress } = req.params;
+        const username = req.user?.username;
+        if (!username) return res.status(401).json({ success: false, message: '未登录' });
+
+        // 解析用户地址
+        const [u] = await pool.execute('SELECT address FROM user WHERE username = ? LIMIT 1', [username]);
+        const myAddr = (u && u.length > 0) ? (u[0].address || '') : '';
+        if (!myAddr) return res.status(400).json({ success: false, message: '未绑定链上地址' });
+
+        const progress = await GitHubContribOnchainService.getProgress(contractAddress);
+
+        // 从部署时的交易中解析 roundId，再查这一轮的 raters
+        let rid = null;
+        const [ridRows] = await pool.execute(
+            `SELECT JSON_UNQUOTE(JSON_EXTRACT(details, '$.roundId')) AS rid
+             FROM transactions WHERE type='contrib_round' AND contractAddress = ?
+             ORDER BY id DESC LIMIT 1`,
+            [contractAddress]
+        );
+        if (ridRows.length > 0) {
+            const rv = ridRows[0].rid; rid = rv ? Number(rv) : null;
+        }
+
+        let inRaters = false;
+        let debug = { rid, raters: [] };
+        if (rid) {
+            const [rRows] = await pool.execute(
+                `SELECT u.address FROM contrib_base_scores b JOIN user u ON u.github_login = b.github_login
+                 WHERE b.round_id = ?`,
+                [rid]
+            );
+            debug.raters = (rRows || []).map(r => r.address);
+            const lowerSet = new Set((rRows || []).map(r => String(r.address || '').toLowerCase()));
+            inRaters = lowerSet.has(String(myAddr).toLowerCase());
+        }
+
+        // 读取链上 hasVoted
+        let hasVoted = false;
+        try {
+            if (inRaters) {
+                hasVoted = await GitHubContribOnchainService.hasVoted(contractAddress, myAddr);
+            }
+        } catch (_) {}
+
+        res.json({ success: true, data: { progress, inRaters, hasVoted, address: myAddr, debug } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -592,11 +726,21 @@ export const getUserRounds = async (req, res) => {
         let { repoId, username, address } = req.query;
         if (!repoId) return res.status(400).json({ success: false, message: '缺少 repoId' });
 
-        if (!username && address) {
-            const [u] = await pool.execute('SELECT username FROM user WHERE address = ? LIMIT 1', [address]);
-            if (u.length > 0) username = u[0].username;
+        // 统一映射到本地 username：优先 address；否则把传入的 username 兼容为 github_login → username
+        let canonicalUsername = username || null;
+        if (!canonicalUsername && address) {
+            const [u1] = await pool.execute('SELECT username FROM user WHERE address = ? LIMIT 1', [address]);
+            if (u1 && u1.length > 0) canonicalUsername = u1[0].username;
         }
-        if (!username) return res.status(400).json({ success: false, message: '缺少 username 或 address' });
+        if (canonicalUsername) {
+            // 如果传入的是 github_login，则先尝试反查
+            const [u2] = await pool.execute('SELECT username FROM user WHERE username = ? LIMIT 1', [canonicalUsername]);
+            if (!u2 || u2.length === 0) {
+                const [u3] = await pool.execute('SELECT username FROM user WHERE github_login = ? LIMIT 1', [canonicalUsername]);
+                if (u3 && u3.length > 0) canonicalUsername = u3[0].username;
+            }
+        }
+        if (!canonicalUsername) return res.status(400).json({ success: false, message: '缺少有效的 username/address' });
 
         const [rows] = await pool.execute(
             `SELECT r.id AS roundId,
@@ -607,7 +751,7 @@ export const getUserRounds = async (req, res) => {
              JOIN contrib_final_scores f ON f.round_id = r.id AND f.username = ?
              WHERE r.repoId = ?
              ORDER BY r.end_ts_ms DESC`,
-            [username, repoId]
+            [canonicalUsername, repoId]
         );
 
         // 可选：附加基础分明细（code/pr/review/issue）
@@ -626,6 +770,155 @@ export const getUserRounds = async (req, res) => {
         }
 
         res.json({ success: true, data: rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 用户在某仓库的“累计汇总” - 汇总至今所有轮次的关键数据（base/peer/final + 互评收/给）
+export const getUserAggregateByRepo = async (req, res) => {
+    try {
+        let { repoId, username, address } = req.query;
+        if (!repoId) return res.status(400).json({ success: false, message: '缺少 repoId' });
+
+        // 统一为本地 username
+        let canonicalUsername = username || null;
+        if (!canonicalUsername && address) {
+            const [u1] = await pool.execute('SELECT username FROM user WHERE address = ? LIMIT 1', [address]);
+            if (u1 && u1.length > 0) canonicalUsername = u1[0].username;
+        }
+        if (canonicalUsername) {
+            const [u2] = await pool.execute('SELECT username FROM user WHERE username = ? LIMIT 1', [canonicalUsername]);
+            if (!u2 || u2.length === 0) {
+                const [u3] = await pool.execute('SELECT username FROM user WHERE github_login = ? LIMIT 1', [canonicalUsername]);
+                if (u3 && u3.length > 0) canonicalUsername = u3[0].username;
+            }
+        }
+        if (!canonicalUsername) return res.status(400).json({ success: false, message: '缺少有效的 username/address' });
+
+        // 汇总：所有轮次的 base/peer/final
+        const [rows] = await pool.execute(
+            `SELECT 
+                COUNT(*) AS rounds,
+                SUM(f.base_score)  AS base_sum,
+                AVG(f.base_score)  AS base_avg,
+                SUM(f.peer_score)  AS peer_sum,
+                AVG(f.peer_score)  AS peer_avg,
+                SUM(f.final_score) AS final_sum,
+                AVG(f.final_score) AS final_avg,
+                MIN(r.start_ts_ms) AS first_start,
+                MAX(r.end_ts_ms)   AS last_end
+             FROM contrib_final_scores f
+             JOIN contrib_rounds r ON r.id = f.round_id
+             WHERE r.repoId = ? AND f.username = ?`,
+            [repoId, canonicalUsername]
+        );
+        const agg = (rows && rows.length > 0) ? rows[0] : {};
+
+        // 互评收到（作为 target）与送出（作为 reviewer）
+        const [recv] = await pool.execute(
+            `SELECT COUNT(*) AS cnt, COALESCE(SUM(score),0) AS sum
+             FROM contrib_peer_votes v
+             JOIN contrib_rounds r ON r.id = v.round_id
+             WHERE r.repoId = ? AND v.target = ?`,
+            [repoId, canonicalUsername]
+        );
+        const [given] = await pool.execute(
+            `SELECT COUNT(*) AS cnt, COALESCE(SUM(score),0) AS sum
+             FROM contrib_peer_votes v
+             JOIN contrib_rounds r ON r.id = v.round_id
+             WHERE r.repoId = ? AND v.reviewer = ?`,
+            [repoId, canonicalUsername]
+        );
+
+        res.json({
+            success: true,
+            data: {
+                username: canonicalUsername,
+                rounds: Number(agg.rounds || 0),
+                base: { sum: Number(agg.base_sum || 0), avg: Number(agg.base_avg || 0) },
+                peer: { sum: Number(agg.peer_sum || 0), avg: Number(agg.peer_avg || 0) },
+                final: { sum: Number(agg.final_sum || 0), avg: Number(agg.final_avg || 0) },
+                votes: {
+                    received: { count: Number((recv && recv[0]?.cnt) || 0), sum: Number((recv && recv[0]?.sum) || 0) },
+                    given:     { count: Number((given && given[0]?.cnt) || 0), sum: Number((given && given[0]?.sum) || 0) }
+                },
+                span: {
+                    first_start: agg.first_start ? new Date(Number(agg.first_start)).toISOString() : null,
+                    last_end:    agg.last_end ? new Date(Number(agg.last_end)).toISOString() : null
+                }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// —— 辅助：等待合约进入 finalized ——
+async function waitUntilFinalized(contractAddress, maxMs = 30000, stepMs = 1000) {
+    const deadline = Date.now() + maxMs;
+    while (Date.now() < deadline) {
+        try {
+            const p = await GitHubContribOnchainService.getProgress(contractAddress);
+            if (p && p.finalized) return true;
+        } catch (_) {}
+        await new Promise(r => setTimeout(r, stepMs));
+    }
+    return false;
+}
+
+// 手动重同步：从链上读取最终分并回填 DB（用于补救）
+export const resyncFinalScores = async (req, res) => {
+    try {
+        const { contractAddress } = req.params;
+        if (!contractAddress) return res.status(400).json({ success: false, message: '缺少合约地址' });
+
+        // 取 roundId
+        let roundId = null;
+        const [ridRows] = await pool.execute(
+            `SELECT JSON_UNQUOTE(JSON_EXTRACT(details, '$.roundId')) AS rid
+             FROM transactions WHERE type='contrib_round' AND contractAddress = ?
+             ORDER BY id DESC LIMIT 1`,
+            [contractAddress]
+        );
+        if (ridRows.length > 0) {
+            const rv = ridRows[0].rid; roundId = rv ? Number(rv) : null;
+        }
+        if (!roundId) return res.status(404).json({ success: false, message: '未找到对应轮次' });
+
+        // 等待 finalized
+        const ok = await waitUntilFinalized(contractAddress, 30000, 1000);
+        if (!ok) return res.status(409).json({ success: false, message: '尚未完成结算' });
+
+        // 参与者地址
+        const [addrRows] = await pool.execute(
+            `SELECT u.address FROM contrib_base_scores b JOIN user u ON u.github_login = b.github_login
+             WHERE b.round_id = ?`,
+            [roundId]
+        );
+        const addrs = (addrRows || []).map(r => r.address).filter(Boolean);
+        if (addrs.length === 0) return res.json({ success: true, message: '无参与者地址', data: [] });
+
+        // 拉取并回填
+        const finalScores = await GitHubContribOnchainService.getFinalScores(contractAddress, addrs);
+        for (const it of finalScores) {
+            // 地址→username 映射，兜底地址字符串
+            let nameKey = null;
+            try {
+                const [u] = await pool.execute('SELECT username FROM user WHERE address = ? LIMIT 1', [it.address]);
+                if (u && u.length > 0) nameKey = u[0].username;
+            } catch (_) {}
+            if (!nameKey) nameKey = String(it.address || '').toLowerCase();
+
+            await pool.execute(
+                `INSERT INTO contrib_final_scores (round_id, username, base_score, peer_score, final_score)
+                 VALUES (?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE base_score=VALUES(base_score), peer_score=VALUES(peer_score), final_score=VALUES(final_score)`,
+                [roundId, nameKey, Number(it.base?.base) || 0, Number(it.peerNorm) || 0, Number(it.finalScore) || 0]
+            );
+        }
+
+        res.json({ success: true, message: '已重同步', data: { roundId, count: finalScores.length } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

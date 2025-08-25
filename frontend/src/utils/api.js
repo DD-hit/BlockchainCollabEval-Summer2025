@@ -233,6 +233,7 @@ export const githubContribAPI = {
     api.post(`/api/github-contrib/${contractAddress}/finalize`, payload, { timeout: 180000 })
   ),
   progress: (contractAddress) => handleApi(api.get(`/api/github-contrib/${contractAddress}/progress`)),
+  check: (contractAddress) => handleApi(api.get(`/api/github-contrib/${contractAddress}/check`)),
   leaderboardByRepo: (repoId) => handleApi(api.get(`/api/github-contrib/leaderboard/by-repo`, { params: { repoId } })),
   userRounds: (repoId, username, address) => handleApi(api.get(`/api/github-contrib/user-rounds`, { params: { repoId, username, address } })),
 }

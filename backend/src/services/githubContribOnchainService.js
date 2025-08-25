@@ -49,6 +49,21 @@ export class GitHubContribOnchainService {
         return new web3.eth.Contract(GitHubContributionABI, address);
     }
 
+    static async hasVoted(contractAddress, addr) {
+        const c = this.getContract(contractAddress);
+        return await c.methods.hasVoted(addr).call();
+    }
+
+    static async isRater(contractAddress, addr) {
+        const c = this.getContract(contractAddress);
+        return await c.methods.isRater(addr).call();
+    }
+
+    static async getAdmin(contractAddress) {
+        const c = this.getContract(contractAddress);
+        return await c.methods.admin().call();
+    }
+
     static async setRaters(contractAddress, adminAddress, adminPrivateKey, raters) {
         const web3 = this.getWeb3();
         const account = web3.eth.accounts.privateKeyToAccount(adminPrivateKey);
@@ -140,7 +155,8 @@ export class GitHubContribOnchainService {
     static async finalize(contractAddress, adminAddress, adminPrivateKey) {
         const web3 = this.getWeb3();
         const account = web3.eth.accounts.privateKeyToAccount(adminPrivateKey);
-        if (account.address.toLowerCase() !== adminAddress.toLowerCase()) throw new Error('admin 地址与私钥不匹配');
+        // finalize 已允许任何人触发，这里仅确保签名者与传入地址一致
+        if (account.address.toLowerCase() !== adminAddress.toLowerCase()) throw new Error('地址与私钥不匹配');
         const c = this.getContract(contractAddress);
         const tx = c.methods.finalize();
         const data = tx.encodeABI();
