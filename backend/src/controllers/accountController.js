@@ -221,14 +221,14 @@ export const logout = async (req, res) => {
         
         const result = await AccountService.logout(username);
         
-        // 清理GitHub token
-        try {
-            const { clearUserGitHubTokenOnly } = await import('../services/accountService.js');
-            await clearUserGitHubTokenOnly(username);
-            console.log(`用户 ${username} 登出，已清理GitHub token`);
-        } catch (error) {
-            console.error(`清理用户 ${username} 的GitHub token失败:`, error);
-        }
+        // // 清理GitHub token
+        // try {
+        //     const { clearUserGitHubTokenOnly } = await import('../services/accountService.js');
+        //     await clearUserGitHubTokenOnly(username);
+        //     console.log(`用户 ${username} 登出，已清理GitHub token`);
+        // } catch (error) {
+        //     console.error(`清理用户 ${username} 的GitHub token失败:`, error);
+        // }
         
         res.json({
             success: true,

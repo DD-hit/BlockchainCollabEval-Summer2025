@@ -1,4 +1,5 @@
 // server.js - 项目的"大门"
+import fetch from 'node-fetch';
 import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
@@ -218,19 +219,20 @@ app.get('/api/auth/callback', async (req, res) => {
             }
         };
         
+        const params = new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+            code: code,
+            redirect_uri: `${(req.headers['x-forwarded-proto'] || req.protocol || 'http')}://${(req.headers['x-forwarded-host'] || req.headers['host'])}/api/auth/callback`
+        });
         const tokenResponse = await fetchWithRetry('https://github.com/login/oauth/access_token', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'Accept': 'application/json',
                 'User-Agent': 'BlockchainCollabEval/1.0'
             },
-            body: JSON.stringify({
-                client_id: clientId,
-                client_secret: clientSecret,
-                code: code,
-                redirect_uri: `${(req.headers['x-forwarded-proto'] || req.protocol || 'http')}://${(req.headers['x-forwarded-host'] || req.headers['host'])}/api/auth/callback`
-            })
+            body: params.toString()
         });
         
         if (!tokenResponse.ok) {
@@ -436,15 +438,15 @@ const startServer = async () => {
                     AccountService.updateUserStatus(username, 0)
                         .catch((error) => console.error('心跳超时更新用户状态失败:', error))
                         .finally(() => {
-                            // 清空该用户的 GitHub token（保留 login/id/avatar）
-                            (async () => {
-                                try {
-                                    const { clearUserGitHubTokenOnly } = await import('./src/services/accountService.js');
-                                    await clearUserGitHubTokenOnly(username);
-                                } catch (e) {
-                                    console.error('心跳超时清理GitHub token失败:', e);
-                                }
-                            })();
+                            // // 清空该用户的 GitHub token（保留 login/id/avatar）
+                            // (async () => {
+                            //     try {
+                            //         const { clearUserGitHubTokenOnly } = await import('./src/services/accountService.js');
+                            //         await clearUserGitHubTokenOnly(username);
+                            //     } catch (e) {
+                            //         console.error('心跳超时清理GitHub token失败:', e);
+                            //     }
+                            // })();
                             userHeartbeats.delete(username);
                             userConnections.delete(username);
                         });
