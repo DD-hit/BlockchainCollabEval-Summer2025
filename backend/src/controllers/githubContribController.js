@@ -252,7 +252,7 @@ export const startContributionRound = async (req, res) => {
                 const pr_s = (prScore.get(login) || 0);
                 const review_s = (reviewScore.get(login) || 0);
                 const issue_s = (issueScore.get(login) || 0);
-                const base = (0.5*(code_s/100) + 0.2*(pr_s/100) + 0.2*(review_s/100) + 0.1*(issue_s/100))*100;
+                const base = 0.5*code_s + 0.2*pr_s + 0.2*review_s + 0.1*issue_s;
                 return {
                     github_login: login,
                     code_score: Math.round(code_s),

@@ -384,6 +384,7 @@
   flex-direction: column;
   justify-content: flex-end;
   border-bottom: 1px solid #e1e4e8;
+  padding-bottom: 25px; /* 为标签留出空间 */
 }
 
 .mini-chart-grid {
@@ -439,6 +440,19 @@
 .mini-bar:hover {
   background-color: #0256cc;
   transform: scaleY(1.05);
+}
+
+.mini-bar-label {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: #586069;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1;
+  z-index: 3;
 }
 
 .contributors-loading,

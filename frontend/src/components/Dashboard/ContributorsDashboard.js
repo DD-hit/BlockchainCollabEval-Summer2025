@@ -16,18 +16,14 @@ const ContributorsDashboard = ({ contributors = [], commits = [], contribScores 
     }
   }, [contributors, commits, selectedMetric, selectedPeriod]);
 
-  // 获取根据期间选择的周数
-  const getWeekCount = () => {
+  // 获取根据期间选择的数据点数量
+  const getDataPointCount = () => {
     switch (selectedPeriod) {
       case 'week':
         return 7; // 本周显示7天（周一到周日）
-      case 'month':
-        return 4;
-      case 'quarter':
-        return 12;
       case 'all':
       default:
-        return 6;
+        return 12; // 全部显示12个月
     }
   };
 
@@ -40,21 +36,24 @@ const ContributorsDashboard = ({ contributors = [], commits = [], contribScores 
     
     switch (selectedPeriod) {
       case 'week':
-        // 对于本周，我们需要获取本周的数据，而不是过去7天
+        // 本周：从周一开始到周日
         const dayOfWeek = now.getDay(); // 0是周日，1是周一
         const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
         startDate.setDate(now.getDate() - daysFromMonday);
         startDate.setHours(0, 0, 0, 0);
         break;
-      case 'month':
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      case 'quarter':
-        startDate.setMonth(now.getMonth() - 3);
-        break;
       case 'all':
       default:
-        startDate = new Date(0); // 从1970年开始
+        // 全部：从最早的提交开始
+        if (commits.length > 0) {
+          const earliestCommit = commits.reduce((earliest, commit) => {
+            const commitDate = new Date(commit.commit.author.date);
+            return commitDate < earliest ? commitDate : earliest;
+          }, new Date(commits[0].commit.author.date));
+          startDate = earliestCommit;
+        } else {
+          startDate = new Date(0); // 从1970年开始
+        }
         break;
     }
     
@@ -63,21 +62,19 @@ const ContributorsDashboard = ({ contributors = [], commits = [], contribScores 
       return commitDate >= startDate && commitDate <= now;
     });
     
-
-    
     return filtered;
   };
 
   const processWeeklyData = () => {
     const now = new Date();
-    const weekCount = getWeekCount();
+    const dataPointCount = getDataPointCount();
     let dataPoints = [];
     
     if (selectedPeriod === 'week') {
       // 本周：显示周一到周日
       const monday = new Date(now);
       const dayOfWeek = now.getDay(); // 0是周日，1是周一
-      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 计算距离周一的天数
+      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       monday.setDate(now.getDate() - daysFromMonday);
       
       for (let i = 0; i < 7; i++) {
@@ -86,11 +83,23 @@ const ContributorsDashboard = ({ contributors = [], commits = [], contribScores 
         dataPoints.push(day);
       }
     } else {
-      // 其他期间：按周显示
-      for (let i = weekCount - 1; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - (i * 7));
-        dataPoints.push(date);
+      // 全部：显示每月
+      if (commits.length > 0) {
+        const earliestCommit = commits.reduce((earliest, commit) => {
+          const commitDate = new Date(commit.commit.author.date);
+          return commitDate < earliest ? commitDate : earliest;
+        }, new Date(commits[0].commit.author.date));
+        
+        const months = [];
+        const current = new Date(earliestCommit.getFullYear(), earliestCommit.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        while (current <= end) {
+          months.push(new Date(current));
+          current.setMonth(current.getMonth() + 1);
+        }
+        
+        dataPoints = months.slice(-12); // 只显示最近12个月
       }
     }
 
@@ -123,40 +132,37 @@ const ContributorsDashboard = ({ contributors = [], commits = [], contribScores 
           );
         }
         
-
-        
         return {
           week: datePoint,
           value: metricValue,
           label: getDayName(datePoint.getDay())
         };
       } else {
-        // 其他期间：按周统计
-        const weekStart = new Date(datePoint);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
+        // 全部：按月统计
+        const monthStart = new Date(datePoint);
+        const monthEnd = new Date(datePoint.getFullYear(), datePoint.getMonth() + 1, 0);
 
-        const weekCommits = filteredCommits.filter(commit => {
+        const monthCommits = filteredCommits.filter(commit => {
           const commitDate = new Date(commit.commit.author.date);
-          return commitDate >= weekStart && commitDate <= weekEnd;
+          return commitDate >= monthStart && commitDate <= monthEnd;
         });
         
         if (selectedMetric === 'commits') {
-          metricValue = weekCommits.length;
+          metricValue = monthCommits.length;
         } else if (selectedMetric === 'additions') {
-          metricValue = weekCommits.reduce((sum, commit) => 
+          metricValue = monthCommits.reduce((sum, commit) => 
             sum + (commit.stats?.additions || 0), 0
           );
         } else if (selectedMetric === 'deletions') {
-          metricValue = weekCommits.reduce((sum, commit) => 
+          metricValue = monthCommits.reduce((sum, commit) => 
             sum + (commit.stats?.deletions || 0), 0
           );
         }
 
         return {
-          week: weekStart,
+          week: monthStart,
           value: metricValue,
-          label: `${weekStart.getDate()} ${getMonthName(weekStart.getMonth())}`
+          label: `${monthStart.getMonth() + 1}月`
         };
       }
     });
@@ -203,7 +209,6 @@ const ContributorsDashboard = ({ contributors = [], commits = [], contribScores 
 
       const weeks = [];
       const now = new Date();
-      const weekCount = getWeekCount();
       
       if (selectedPeriod === 'week') {
         // 本周：按天统计
@@ -242,32 +247,47 @@ const ContributorsDashboard = ({ contributors = [], commits = [], contribScores 
           weeks.push(dayValue);
         }
       } else {
-        // 其他期间：按周统计
-        for (let i = weekCount - 1; i >= 0; i--) {
-          const weekStart = new Date(now);
-          weekStart.setDate(weekStart.getDate() - (i * 7));
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekEnd.getDate() + 6);
-
-          const weekCommits = contributorCommits.filter(commit => {
+        // 全部：按月统计
+        if (commits.length > 0) {
+          const earliestCommit = commits.reduce((earliest, commit) => {
             const commitDate = new Date(commit.commit.author.date);
-            return commitDate >= weekStart && commitDate <= weekEnd;
-          });
-
-          let weekValue = 0;
-          if (selectedMetric === 'commits') {
-            weekValue = weekCommits.length;
-          } else if (selectedMetric === 'additions') {
-            weekValue = weekCommits.reduce((sum, commit) => 
-              sum + (commit.stats?.additions || 0), 0
-            );
-          } else if (selectedMetric === 'deletions') {
-            weekValue = weekCommits.reduce((sum, commit) => 
-              sum + (commit.stats?.deletions || 0), 0
-            );
+            return commitDate < earliest ? commitDate : earliest;
+          }, new Date(commits[0].commit.author.date));
+          
+          const months = [];
+          const current = new Date(earliestCommit.getFullYear(), earliestCommit.getMonth(), 1);
+          const end = new Date(now.getFullYear(), now.getMonth(), 1);
+          
+          while (current <= end) {
+            months.push(new Date(current));
+            current.setMonth(current.getMonth() + 1);
           }
+          
+          const recentMonths = months.slice(-12); // 只显示最近12个月
+          
+          recentMonths.forEach(monthStart => {
+            const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
 
-          weeks.push(weekValue);
+            const monthCommits = contributorCommits.filter(commit => {
+              const commitDate = new Date(commit.commit.author.date);
+              return commitDate >= monthStart && commitDate <= monthEnd;
+            });
+
+            let monthValue = 0;
+            if (selectedMetric === 'commits') {
+              monthValue = monthCommits.length;
+            } else if (selectedMetric === 'additions') {
+              monthValue = monthCommits.reduce((sum, commit) => 
+                sum + (commit.stats?.additions || 0), 0
+              );
+            } else if (selectedMetric === 'deletions') {
+              monthValue = monthCommits.reduce((sum, commit) => 
+                sum + (commit.stats?.deletions || 0), 0
+              );
+            }
+
+            weeks.push(monthValue);
+          });
         }
       }
 
@@ -368,16 +388,14 @@ const ContributorsDashboard = ({ contributors = [], commits = [], contribScores 
         <div className="contributors-controls">
           <div className="control-group">
             <label>期间:</label>
-            <select 
-              value={selectedPeriod} 
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="period-select"
-            >
-              <option value="all">全部</option>
-              <option value="week">本周</option>
-              <option value="month">本月</option>
-              <option value="quarter">本季度</option>
-            </select>
+                         <select 
+               value={selectedPeriod} 
+               onChange={(e) => setSelectedPeriod(e.target.value)}
+               className="period-select"
+             >
+               <option value="all">全部</option>
+               <option value="week">本周</option>
+             </select>
           </div>
           <div className="control-group">
             <label>贡献:</label>
@@ -563,31 +581,37 @@ const ContributorsDashboard = ({ contributors = [], commits = [], contribScores 
                           ))}
                         </div>
                         
-                        {/* 迷你柱状图 */}
-                        <div className="mini-chart">
-                          {stats.weeklyData?.map((value, weekIndex) => (
-                            <div key={weekIndex} className="mini-bar-container">
-                              <div 
-                                className="mini-bar"
-                                style={{ 
-                                  height: `${(value / getMiniChartMaxValue()) * 100}%`,
-                                  backgroundColor: '#0366d6'
-                                }}
-                                title={`${getMetricLabel()}: ${value}`}
-                              />
-                            </div>
-                          )) || Array.from({ length: getWeekCount() }, (_, i) => (
-                            <div key={i} className="mini-bar-container">
-                              <div 
-                                className="mini-bar"
-                                style={{ 
-                                  height: '20%',
-                                  backgroundColor: '#0366d6'
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
+                                                 {/* 迷你柱状图 */}
+                         <div className="mini-chart">
+                           {stats.weeklyData?.map((value, weekIndex) => (
+                             <div key={weekIndex} className="mini-bar-container">
+                               <div 
+                                 className="mini-bar"
+                                 style={{ 
+                                   height: `${(value / getMiniChartMaxValue()) * 100}%`,
+                                   backgroundColor: '#0366d6'
+                                 }}
+                                 title={`${getMetricLabel()}: ${value}`}
+                               />
+                               <div className="mini-bar-label">
+                                 {weeklyData[weekIndex]?.label || `${weekIndex + 1}`}
+                               </div>
+                             </div>
+                           )) || Array.from({ length: getDataPointCount() }, (_, i) => (
+                             <div key={i} className="mini-bar-container">
+                               <div 
+                                 className="mini-bar"
+                                 style={{ 
+                                   height: '20%',
+                                   backgroundColor: '#0366d6'
+                                 }}
+                               />
+                               <div className="mini-bar-label">
+                                 {weeklyData[i]?.label || `${i + 1}`}
+                               </div>
+                             </div>
+                           ))}
+                         </div>
                       </div>
                     </div>
                   </div>
