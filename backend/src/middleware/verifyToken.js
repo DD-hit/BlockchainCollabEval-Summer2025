@@ -1,4 +1,7 @@
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const verifyToken = (req, res, next) => {
     // 1. 从请求头获取token
@@ -14,7 +17,7 @@ export const verifyToken = (req, res, next) => {
     
     // 3. 验证token有效性
     try {
-        const decoded = jwt.verify(token, "123456789");
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         req.user = decoded;  // 将用户信息注入到请求对象
         next();  // 继续执行下一个函数
