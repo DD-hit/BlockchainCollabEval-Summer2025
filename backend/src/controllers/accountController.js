@@ -72,7 +72,7 @@ export const loginAccount = async (req, res) => {
         req.session.user = username.trim();
         
         // 生成GitHub授权URL（兼容本地与服务器环境）
-        const clientId = process.env.GITHUB_CLIENT_ID || 'Ov23lijDYlWd2i55uOKv';
+        const clientId = process.env.GITHUB_CLIENT_ID;
         const state = Math.random().toString(36).substring(2, 15);
         // 将用户名编码到state中
         const stateData = { state, username: username.trim() };

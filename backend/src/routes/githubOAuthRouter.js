@@ -6,13 +6,18 @@ import { updateUserGitHubToken, updateUserGitHubIdentity } from '../services/acc
 
 const router = express.Router();
 
-const clientId = process.env.GITHUB_CLIENT_ID || 'Ov23lijDYlWd2i55uOKv';
-const clientSecret = process.env.GITHUB_CLIENT_SECRET || '81cbc88f841232fb466f0d9074126a91aa63ef75';
+const clientId = process.env.GITHUB_CLIENT_ID;
+const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+if (!clientId || !clientSecret) {
+    console.warn('WARNING: GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET is not defined. GitHub OAuth will not work.');
+}
 
 const getScheme = (req) => (req.headers['x-forwarded-proto'] || req.protocol || 'http');
 const getHost = (req) => (req.headers['x-forwarded-host'] || req.headers['host']);
 const getFrontendBaseUrl = (req) => {
     if (process.env.FRONTEND_BASE_URL) return process.env.FRONTEND_BASE_URL;
+    console.warn('WARNING: FRONTEND_BASE_URL is not defined. Falling back to request headers.');
     const scheme = getScheme(req);
     const host = getHost(req) || '';
     if (/localhost:5000|127\.0\.0\.1:5000/.test(host)) {

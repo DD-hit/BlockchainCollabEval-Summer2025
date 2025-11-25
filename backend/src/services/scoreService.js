@@ -1,9 +1,13 @@
 import Web3 from 'web3';
-import { WEB3_PROVIDER } from '../config/config.js';
 import { ContributionScoreABI } from '../utils/contracts.js';
 import { pool } from '../../config/database.js';
 import { AccountService } from './accountService.js';
 import { TransactionService } from './transactionService.js';
+
+const WEB3_PROVIDER = process.env.WEB3_PROVIDER;
+if (!WEB3_PROVIDER) {
+    throw new Error('WEB3_PROVIDER is not defined');
+}
 
 export class ScoreService {
 

@@ -1,12 +1,11 @@
 // server.js - 项目的"大门"
+import './loadEnv.js'; // 必须在最前面导入，确保环境变量在其他模块加载前生效
 import fetch from 'node-fetch';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import session from 'express-session';
-dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '.env') });
 
 import { testConnection } from './config/database.js';
 import { AccountService } from './src/services/accountService.js';
@@ -15,7 +14,11 @@ const __filename = fileURLToPath(import.meta.url); // C:\StudyFile\项目\Blockc
 const __dirname = path.dirname(__filename); // C:\StudyFile\项目\BlockchainCollabEval-Summer2025\backend
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
+if (!PORT) {
+    console.error('FATAL ERROR: PORT is not defined in .env');
+    process.exit(1);
+}
 
 //指定允许访问后端接口的前端域名（“源”）
 app.use(cors({
@@ -43,9 +46,15 @@ app.use(session({
 
 // 设置请求超时时间
 app.use((req, res, next) => {
-    const TIMEOUT_MS = parseInt(process.env.HTTP_TIMEOUT_MS || '300000', 10);
-    req.setTimeout(TIMEOUT_MS);
-    res.setTimeout(TIMEOUT_MS);
+    const TIMEOUT_MS = parseInt(process.env.HTTP_TIMEOUT_MS, 10);
+    if (isNaN(TIMEOUT_MS)) {
+        console.warn('WARNING: HTTP_TIMEOUT_MS is not defined or invalid. Using default 300000ms.');
+        req.setTimeout(300000);
+        res.setTimeout(300000);
+    } else {
+        req.setTimeout(TIMEOUT_MS);
+        res.setTimeout(TIMEOUT_MS);
+    }
     next();
 });
 

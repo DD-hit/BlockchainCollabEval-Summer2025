@@ -1,1 +1,0 @@
-export const WEB3_PROVIDER = 'http://192.168.241.130:8545'; //区块链节点地址

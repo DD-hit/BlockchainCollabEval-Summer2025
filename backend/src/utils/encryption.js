@@ -5,7 +5,11 @@ import crypto from 'crypto';
 const SALT_ROUNDS = 12; // bcrypt 盐轮数
 
 // 加密密钥 - 在生产环境中应该从环境变量获取
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-secret-encryption-key-32-chars-long';
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+if (!ENCRYPTION_KEY) {
+    console.error('FATAL ERROR: ENCRYPTION_KEY is not defined.');
+    process.exit(1);
+}
 const ALGORITHM = 'aes-256-cbc';
 
 export class EncryptionService {

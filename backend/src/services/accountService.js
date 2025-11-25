@@ -3,7 +3,11 @@ import { pool } from '../../config/database.js';
 import jwt from 'jsonwebtoken';
 import { getBalance } from '../utils/eth.js';
 import { EncryptionService } from '../utils/encryption.js';
-import { WEB3_PROVIDER } from '../config/config.js';
+
+const WEB3_PROVIDER = process.env.WEB3_PROVIDER;
+if (!WEB3_PROVIDER) {
+    throw new Error('WEB3_PROVIDER is not defined');
+}
 
 // 密码强度验证函数
 function validatePasswordStrength(password) {

@@ -1,6 +1,11 @@
 import Web3 from 'web3';
 import { pool } from '../../config/database.js';
-import { WEB3_PROVIDER } from '../config/config.js';
+
+const WEB3_PROVIDER = process.env.WEB3_PROVIDER;
+if (!WEB3_PROVIDER) {
+    console.error('FATAL ERROR: WEB3_PROVIDER is not defined.');
+    process.exit(1);
+}
 
 export const getAddress = async (username) => {
     try {

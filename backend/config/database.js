@@ -1,12 +1,20 @@
 import mysql from 'mysql2/promise';
 
 // 数据库配置
+const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_PORT'];
+const missingEnvVars = requiredEnvVars.filter(key => !process.env[key]);
+
+if (missingEnvVars.length > 0) {
+    console.error(`FATAL ERROR: Missing required database environment variables: ${missingEnvVars.join(', ')}`);
+    process.exit(1);
+}
+
 const dbConfig = {
-    host: 'localhost', // 使用localhost，因为数据库在同一台服务器上
-    user: 'root',
-    password: '123456',
-    database: 'bce',
-    port: 3306,
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
     charset: 'utf8mb4'
 };
 

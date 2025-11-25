@@ -6,13 +6,18 @@ export function setupWebSocket(server, AccountService) {
     const userHeartbeats = new Map(); // 记录用户最后心跳时间
     const userConnections = new Map(); // 记录用户与 ws 连接的映射
 
-    // 心跳超时时间（默认 2 分钟）
-    const HEARTBEAT_TIMEOUT_MS = parseInt(process.env.HEARTBEAT_TIMEOUT_MS || '120000', 10);
+    // 心跳超时时间
+    const HEARTBEAT_TIMEOUT_MS = parseInt(process.env.HEARTBEAT_TIMEOUT_MS, 10);
+    if (isNaN(HEARTBEAT_TIMEOUT_MS)) {
+        console.warn('WARNING: HEARTBEAT_TIMEOUT_MS is not defined or invalid. Using default 120000ms.');
+    }
+    const finalHeartbeatTimeout = isNaN(HEARTBEAT_TIMEOUT_MS) ? 120000 : HEARTBEAT_TIMEOUT_MS;
+
     // 定时检测用户心跳，超时则标记离线
     setInterval(() => {
         const now = Date.now();
         userHeartbeats.forEach((lastHeartbeat, username) => {
-            if (now - lastHeartbeat > HEARTBEAT_TIMEOUT_MS) {
+            if (now - lastHeartbeat > finalHeartbeatTimeout) {
                 // 超时未心跳，更新用户状态为离线
                 AccountService.updateUserStatus(username, 0)
                     .catch(() => {})

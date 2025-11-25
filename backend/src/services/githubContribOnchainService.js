@@ -1,6 +1,10 @@
 import Web3 from 'web3';
-import { WEB3_PROVIDER } from '../config/config.js';
 import { GitHubContributionABI, GitHubContributionBytecode } from '../utils/contracts.js';
+
+const WEB3_PROVIDER = process.env.WEB3_PROVIDER;
+if (!WEB3_PROVIDER) {
+    throw new Error('WEB3_PROVIDER is not defined');
+}
 
 export class GitHubContribOnchainService {
     static getWeb3() {

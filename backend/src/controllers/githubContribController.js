@@ -197,7 +197,12 @@ export const startContributionRound = async (req, res) => {
             }
 
             // Issue：被指派且按时关闭；优先以里程碑截止时间判定按时，其次回退到 SLA；支持多指派（assignees）
-            const SLA_DAYS = parseInt(process.env.CONTRIB_SLA_DAYS || '7', 10);
+            const SLA_DAYS = parseInt(process.env.CONTRIB_SLA_DAYS, 10);
+            if (isNaN(SLA_DAYS)) {
+                console.warn('WARNING: CONTRIB_SLA_DAYS is not defined or invalid. Using default 7 days.');
+            }
+            const finalSlaDays = isNaN(SLA_DAYS) ? 7 : SLA_DAYS;
+
             const issuesResp = await GitHubService.getRepoIssues(owner, repo, 'all', 1);
             const issues = Array.isArray(issuesResp?.issues) ? issuesResp.issues : [];
             const issueRaw = new Map();
