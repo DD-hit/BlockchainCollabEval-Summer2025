@@ -1,0 +1,127 @@
+@startuml class_diagram
+' 美化参数
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+' =================== Backend Services ===================
+package "Backend Services" {
+    class AccountService {
+        + register(username, password)
+        + login(username, password)
+        + bindGithub(username, githubId)
+        + getProfile(username)
+    }
+    class ProjectManagerService {
+        + createProject(name, description, owner)
+        + getProjectList(username)
+        + getProjectDetails(projectId)
+    }
+    class ProjectMemberService {
+        + inviteMember(projectId, username)
+        + removeMember(projectId, username)
+        + getMembers(projectId)
+    }
+    class MilestoneService {
+        + createMilestone(projectId, title, deadline)
+        + getMilestones(projectId)
+    }
+    class SubtaskService {
+        + createSubtask(milestoneId, title, description)
+        + assignTask(subtaskId, username)
+        + completeTask(subtaskId)
+    }
+    class ScoreService {
+        + deployScoreContract(subtaskId)
+        + submitScore(contractAddress, score)
+        + calculateContribution(projectId)
+        + getMemberContributions(projectId, username)
+    }
+    class GitHubService {
+        + fetchCommits(repo)
+        + fetchIssues(repo)
+        + calculateCodeContribution()
+    }
+}
+
+' =================== Database Models ===================
+package "Database Models" {
+    class User {
+        + id: int
+        + username: string
+        + password_hash: string
+        + github_id: string
+        + address: string
+    }
+    class Project {
+        + id: int
+        + name: string
+        + description: string
+        + owner_id: int
+        + created_at: datetime
+    }
+    class ProjectMember {
+        + project_id: int
+        + user_id: int
+        + role: string
+        + contribution_point: float
+    }
+    class Milestone {
+        + id: int
+        + project_id: int
+        + title: string
+        + deadline: datetime
+        + status: string
+    }
+    class Subtask {
+        + id: int
+        + milestone_id: int
+        + title: string
+        + assigned_to: int
+        + status: string
+        + contract_address: string
+    }
+    class File {
+        + id: int
+        + subtask_id: int
+        + uploader_id: int
+        + file_path: string
+        + file_hash: string
+    }
+}
+
+' =================== Smart Contracts ===================
+package "Smart Contracts" {
+    class ContributionScore {
+        - totalScore: uint
+        - scoreCount: uint
+        - contributor: address
+        + score(points: uint)
+        + calculateContributionPoint(): uint
+    }
+}
+
+' =================== 关系定义 ===================
+' 继承（实线三角）
+' 这里没有继承关系，若有可用 User <|-- Admin
+
+' 关联（实线箭头）
+User "1" --o "*" Project : 关联
+User "1" --o "*" ProjectMember : 关联
+Project "1" --o "*" ProjectMember : 关联
+Project "1" --o "*" Milestone : 关联
+Milestone "1" --o "*" Subtask : 关联
+Subtask "1" --o "*" File : 关联
+
+' 组合（实心菱形）
+Subtask "1" *-- "0..1" ContributionScore : 组合
+    
+' 依赖（虚线箭头）
+ScoreService ..> ContributionScore : 依赖
+ProjectManagerService ..> Project : 依赖
+AccountService ..> User : 依赖
+
+' 依赖（虚线箭头）
+SubtaskService ..> User : 依赖
+
+@enduml

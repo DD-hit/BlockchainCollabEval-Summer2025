@@ -1,0 +1,63 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "普通用户/项目成员" as User
+actor "项目组长" as Admin
+actor "以太坊智能合约" as SmartContract
+
+rectangle "区块链协作评估系统" {
+    
+    package "账户管理" {
+        usecase "注册/登录" as UC1
+        usecase "绑定GitHub账号" as UC2
+        usecase "查看个人资料" as UC3
+    }
+
+    package "项目管理" {
+        usecase "创建项目" as UC4
+        usecase "邀请成员" as UC5
+        usecase "管理里程碑" as UC6
+        usecase "查看项目进度" as UC7
+    }
+
+    package "任务与协作" {
+        usecase "创建子任务" as UC8
+        usecase "领取/分配任务" as UC9
+        usecase "提交任务成果(文件)" as UC10
+        usecase "GitHub代码提交" as UC11
+    }
+
+    package "评分与评估" {
+        usecase "发起评分" as UC12
+        usecase "为成员评分" as UC13
+        usecase "查看贡献分数" as UC14
+        usecase "计算最终贡献值" as UC15
+    }
+}
+
+' 关系定义
+User <|-- Admin
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC7
+User --> UC9
+User --> UC10
+User --> UC11
+User --> UC13
+User --> UC14
+
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC8
+Admin --> UC12
+
+' 智能合约交互
+UC12 ..> SmartContract : 部署评分合约
+UC13 ..> SmartContract : 记录评分数据
+UC15 ..> SmartContract : 计算加权平均分
+
+@enduml
