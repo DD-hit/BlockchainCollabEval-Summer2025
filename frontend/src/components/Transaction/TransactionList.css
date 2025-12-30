@@ -25,7 +25,7 @@
 
 .refresh-btn {
   padding: 8px 16px;
-  background: #00d4ff;
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -35,7 +35,7 @@
 }
 
 .refresh-btn:hover {
-  background: #00b8e6;
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
 }
 
 /* 统计卡片 */

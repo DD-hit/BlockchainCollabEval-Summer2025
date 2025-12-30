@@ -246,11 +246,9 @@ export default function ProjectDetail() {
             </div>
             </div>
           </div>
-          <div className="project-actions">
             <button className="btn-primary" onClick={onOpenEdit}>
               ✏️ 编辑项目
             </button>
-          </div>
         </div>
         
         {/* Project details section */}
@@ -323,7 +321,7 @@ export default function ProjectDetail() {
                     style={{ width: `${projectStats.projectProgress}%` }}
                   ></div>
                 </div>
-                <div className="progress-text">
+                <div className="progress-text1">
                   {projectStats.projectProgress}% 完成
                 </div>
               </div>

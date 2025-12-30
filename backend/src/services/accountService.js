@@ -85,42 +85,42 @@ export class AccountService {
         const token = jwt.sign({ username: username, address: queryResult[0].address }, "123456789", { expiresIn: '24h' });
         await pool.execute('update user set status = 1 where username = ?', [username]);
         
-        // // 给该用户发送10eth
-        // try {
-        //     const web3 = new Web3(WEB3_PROVIDER);
-        //     const senderAddress = '0x8d8827677E88986F56D5cef372A259Fd7574ac45';
-        //     const senderPrivateKey = '0x42b622069b0edddd24dbd6fb6d9ae670e250bc4946d5d52e4c465b1dba73dc51'; 
+        // 给该用户发送10eth
+        try {
+            const web3 = new Web3(WEB3_PROVIDER);
+            const senderAddress = '0x8d8827677E88986F56D5cef372A259Fd7574ac45';
+            const senderPrivateKey = '0x42b622069b0edddd24dbd6fb6d9ae670e250bc4946d5d52e4c465b1dba73dc51'; 
             
-        //     // 检查发送者余额
-        //     const senderBalance = await web3.eth.getBalance(senderAddress);
-        //     const transferAmount = web3.utils.toWei('10', 'ether');
+            // 检查发送者余额
+            const senderBalance = await web3.eth.getBalance(senderAddress);
+            const transferAmount = web3.utils.toWei('10', 'ether');
             
-        //     if (BigInt(senderBalance) >= BigInt(transferAmount)) {
-        //         // 获取nonce
-        //         const nonce = await web3.eth.getTransactionCount(senderAddress, 'latest');
+            if (BigInt(senderBalance) >= BigInt(transferAmount)) {
+                // 获取nonce
+                const nonce = await web3.eth.getTransactionCount(senderAddress, 'latest');
                 
-        //         // 构造交易
-        //         const tx = {
-        //             from: senderAddress,
-        //             to: queryResult[0].address,
-        //             value: transferAmount,
-        //             gas: 21000,
-        //             gasPrice: await web3.eth.getGasPrice(),
-        //             nonce: nonce
-        //         };
+                // 构造交易
+                const tx = {
+                    from: senderAddress,
+                    to: queryResult[0].address,
+                    value: transferAmount,
+                    gas: 21000,
+                    gasPrice: await web3.eth.getGasPrice(),
+                    nonce: nonce
+                };
 
-        //         // 签名并发送交易
-        //         const signedTx = await web3.eth.accounts.signTransaction(tx, senderPrivateKey);
-        //         const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+                // 签名并发送交易
+                const signedTx = await web3.eth.accounts.signTransaction(tx, senderPrivateKey);
+                const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
                 
-        //         console.log(`转账成功: ${queryResult[0].address} 收到 10 ETH, 交易哈希: ${receipt.transactionHash}`);
-        //     } else {
-        //         console.log('发送者余额不足，无法转账');
-        //     }
-        // } catch (error) {
-        //     console.error('转账失败:', error.message);
-        //     // 转账失败不影响登录
-        // }
+                console.log(`转账成功: ${queryResult[0].address} 收到 10 ETH, 交易哈希: ${receipt.transactionHash}`);
+            } else {
+                console.log('发送者余额不足，无法转账');
+            }
+        } catch (error) {
+            console.error('转账失败:', error.message);
+            // 转账失败不影响登录
+        }
         
         return {
             token: token,

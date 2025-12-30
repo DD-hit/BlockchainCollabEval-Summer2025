@@ -341,7 +341,7 @@ const MilestoneDetail = ({ user }) => {
                   }}
                 ></div>
               </div>
-              <div className="progress-text">{Math.round(animatedProgress)}% 完成</div>
+              <div className="progress-text2">{Math.round(animatedProgress)}% 完成</div>
             </div>
           </div>
 

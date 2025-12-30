@@ -360,19 +360,19 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
       {/* 统计信息 */}
       <div className="subtask-stats">
         <div className="stat-card">
-          <div className="stat-number">{stats.total}</div>
+          <div className="stat-number3">{stats.total}</div>
           <div className="stat-label">总任务</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{stats.inProgress}</div>
+          <div className="stat-number3">{stats.inProgress}</div>
           <div className="stat-label">进行中</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{stats.completed}</div>
+          <div className="stat-number3">{stats.completed}</div>
           <div className="stat-label">已完成</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{stats.overdue}</div>
+          <div className="stat-number3">{stats.overdue}</div>
           <div className="stat-label">已逾期</div>
         </div>
       </div>
@@ -385,7 +385,7 @@ const SubtaskManagement = ({ projectId, milestoneId, isProjectOwner, onSubtaskCh
             <h3>还没有子任务</h3>
             <p>创建第一个子任务来开始工作</p>
             {isProjectOwner && (
-              <button className="create-first-subtask-btn" onClick={() => setShowCreateModal(true)}>
+              <button className="create-first-subtask-btn1" onClick={() => setShowCreateModal(true)}>
                 创建子任务
               </button>
             )}

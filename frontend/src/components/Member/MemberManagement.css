@@ -15,7 +15,7 @@
 }
 
 .add-member-btn {
-  background: #00d4ff;
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
   border: none;
   padding: 12px 20px;
@@ -69,7 +69,7 @@
 }
 
 .leaderboard-item.rank-1 {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   border: 1px solid #f59e0b;
 }
 
@@ -150,22 +150,21 @@
 .contribution-score {
   text-align: center;
   padding: 12px 20px;
-  background: rgba(59, 130, 246, 0.1);
+  background: white;
   border-radius: 8px;
-  border: 1px solid #3b82f6;
   min-width: 80px;
 }
 
 .score-number {
   font-size: 24px;
   font-weight: bold;
-  color: #1e40af;
+  color: #4dd5fa;
   line-height: 1;
 }
 
 .score-label {
   font-size: 12px;
-  color: #64748b;
+  color: black;
   margin-top: 4px;
 }
 

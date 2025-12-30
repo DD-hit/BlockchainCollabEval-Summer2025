@@ -66,17 +66,44 @@ PORT=3000
 REACT_APP_API_URL=http://localhost:5000
 ```
 
+
 #### 后端配置 (backend/.env)
-```bash
-DB_HOST=localhost
-DB_USER=your_username
-DB_PASSWORD=your_password
-DB_NAME=blockchain_collab_eval
-JWT_SECRET=your_jwt_secret_key
-PORT=5000
-ETHEREUM_NETWORK=localhost:8545
-CONTRACT_ADDRESS=your_contract_address
+请在 `backend/.env` 文件中配置以下环境变量，否则系统无法正常运行。示例及字段说明如下：
+
+```env
+# Server Configuration
+PORT=5000                        # 后端服务端口
+HTTP_TIMEOUT_MS=300000           # HTTP请求超时时间（毫秒）
+HEARTBEAT_TIMEOUT_MS=120000      # WebSocket心跳超时时间（毫秒）
+
+# Database Configuration
+DB_HOST=localhost                # 数据库主机地址
+DB_USER=root                     # 数据库用户名
+DB_PASSWORD=123456               # 数据库密码
+DB_NAME=bce                      # 数据库名称
+DB_PORT=3306                     # 数据库端口
+
+# Security
+# 注意：在生产环境中，请务必修改这些密钥！
+JWT_SECRET=123456789             # JWT密钥
+SESSION_SECRET=123456789         # Session密钥
+ENCRYPTION_KEY=your-secret-encryption-key-32-chars-long # 32位加密密钥
+
+# GitHub Integration
+GITHUB_CLIENT_ID=Ov23liUjilm3zxwbD1zH
+GITHUB_CLIENT_SECRET=59370b92957fa5290b22ef3046418eb4d8c57f0b
+FRONTEND_BASE_URL=http://localhost:3000 # 前端地址
+
+# Business Logic
+CONTRIB_SLA_DAYS=7               # 贡献SLA天数
+
+# Blockchain Configuration
+WEB3_PROVIDER=http://localhost:8545 # 区块链节点地址
 ```
+
+> ⚠️ **注意**：所有字段均需根据实际环境填写，缺失或错误将导致系统无法启动。
+
+各字段含义请参考上方注释。
 
 ### 4. 数据库设置
 ```bash

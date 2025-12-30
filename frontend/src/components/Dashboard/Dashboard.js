@@ -190,8 +190,8 @@ const Dashboard = ({ user }) => {
       <div className="dashboard-header">
         <div className="header-content">
           <div>
-            <h1>欢迎回来，{user.username}！</h1>
-            <p>这里是您的工作概览</p>
+            <h1>欢迎回来，{user.username}!</h1>
+            <div>这里是您的工作概览</div>
           </div>
                      <div className="github-connection-section">
              <div className={`github-status ${githubStatus.connected ? 'connected' : 'disconnected'}`}>

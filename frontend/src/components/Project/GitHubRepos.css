@@ -48,16 +48,18 @@
   margin-bottom: 20px;
 }
 
+
 .repo-card {
   border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 24px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   background: #fff;
-  height: 160px; /* 固定卡片高度 */
+  height: 250px; /* 增加卡片高度 */
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* 去除 hover 时的蓝色边框和阴影效果 */
@@ -187,7 +189,7 @@
 
 .repo-stats {
   display: flex;
-  gap: 8px;
+  gap: 20px;
 }
 
 .stat {

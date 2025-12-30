@@ -1,3 +1,4 @@
+
 .dashboard {
   background: transparent;
   min-height: 100vh;
@@ -11,7 +12,7 @@
   align-items: center;
   justify-content: center;
   height: 300px;
-  background: white;
+  background: white ;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
@@ -22,22 +23,30 @@
 }
 
 /* 页面头部 */
-.dashboard-header {
+/* .dashboard-header {
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   margin-bottom: 24px;
   padding: 24px;
-}
+} */
+
+
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: linear-gradient(135deg, #e6f4ff 0%, #f8feff 100%) !important;
+  /* background: linear-gradient(90deg, #fce4ec 0%, #faf6f8 100%)!important; */
+  /* background: linear-gradient(180deg, #e8f5e9 0%, #f9fdf9 100%)!important; */
+  /* background: linear-gradient(45deg, #f3e5f5 0%, #faf7fa 100%)!important; */
+  /* background: linear-gradient(225deg, #fff8e1 0%, #fcfaf6 100%)!important;
+  background: linear-gradient(135deg, #f1f3f5 0%, #fafafa 100%)!important; */
 }
 
 .connect-github-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -46,7 +55,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.8);
 }
 
 .connect-github-btn:hover {
@@ -112,27 +121,33 @@
 
 /* 统计卡片 */
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 24px;
+  display: flex ;
+  flex-direction: column ;
+  gap: 40px !important;
   margin-bottom: 32px;
+  width: 100%;
 }
-
-.stat-card {
-  background: white;
+.dashboard .stats-grid .stat-card {
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f1f5f9;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 20px;
+  backdrop-filter: blur(10px) ;
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
 }
 
 .stat-icon {
@@ -146,6 +161,7 @@
   font-size: 24px;
   color: white;
   box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+
 }
 
 .stat-content {
@@ -754,54 +770,32 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.connect-github-btn {
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
-  letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
-  height: 48px;
-  box-sizing: border-box;
+/* Dashboard网格布局 - 将交易记录放在左侧，统计卡片放在右侧作为侧边栏 */
+.dashboard-grid {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
 }
 
-.connect-github-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
+.stats-grid {
+  order: 2;
+  flex: 1;
+
 }
 
-.connect-github-btn:hover::before {
-  left: 100%;
+.dashboard-section {
+  order: 1;
+  flex: 4;
 }
 
-.connect-github-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
-}
-
-.connect-github-btn.connected {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-}
-
-.connect-github-btn.connected:hover {
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
-}
-
-.connect-github-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+@media (max-width: 768px) {
+  .dashboard-grid {
+    flex-direction: column;
+  }
+  
+  .stats-grid,
+  .dashboard-section {
+    order: 0;
+    flex: none;
+  }
 }

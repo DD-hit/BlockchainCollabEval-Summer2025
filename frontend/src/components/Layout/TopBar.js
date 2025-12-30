@@ -118,6 +118,7 @@ const TopBar = ({ user, onLogout }) => {
   return (
     <div className="top-bar">
       <div className="top-bar-left">
+        <span className="blockchain-title">跨区块链协同开发</span>
         {/* 搜索框已隐藏 */}
         {/* <div className="search-bar">
           <span className="search-icon">🔍</span>

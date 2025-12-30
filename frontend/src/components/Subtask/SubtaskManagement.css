@@ -24,7 +24,7 @@
   color: #1e293b;
   font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #0969da, #1f6feb);
+  background:  #01c4fa;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -32,13 +32,13 @@
 
 .header-content p {
   margin: 0;
-  color: #64748b;
+  color: black;
   font-size: 16px;
   font-weight: 500;
 }
 
 .create-subtask-btn {
-  background: linear-gradient(135deg, #0969da, #1f6feb);
+background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -55,7 +55,7 @@
 }
 
 .create-subtask-btn:hover {
-  background: linear-gradient(135deg, #0858b9, #1a5fdb);
+background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(9, 105, 218, 0.4);
 }
@@ -99,10 +99,10 @@
   box-shadow: 0 8px 25px rgba(9, 105, 218, 0.15);
 }
 
-.stat-number {
+.stat-number3 {
   font-size: 36px;
   font-weight: 800;
-  background: linear-gradient(135deg, #0969da, #1f6feb);
+  background: #44d2f9;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -250,14 +250,12 @@
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #0969da, #1f6feb);
-  border-color: #0969da;
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
 }
 
 .action-btn.primary:hover {
-  background: linear-gradient(135deg, #0858b9, #1a5fdb);
-  border-color: #0858b9;
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 15px rgba(9, 105, 218, 0.3);
 }
@@ -345,8 +343,8 @@
   font-weight: 500;
 }
 
-.create-first-subtask-btn {
-  background: linear-gradient(135deg, #0969da, #1f6feb);
+.create-first-subtask-btn1 {
+ background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
   border: none;
   padding: 12px 28px;
@@ -358,8 +356,8 @@
   box-shadow: 0 4px 15px rgba(9, 105, 218, 0.3);
 }
 
-.create-first-subtask-btn:hover {
-  background: linear-gradient(135deg, #0858b9, #1a5fdb);
+.create-first-subtask-btn1:hover {
+ background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(9, 105, 218, 0.4);
 }

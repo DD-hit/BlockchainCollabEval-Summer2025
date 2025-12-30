@@ -2,21 +2,23 @@
   max-width: 900px;
   margin: 0 auto;
   padding: 32px 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   min-height: 100vh;
 }
 
 .profile-header {
   margin-bottom: 40px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: left;
 }
 
 .profile-header h1 {
   margin: 0 0 8px 0;
   color: #1e293b;
-  font-size: 36px;
+  font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #00d4ff 0%, #5b73ff 100%);
+  background:  #1e293b;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -24,7 +26,7 @@
 
 .profile-header p {
   margin: 0;
-  color: #64748b;
+  color: #1e293b;
   font-size: 16px;
   font-weight: 500;
 }
@@ -54,7 +56,7 @@
 .user-avatar-large {
   width: 110px;
   height: 110px;
-  background: linear-gradient(135deg, #00d4ff 0%, #5b73ff 100%);
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -74,7 +76,7 @@
   left: -4px;
   right: -4px;
   bottom: -4px;
-  background: linear-gradient(135deg, #00d4ff 0%, #5b73ff 100%);
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   border-radius: 50%;
   z-index: -1;
   opacity: 0.3;
@@ -198,7 +200,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
   padding: 8px 14px;
   border-radius: 999px;
@@ -212,7 +214,7 @@
 }
 
 .edit-btn {
-  background: linear-gradient(135deg, #00d4ff 0%, #5b73ff 100%);
+   background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
   border: none;
   padding: 14px 28px;
@@ -279,7 +281,7 @@
 }
 
 .save-btn {
-  background: #10b981;
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%) ;
   color: white;
   border: none;
   padding: 8px 16px;

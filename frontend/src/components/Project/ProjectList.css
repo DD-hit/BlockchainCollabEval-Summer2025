@@ -21,24 +21,24 @@
   background: #f8f9fa;
   color: #6c757d;
   border: 1px solid #dee2e6;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
+  padding: 20.5px 30px !important;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px ;
 }
 
 .refresh-btn:hover {
-  background: #e9ecef;
-  color: #495057;
-  border-color: #adb5bd;
+background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
 }
 
 .create-project-btn {
-  background: #00d4ff;
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -159,7 +159,6 @@
   margin: 12px 0;
   line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

@@ -253,7 +253,7 @@
 }
 
 .download-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -332,7 +332,7 @@
 }
 
 .modal-actions button[type="submit"] {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   border: none;
   color: white;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);

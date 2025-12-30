@@ -1,7 +1,7 @@
 /* 现代化里程碑详情页面样式 */
 .milestone-detail {
   min-height: 100vh;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background:white;
   padding: 24px;
   position: relative;
   overflow-x: hidden;
@@ -77,7 +77,7 @@
   transition: all 0.3s ease;
   padding: 4px 8px;
   border-radius: 6px;
-  color: #4f46e5;
+  color: #46abe5;
   font-weight: 600;
 }
 
@@ -108,7 +108,7 @@
 .milestone-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -313,7 +313,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background:linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
 }
 
 .overview-card:hover {
@@ -325,7 +325,7 @@
 
 .overview-card h3 {
   margin: 0 0 24px 0;
-  color: #1e293b;
+  color: #44d2f9;
   font-size: 20px;
   font-weight: 700;
   display: flex;
@@ -373,10 +373,10 @@
   100% { left: 100%; }
 }
 
-.progress-text {
+.progress-text2 {
   font-size: 28px;
   font-weight: 800;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background:#44d2f9;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

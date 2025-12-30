@@ -406,19 +406,19 @@ export default function MilestoneManagement({ projectId, user, isProjectOwner })
       {/* 统计卡片 */}
       <div className="milestone-stats">
         <div className="stat-card">
-          <div className="stat-number">{stats.total}</div>
+          <div className="stat-number2">{stats.total}</div>
           <div className="stat-label">总里程碑</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number" style={{ color: '#10b981' }}>{stats.completed}</div>
+          <div className="stat-number2" style={{ color: '#10b981' }}>{stats.completed}</div>
           <div className="stat-label">已完成</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number" style={{ color: '#3b82f6' }}>{stats.inProgress}</div>
+          <div className="stat-number2" style={{ color: '#3b82f6' }}>{stats.inProgress}</div>
           <div className="stat-label">进行中</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number" style={{ color: '#ef4444' }}>{stats.overdue}</div>
+          <div className="stat-number2" style={{ color: '#ef4444' }}>{stats.overdue}</div>
           <div className="stat-label">已逾期</div>
         </div>
       </div>

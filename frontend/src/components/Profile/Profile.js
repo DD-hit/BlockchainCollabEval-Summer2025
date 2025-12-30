@@ -68,7 +68,7 @@ const Profile = ({ user }) => {
     newPassword: '',
     confirmPassword: ''
   });
-
+  const [activeTab, setActiveTab] = useState('info'); // 'info' 或 'private-key'
 
   const handleGetPrivateKey = async () => {
     if (!passwordForKey.trim()) {
@@ -192,158 +192,176 @@ const Profile = ({ user }) => {
         <p>管理您的个人信息和账户安全</p>
       </div>
 
+      {/* 选项卡导航 */}
+      <div className="tab-navigation">
+        <button 
+          className={`tab-btn ${activeTab === 'info' ? 'active' : ''}`}
+          onClick={() => setActiveTab('info')}
+        >
+          📋 个人信息
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'private-key' ? 'active' : ''}`}
+          onClick={() => setActiveTab('private-key')}
+        >
+          🔑 私钥管理
+        </button>
+      </div>
+
+      {/* 内容区域 */}
       <div className="profile-content">
-        {/* 基本信息卡片 */}
-        <div className="profile-card">
-          <div className="profile-avatar-section">
-            <div className="user-avatar-large">
-              {userInfo.username.charAt(0).toUpperCase()}
-            </div>
-            <div className="user-info">
-              <h2>{userInfo.username}</h2>
-              <div className="user-address-container">
-                <span className="address-label">区块链地址:</span>
-                <span className="user-address">{userInfo.address}</span>
+        {/* 个人信息选项卡 */}
+        {activeTab === 'info' && (
+          <div className="profile-card">
+            <div className="profile-avatar-section">
+              <div className="user-avatar-large">
+                {userInfo.username.charAt(0).toUpperCase()}
               </div>
-              <div className="github-binding">
-                <span className="github-label">GitHub 绑定：</span>
-                {ghBinding.bound ? (
-                  <div className="github-bound">
-                    {ghBinding.github_avatar && (
-                      <img className="github-avatar" src={ghBinding.github_avatar} alt={ghBinding.github_login} />
-                    )}
-                    <a className="github-login" href={`https://github.com/${ghBinding.github_login}`} target="_blank" rel="noreferrer">@{ghBinding.github_login}</a>
-                    <button className="github-unbind" onClick={handleUnbind}>解绑</button>
-                  </div>
-                ) : (
-                  <button type="button" className="github-bind-btn" onClick={handleConnectGithub}>🐙 绑定 GitHub</button>
-                )}
+              <div className="user-info">
+                <h2>{userInfo.username}</h2>
+                <div className="user-address-container">
+                  <span className="address-label">区块链地址:</span>
+                  <span className="user-address">{userInfo.address}</span>
+                </div>
+                <div className="github-binding">
+                  <span className="github-label">GitHub 绑定：</span>
+                  {ghBinding.bound ? (
+                    <div className="github-bound">
+                      {ghBinding.github_avatar && (
+                        <img className="github-avatar" src={ghBinding.github_avatar} alt={ghBinding.github_login} />
+                      )}
+                      <a className="github-login" href={`https://github.com/${ghBinding.github_login}`} target="_blank" rel="noreferrer">@{ghBinding.github_login}</a>
+                      <button className="github-unbind" onClick={handleUnbind}>解绑</button>
+                    </div>
+                  ) : (
+                    <button type="button" className="github-bind-btn" onClick={handleConnectGithub}>🐙 绑定 GitHub</button>
+                  )}
+                </div>
               </div>
             </div>
+            
+            {!editing ? (
+              <button className="edit-btn" onClick={() => setEditing(true)}>
+                编辑资料
+              </button>
+            ) : (
+              <form onSubmit={handleUpdateProfile} className="edit-form">
+                <div className="form-group">
+                  <label>用户名</label>
+                  <input
+                    type="text"
+                    value={editForm.username}
+                    onChange={(e) => setEditForm({...editForm, username: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>新密码（可选）</label>
+                  <input
+                    type="password"
+                    value={editForm.newPassword}
+                    onChange={(e) => setEditForm({...editForm, newPassword: e.target.value})}
+                    placeholder="留空则不修改密码"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>确认新密码</label>
+                  <input
+                    type="password"
+                    value={editForm.confirmPassword}
+                    onChange={(e) => setEditForm({...editForm, confirmPassword: e.target.value})}
+                    placeholder="确认新密码"
+                  />
+                </div>
+                
+                <div className="form-actions">
+                  <button type="submit" className="save-btn">保存</button>
+                  <button type="button" className="cancel-btn" onClick={() => setEditing(false)}>
+                    取消
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
-          
-          {!editing ? (
-            <button className="edit-btn" onClick={() => setEditing(true)}>
-              编辑资料
-            </button>
-          ) : (
-            <form onSubmit={handleUpdateProfile} className="edit-form">
-              <div className="form-group">
-                <label>用户名</label>
-                <input
-                  type="text"
-                  value={editForm.username}
-                  onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                  required
-                />
+        )}
+
+        {/* 私钥管理选项卡 */}
+        {activeTab === 'private-key' && (
+          <div className="private-key-section">
+            <div className="section-header">
+              <h3>🔐 私钥管理</h3>
+              <p>安全地查看和管理您的区块链私钥</p>
+            </div>
+            <div className="warning-box">
+              <div className="warning-icon">⚠️</div>
+              <div className="warning-content">
+                <h4>安全提醒</h4>
+                <p>私钥是您区块链账户的重要凭证，请妥善保管，不要泄露给他人！</p>
               </div>
-              
-              <div className="form-group">
-                <label>新密码（可选）</label>
-                <input
-                  type="password"
-                  value={editForm.newPassword}
-                  onChange={(e) => setEditForm({...editForm, newPassword: e.target.value})}
-                  placeholder="留空则不修改密码"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>确认新密码</label>
-                <input
-                  type="password"
-                  value={editForm.confirmPassword}
-                  onChange={(e) => setEditForm({...editForm, confirmPassword: e.target.value})}
-                  placeholder="确认新密码"
-                />
-              </div>
-              
-              <div className="form-actions">
-                <button type="submit" className="save-btn">保存</button>
-                <button type="button" className="cancel-btn" onClick={() => setEditing(false)}>
-                  取消
+            </div>
+            
+            {!showPrivateKey ? (
+              <div className="private-key-form">
+                <div className="form-group">
+                  <label>请输入密码以查看私钥</label>
+                  <input
+                    type="password"
+                    value={passwordForKey}
+                    onChange={(e) => setPasswordForKey(e.target.value)}
+                    placeholder="请输入您的登录密码"
+                    onKeyPress={(e) => e.key === 'Enter' && handleGetPrivateKey()}
+                  />
+                </div>
+                <button 
+                  className="show-key-btn" 
+                  onClick={handleGetPrivateKey}
+                  disabled={loadingPrivateKey}
+                >
+                  {loadingPrivateKey ? '验证中...' : '显示私钥'}
                 </button>
               </div>
-            </form>
-          )}
-        </div>
-
-
-
-        {/* 私钥管理 */}
-        <div className="private-key-section">
-          <div className="section-header">
-            <h3>🔐 私钥管理</h3>
-            <p>安全地查看和管理您的区块链私钥</p>
-          </div>
-          <div className="warning-box">
-            <div className="warning-icon">⚠️</div>
-            <div className="warning-content">
-              <h4>安全提醒</h4>
-              <p>私钥是您区块链账户的重要凭证，请妥善保管，不要泄露给他人！</p>
-            </div>
-          </div>
-          
-          {!showPrivateKey ? (
-            <div className="private-key-form">
-              <div className="form-group">
-                <label>请输入密码以查看私钥</label>
-                <input
-                  type="password"
-                  value={passwordForKey}
-                  onChange={(e) => setPasswordForKey(e.target.value)}
-                  placeholder="请输入您的登录密码"
-                  onKeyPress={(e) => e.key === 'Enter' && handleGetPrivateKey()}
-                />
-              </div>
-              <button 
-                className="show-key-btn" 
-                onClick={handleGetPrivateKey}
-                disabled={loadingPrivateKey}
-              >
-                {loadingPrivateKey ? '验证中...' : '显示私钥'}
-              </button>
-            </div>
-          ) : (
-            <div className="private-key-display">
-              <div className="key-info">
-                <div className="key-item">
-                  <label>以太坊地址</label>
-                  <div className="key-value">
-                    <span>{privateKeyData?.address}</span>
-                    <button onClick={() => copyToClipboard(privateKeyData?.address)}>
-                      📋 复制
-                    </button>
+            ) : (
+              <div className="private-key-display">
+                <div className="key-info">
+                  <div className="key-item">
+                    <label>以太坊地址</label>
+                    <div className="key-value">
+                      <span>{privateKeyData?.address}</span>
+                      <button onClick={() => copyToClipboard(privateKeyData?.address)}>
+                        📋 复制
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="key-item">
+                    <label>私钥</label>
+                    <div className="key-value private-key">
+                      <span>{privateKeyData?.privateKey}</span>
+                      <button onClick={() => copyToClipboard(privateKeyData?.privateKey)}>
+                        📋 复制
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="key-item">
-                  <label>私钥</label>
-                  <div className="key-value private-key">
-                    <span>{privateKeyData?.privateKey}</span>
-                    <button onClick={() => copyToClipboard(privateKeyData?.privateKey)}>
-                      📋 复制
-                    </button>
-                  </div>
-                </div>
+                <button 
+                  className="hide-key-btn" 
+                  onClick={() => {
+                    setShowPrivateKey(false);
+                    setPrivateKeyData(null);
+                  }}
+                >
+                  隐藏私钥
+                </button>
               </div>
-              
-              <button 
-                className="hide-key-btn" 
-                onClick={() => {
-                  setShowPrivateKey(false);
-                  setPrivateKeyData(null);
-                }}
-              >
-                隐藏私钥
-              </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default Profile;
-

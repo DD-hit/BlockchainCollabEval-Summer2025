@@ -406,7 +406,7 @@
 }
 
 .refresh-btn {
-  background: #0366d6;
+   background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   color: #fff;
   border: none;
   padding: 6px 12px;
@@ -420,7 +420,7 @@
 }
 
 .refresh-btn:hover {
-  background: #0256cc;
+   background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
 }
 
 .refresh-btn:disabled,

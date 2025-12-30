@@ -25,7 +25,7 @@
 .page-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: white;
+  color: black;
   margin: 0 0 16px 0;
   display: flex;
   align-items: center;
@@ -51,9 +51,9 @@
 }
 
 .page-subtitle {
-  font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
+  font-size: 1.1rem !important;
+  color: black !important;
+  margin: 20px !important;
   font-weight: 400;
 }
 
@@ -75,7 +75,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #00d4ff, #5b73ff, #667eea);
+  background: linear-gradient(90deg, #00d4ff, #5b73ff);
 }
 
 .error-banner {
@@ -252,7 +252,7 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #00d4ff 0%, #5b73ff 100%);
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%) !important;
   color: white;
   box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
 }

@@ -62,6 +62,21 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="auth-container">
+      {/* 添加粒子效果 */}
+      <div className="particle particle-1"></div>
+      <div className="particle particle-2"></div>
+      <div className="particle particle-3"></div>
+      <div className="particle particle-4"></div>
+      <div className="particle particle-5"></div>
+      
+      {/* 添加围绕屏幕的矩形发光边框 */}
+      <div className="border-glow">
+        <div className="glow-point glow-point-1"></div>
+        <div className="glow-point glow-point-2"></div>
+        <div className="glow-point glow-point-3"></div>
+        <div className="glow-point glow-point-4"></div>
+      </div>
+      
       <div className="auth-left">
         <div className="auth-illustration">
           <div className="blockchain-visual">

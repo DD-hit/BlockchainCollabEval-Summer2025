@@ -5,10 +5,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  /* 移除box-shadow */
+  box-shadow: none;
   position: sticky;
   top: 0;
   z-index: 100;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .top-bar-left {
@@ -16,6 +19,15 @@
   align-items: center;
   gap: 24px;
   flex: 1;
+}
+
+.blockchain-title {
+  font-size: 20px; /* 增大字体大小 */
+  font-weight: 700;
+  color: #2d3748;
+  margin-right: 24px;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .project-selector {
@@ -33,6 +45,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   min-width: 200px;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .current-project:hover {
@@ -41,16 +55,20 @@
 }
 
 .project-info h4 {
-  font-size: 14px;
+  font-size: 16px; /* 增大字体大小 */
   font-weight: 600;
   color: #2d3748;
   margin: 0;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .project-info p {
-  font-size: 12px;
+  font-size: 14px; /* 增大字体大小 */
   color: #718096;
   margin: 0;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .project-dropdown {
@@ -61,7 +79,8 @@
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  /* 确保移除所有阴影效果 */
+  box-shadow: none !important;
   z-index: 1000;
   margin-top: 8px;
   max-height: 300px;
@@ -97,6 +116,8 @@
   font-size: 14px;
   background: #f7fafc;
   transition: all 0.3s ease;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .search-input:focus {
@@ -131,20 +152,23 @@
   width: 44px;
   height: 44px;
   border: none;
-  background: #f7fafc;
+  background: white;
   border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  color: #4a5568;
   transition: all 0.3s ease;
+  /* 确保移除所有阴影效果 */
+  box-shadow: none !important;
 }
 
 .notification-btn:hover {
   background: #edf2f7;
   color: #2d3748;
+  /* 确保移除所有阴影效果 */
+  box-shadow: none !important;
 }
 
 .notification-badge-count {
@@ -171,7 +195,8 @@
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  /* 确保移除所有阴影效果 */
+  box-shadow: none !important;
   z-index: 1000;
   overflow: hidden;
 }
@@ -184,6 +209,8 @@
   border-bottom: 1px solid #f1f5f9;
   font-weight: 700;
   color: #1e293b;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .notifications-actions {
@@ -199,6 +226,8 @@
   border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .notifications-actions button:hover {
@@ -214,6 +243,8 @@
   padding: 16px;
   color: #64748b;
   text-align: center;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .notification-item {
@@ -233,17 +264,23 @@
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 6px;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .notification-message {
   font-size: 14px;
   color: #475569;
   margin-bottom: 6px;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .notification-meta {
   font-size: 12px;
   color: #94a3b8;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .notification-actions {
@@ -259,6 +296,8 @@
   font-size: 12px;
   cursor: pointer;
   transition: background-color 0.2s;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .notification-action-btn:hover {
@@ -275,22 +314,25 @@
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
+  background: white;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
+  /* 确保移除所有阴影效果 */
+  box-shadow: none !important;
 }
 
 .user-avatar:hover {
   background: #edf2f7;
   border-color: #cbd5e0;
+  /* 确保移除所有阴影效果 */
+  box-shadow: none !important;
 }
 
 .avatar-circle {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #00d4ff 0%, #5b73ff 100%);
+  background: linear-gradient(135deg, #aad8f8 0%, #00d4ff 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -298,6 +340,8 @@
   color: white;
   font-weight: 600;
   font-size: 14px;
+  /* 确保移除所有阴影效果 */
+  box-shadow: none !important;
 }
 
 .user-info h4 {
@@ -305,12 +349,16 @@
   font-weight: 600;
   color: #2d3748;
   margin: 0;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .user-info p {
   font-size: 12px;
   color: #718096;
   margin: 0;
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .user-dropdown {
@@ -320,7 +368,8 @@
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  /* 确保移除所有阴影效果 */
+  box-shadow: none !important;
   z-index: 1000;
   margin-top: 8px;
   min-width: 200px;
@@ -335,6 +384,8 @@
   cursor: pointer;
   transition: background-color 0.2s;
   text-decoration: none; /* 移除链接下划线 */
+  /* 设置为微软雅黑字体 */
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
 }
 
 .dropdown-item:hover {
@@ -394,4 +445,3 @@
     font-size: 12px;
   }
 }
-
