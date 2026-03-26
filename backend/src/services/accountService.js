@@ -1,8 +1,9 @@
 import Web3 from 'web3';
 import { pool } from '../../config/database.js';
-import jwt from 'jsonwebtoken';
 import { getBalance } from '../utils/eth.js';
 import { EncryptionService } from '../utils/encryption.js';
+import { issueAccessToken } from './authTokens.js';
+import { bumpSessionVersion } from './sessionVersionStore.js';
 
 const WEB3_PROVIDER = process.env.WEB3_PROVIDER;
 if (!WEB3_PROVIDER) {
@@ -82,7 +83,7 @@ export class AccountService {
             throw new Error('密码错误');
         }
         
-        const token = jwt.sign({ username: username, address: queryResult[0].address }, "123456789", { expiresIn: '24h' });
+        const token = await issueAccessToken(username, queryResult[0].address);
         await pool.execute('update user set status = 1 where username = ?', [username]);
         
         // 给该用户发送10eth
@@ -217,6 +218,12 @@ export class AccountService {
             
             const hashedPassword = await EncryptionService.hashPassword(password);
             await pool.execute('UPDATE user SET password = ? WHERE username = ?', [hashedPassword, username]);
+            const token = await issueAccessToken(username, user[0].address);
+            return {
+                username: username,
+                message: '用户信息更新成功',
+                token
+            };
         }
 
         return {
@@ -262,9 +269,11 @@ export class AccountService {
         };
     }
 
-    // 退出登录 
+    // 退出登录（递增会话版本，使该账号下所有 JWT 失效）
     static async logout(username) {
-        return await this.updateUserStatus(username, 0);
+        const result = await this.updateUserStatus(username, 0);
+        await bumpSessionVersion(username);
+        return result;
     }
 
 

@@ -2,12 +2,14 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { encryptToken } from '../utils/encryption.js';
 import { updateUserGitHubToken, updateUserGitHubIdentity } from '../services/accountService.js';
+import { isAccessTokenSessionActive } from '../services/authTokens.js';
 
 
 const router = express.Router();
 
 const clientId = process.env.GITHUB_CLIENT_ID;
 const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+const configuredRedirectUri = process.env.GITHUB_REDIRECT_URI;
 
 if (!clientId || !clientSecret) {
     console.warn('WARNING: GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET is not defined. GitHub OAuth will not work.');
@@ -15,6 +17,12 @@ if (!clientId || !clientSecret) {
 
 const getScheme = (req) => (req.headers['x-forwarded-proto'] || req.protocol || 'http');
 const getHost = (req) => (req.headers['x-forwarded-host'] || req.headers['host']);
+const getOAuthRedirectUri = (req) => {
+    if (configuredRedirectUri) return configuredRedirectUri;
+    const scheme = getScheme(req);
+    const host = getHost(req);
+    return `${scheme}://${host}/api/auth/callback`;
+};
 const getFrontendBaseUrl = (req) => {
     if (process.env.FRONTEND_BASE_URL) return process.env.FRONTEND_BASE_URL;
     console.warn('WARNING: FRONTEND_BASE_URL is not defined. Falling back to request headers.');
@@ -27,7 +35,7 @@ const getFrontendBaseUrl = (req) => {
     return `${scheme}://${hostname}`;
 };
 
-router.get('/auth/url', (req, res) => {
+router.get('/auth/url', async (req, res) => {
     const state = Math.random().toString(36).substring(2, 15);
     let username = req.session?.user;
     if (!username) {
@@ -36,19 +44,19 @@ router.get('/auth/url', (req, res) => {
             const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
             if (token) {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                username = decoded?.username;
-                if (username) req.session.user = username;
+                if (await isAccessTokenSessionActive(decoded)) {
+                    username = decoded?.username;
+                    if (username) req.session.user = username;
+                }
             }
         } catch (e) {}
     }
     if (!username) return res.status(401).json({ error: '请先登录系统' });
     const stateData = { state, username };
     const encodedState = Buffer.from(JSON.stringify(stateData)).toString('base64');
-    const scheme = getScheme(req);
-    const host = getHost(req);
-    const apiBase = `${scheme}://${host}`;
+    const redirectUri = getOAuthRedirectUri(req);
     const scope = encodeURIComponent('repo read:org');
-    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(apiBase + '/api/auth/callback')}&state=${encodedState}&scope=${scope}`;
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(encodedState)}&scope=${scope}`;
     res.json({ authUrl });
 });
 
@@ -60,7 +68,9 @@ router.get('/auth/status', async (req, res) => {
             const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
             if (token) {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                username = decoded?.username;
+                if (await isAccessTokenSessionActive(decoded)) {
+                    username = decoded?.username;
+                }
             }
         } catch (e) {}
     }
@@ -96,7 +106,7 @@ router.get('/auth/callback', async (req, res) => {
             client_id: clientId,
             client_secret: clientSecret,
             code: code,
-            redirect_uri: `${getScheme(req)}://${getHost(req)}/api/auth/callback`
+            redirect_uri: getOAuthRedirectUri(req)
         });
         const tokenResponse = await fetchWithRetry('https://github.com/login/oauth/access_token', {
             method: 'POST',
@@ -112,7 +122,10 @@ router.get('/auth/callback', async (req, res) => {
         if (data.access_token) {
             let currentUser = null;
             try {
-                const stateData = JSON.parse(Buffer.from(req.query.state, 'base64').toString());
+                const rawState = typeof req.query.state === 'string' ? req.query.state : '';
+                const decodedState = decodeURIComponent(rawState);
+                const normalizedState = decodedState.replace(/ /g, '+');
+                const stateData = JSON.parse(Buffer.from(normalizedState, 'base64').toString());
                 currentUser = stateData.username;
             } catch (error) {
                 currentUser = req.session?.user;

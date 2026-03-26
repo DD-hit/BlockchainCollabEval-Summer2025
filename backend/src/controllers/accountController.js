@@ -71,18 +71,19 @@ export const loginAccount = async (req, res) => {
         
         // 设置session
         req.session.user = username.trim();
-        
+
         // 生成GitHub授权URL（兼容本地与服务器环境）
         const clientId = process.env.GITHUB_CLIENT_ID;
         const state = Math.random().toString(36).substring(2, 15);
         // 将用户名编码到state中
         const stateData = { state, username: username.trim() };
         const encodedState = Buffer.from(JSON.stringify(stateData)).toString('base64');
+        const configuredRedirectUri = process.env.GITHUB_REDIRECT_URI;
         const scheme = req.headers['x-forwarded-proto'] || req.protocol || 'http';
         const host = req.headers['x-forwarded-host'] || req.headers['host'];
-        const base = `${scheme}://${host}`;
+        const redirectUri = configuredRedirectUri || `${scheme}://${host}/api/auth/callback`;
         const scope = encodeURIComponent('repo read:org');
-        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(base + '/api/auth/callback')}&state=${encodedState}&scope=${scope}`;
+        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(encodedState)}&scope=${scope}`;
         
         res.json({
             success: true,
@@ -188,6 +189,14 @@ export const updateProfile = async (req, res) => {
             });
         }
         
+        const authenticatedUser = req.user?.username;
+        if (!authenticatedUser || authenticatedUser !== username.trim()) {
+            return res.status(403).json({
+                success: false,
+                message: '只能修改当前登录账号'
+            });
+        }
+
         const result = await AccountService.updateProfile(username.trim(), password);
         res.json({
             success: true,

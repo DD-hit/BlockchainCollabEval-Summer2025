@@ -9,6 +9,7 @@ import session from 'express-session';
 
 import { testConnection } from './config/database.js';
 import { AccountService } from './src/services/accountService.js';
+import { initSessionVersionStore } from './src/services/sessionVersionStore.js';
 
 const __filename = fileURLToPath(import.meta.url); // C:\StudyFile\项目\BlockchainCollabEval-Summer2025\backend\server.js
 const __dirname = path.dirname(__filename); // C:\StudyFile\项目\BlockchainCollabEval-Summer2025\backend
@@ -102,6 +103,7 @@ app.use((error, req, res, next) => {
 // 启动服务器
 const startServer = async () => {
     try {
+        await initSessionVersionStore();
         await testConnection();
         const server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`服务器运行在 http://localhost:${PORT}`);

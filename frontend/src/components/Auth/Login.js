@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Auth.css';
 import { accountAPI } from '../../utils/api';
+
+const AUTH_NOTICE_KEY = 'auth_notice';
+
+const REASON_MESSAGES = {
+  kicked:
+    '您的账号已在其他设备（或浏览器）登录，本会话已失效。仍可在此重新登录；重新登录后其他设备上的会话将失效。',
+  token: '登录已过期或验证失败，请重新登录。',
+  auth: '请先登录后再访问该页面。',
+};
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -11,10 +20,36 @@ const Login = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // 用 sessionStorage 携带提示，避免 React StrictMode 双次挂载 + 立刻清 URL 导致消息丢失
+  useEffect(() => {
+    const fromStore = sessionStorage.getItem(AUTH_NOTICE_KEY);
+    const fromUrl = new URLSearchParams(window.location.search).get('reason');
+    const key =
+      fromStore && REASON_MESSAGES[fromStore]
+        ? fromStore
+        : fromUrl && REASON_MESSAGES[fromUrl]
+          ? fromUrl
+          : null;
+    if (!key) return;
+    if (!fromStore) sessionStorage.setItem(AUTH_NOTICE_KEY, key);
+    setError(REASON_MESSAGES[key]);
+    if (fromUrl) {
+      window.history.replaceState({}, '', '/login');
+    }
+  }, []);
+
+  const clearAuthNotice = () => sessionStorage.removeItem(AUTH_NOTICE_KEY);
+
+  const handleFieldChange = (field) => (e) => {
+    clearAuthNotice();
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    clearAuthNotice();
 
     try {
   
@@ -25,22 +60,11 @@ const Login = ({ onLogin }) => {
       });
 
       if (response.data.success) {
-        const { token, username, address, githubAuthUrl } = response.data.data;
+        const { token, username, address } = response.data.data;
         
         sessionStorage.setItem('token', token);
         sessionStorage.setItem('username', username);
         if (address) sessionStorage.setItem('address', address);
-        
-        // 处理GitHub认证
-        if (githubAuthUrl) {
-          // 询问用户是否要连接GitHub
-          const shouldConnectGitHub = window.confirm('登录成功！是否要连接GitHub账户？');
-          if (shouldConnectGitHub) {
-            // 跳转到GitHub授权页面
-            window.location.href = githubAuthUrl;
-            return; // 不调用onLogin，因为页面会跳转
-          }
-        }
         
         onLogin({ username, address, token });
       } else {
@@ -96,14 +120,25 @@ const Login = ({ onLogin }) => {
           </div>
           
           <form onSubmit={handleSubmit} className="auth-form">
-            {error && <div className="error-message">{error}</div>}
+            {error && (
+              <div
+                className={
+                  error.includes('其他设备') || error.includes('本会话已失效')
+                    ? 'auth-notice-banner'
+                    : 'error-message'
+                }
+                role="alert"
+              >
+                {error}
+              </div>
+            )}
             
             <div className="form-group">
               <label>用户名</label>
               <input
                 type="text"
                 value={formData.username}
-                onChange={(e) => setFormData({...formData, username: e.target.value})}
+                onChange={handleFieldChange('username')}
                 placeholder="请输入用户名"
                 required
               />
@@ -114,7 +149,7 @@ const Login = ({ onLogin }) => {
               <input
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                onChange={handleFieldChange('password')}
                 placeholder="请输入密码"
                 required
               />

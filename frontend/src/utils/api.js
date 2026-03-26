@@ -32,14 +32,37 @@ api.interceptors.response.use(
     return response
   },
   (error) => {
-    // 只在特定情况下自动跳转到登录页面
-    // 排除GitHub相关的API调用，让具体的组件来处理这些错误
     const url = error && error.config && error.config.url ? error.config.url : ''
-    if (error && error.response && error.response.status === 401 &&
-        !url.includes('/api/auth/url') &&
-        !url.includes('/api/auth/status') &&
-        !url.includes('/api/github/') &&
-        !url.includes('/github/')) {
+    const res = error && error.response
+    const data = res && res.data ? res.data : {}
+    const code = data.code
+    const msg = (data.message || data.error || '').toString()
+    // JWT 被顶号/登出失效、或 token 损坏过期：清会话并回登录页（带提示参数）
+    const sessionKicked =
+      code === 'SESSION_REVOKED' ||
+      code === 'INVALID_TOKEN' ||
+      (res && res.status === 403 && msg.includes('token已失效'))
+    const skipRedirect =
+      url.includes('/api/accounts/login') ||
+      url.includes('/api/accounts/createAccount') ||
+      url.includes('/api/auth/url') ||
+      url.includes('/api/auth/status') ||
+      url.includes('/api/github/') ||
+      url.includes('/github/')
+    if (res && sessionKicked && !skipRedirect) {
+      const notice = code === 'SESSION_REVOKED' ? 'kicked' : 'token'
+      sessionStorage.setItem('auth_notice', notice)
+      sessionStorage.removeItem('token')
+      sessionStorage.removeItem('username')
+      sessionStorage.removeItem('address')
+      window.location.href = '/login'
+    } else if (
+      res &&
+      res.status === 401 &&
+      !skipRedirect &&
+      (msg === '未提供token' || msg === '未登录')
+    ) {
+      sessionStorage.setItem('auth_notice', 'auth')
       sessionStorage.removeItem('token')
       sessionStorage.removeItem('username')
       sessionStorage.removeItem('address')

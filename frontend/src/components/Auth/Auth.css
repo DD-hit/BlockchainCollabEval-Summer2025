@@ -501,6 +501,18 @@
   box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
 }
 
+/* 顶号 / 会话失效提醒（与表单校验错误区分开，更易看见） */
+.auth-notice-banner {
+  padding: 18px 22px;
+  background: linear-gradient(135deg, rgba(255, 248, 225, 0.95), rgba(255, 236, 179, 0.92));
+  color: #5d4037;
+  border-radius: 12px;
+  font-size: 15px;
+  line-height: 1.55;
+  border: 1px solid rgba(255, 152, 0, 0.55);
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.25);
+}
+
 .auth-btn {
   padding: 18px;
   background: linear-gradient(135deg, #0288d1, #4fc3f7);

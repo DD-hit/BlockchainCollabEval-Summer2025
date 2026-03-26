@@ -1,28 +1,38 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { isAccessTokenSessionActive } from '../services/authTokens.js';
 
 dotenv.config();
 
-export const verifyToken = (req, res, next) => {
-    // 1. 从请求头获取token
+export const verifyToken = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     const token = authHeader && authHeader.split(' ')[1];
     
-    // 2. 检查token是否存在
     if (!token) {
-
         return res.status(401).json({ message: '未提供token' });
     }
-    
-    // 3. 验证token有效性
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        return res.status(500).json({ message: '服务器未配置 JWT_SECRET' });
+    }
+
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        req.user = decoded;  // 将用户信息注入到请求对象
-        next();  // 继续执行下一个函数
+        const decoded = jwt.verify(token, secret);
+        const sessionOk = await isAccessTokenSessionActive(decoded);
+        if (!sessionOk) {
+            return res.status(401).json({
+                message: 'token已失效，请重新登录（可能已在其他设备登录）',
+                code: 'SESSION_REVOKED'
+            });
+        }
+        req.user = decoded;
+        next();
     } catch (error) {
-
-        return res.status(403).json({ message: 'token无效' });
+        return res.status(401).json({
+            message: 'token无效或已过期，请重新登录',
+            code: 'INVALID_TOKEN'
+        });
     }
 };
